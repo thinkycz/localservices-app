@@ -21,10 +21,10 @@ class BookingController extends Controller
         }
 
         return Inertia::render('Booking/Index', [
-            'service'  => $service,
+            'service' => $service,
             'offering' => $offering,
-            'date'     => $request->get('date'),
-            'time'     => $request->get('time'),
+            'date' => $request->get('date'),
+            'time' => $request->get('time'),
         ]);
     }
 }

@@ -17,8 +17,8 @@ class ServiceController extends Controller
         // Search by keyword
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->q . '%')
-                  ->orWhere('description', 'like', '%' . $request->q . '%');
+                $q->where('name', 'like', '%'.$request->q.'%')
+                    ->orWhere('description', 'like', '%'.$request->q.'%');
             });
         }
 
@@ -55,9 +55,9 @@ class ServiceController extends Controller
         // Sort
         $sort = $request->get('sort', 'recommended');
         match ($sort) {
-            'nearest'   => $query->orderBy('id', 'asc'), // placeholder for geo sort
-            'cheapest'  => $query->orderBy('price_range', 'asc'),
-            default     => $query->orderBy('rating', 'desc'),
+            'nearest' => $query->orderBy('id', 'asc'), // placeholder for geo sort
+            'cheapest' => $query->orderBy('price_range', 'asc'),
+            default => $query->orderBy('rating', 'desc'),
         };
 
         $services = $query->paginate(20)->withQueryString();
@@ -65,9 +65,9 @@ class ServiceController extends Controller
         $categories = Category::withCount('services')->get();
 
         return Inertia::render('Services/Index', [
-            'services'   => $services,
+            'services' => $services,
             'categories' => $categories,
-            'filters'    => $request->only(['q', 'categories', 'price_range', 'min_rating', 'sort', 'city']),
+            'filters' => $request->only(['q', 'categories', 'price_range', 'min_rating', 'sort', 'city']),
         ]);
     }
 

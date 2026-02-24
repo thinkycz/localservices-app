@@ -19,9 +19,9 @@ class ServiceOffering extends Model
     ];
 
     protected $casts = [
-        'price'          => 'float',
+        'price' => 'float',
         'duration_minutes' => 'integer',
-        'is_popular'     => 'boolean',
+        'is_popular' => 'boolean',
     ];
 
     public function service(): BelongsTo
