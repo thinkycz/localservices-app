@@ -132,28 +132,6 @@ function navClass(name) {
                     Settings
                 </Link>
             </div>
-
-            <!-- New Booking Button -->
-            <div class="px-4 pb-6">
-                <button
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2.5"
-                            d="M12 4v16m8-8H4"
-                        />
-                    </svg>
-                    New Booking
-                </button>
-            </div>
         </aside>
 
         <!-- ===== Main Content Area ===== -->

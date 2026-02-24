@@ -277,18 +277,6 @@ function getCardStyle(colorType) {
                         @click="currentView = 'month'"
                     >Month</button>
                 </div>
-
-                <div class="flex items-center gap-3">
-                    <button class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-sm transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        New Booking
-                    </button>
-                    <div class="w-9 h-9 bg-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0">
-                        0
-                    </div>
-                </div>
             </div>
 
             <!-- Calendar + Details Panel -->
