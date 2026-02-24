@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
+import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
     service:  { type: Object, required: true },
@@ -88,32 +89,7 @@ function cancel() {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-100 flex flex-col">
-
-        <!-- ── Header ──────────────────────────────────────────────────────── -->
-        <header class="bg-white border-b border-gray-200">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <!-- Logo -->
-                <Link :href="route('home')" class="flex items-center gap-2">
-                    <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <!-- calendar-check icon -->
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                        </svg>
-                    </div>
-                    <span class="text-xl font-bold text-gray-900">ReserveNow</span>
-                </Link>
-
-                <!-- Right actions -->
-                <div class="flex items-center gap-4 text-sm">
-                    <a href="#" class="text-gray-600 hover:text-gray-900 font-medium">Need help?</a>
-                    <span class="text-gray-300">|</span>
-                    <button @click="cancel" class="text-gray-600 hover:text-gray-900 font-medium">Cancel</button>
-                </div>
-            </div>
-        </header>
-
+    <AppLayout>
         <!-- ── Step Progress ────────────────────────────────────────────────── -->
         <div class="bg-white border-b border-gray-200">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
@@ -362,18 +338,5 @@ function cancel() {
 
             </div>
         </main>
-
-        <!-- ── Footer ──────────────────────────────────────────────────────── -->
-        <footer class="bg-white border-t border-gray-200 mt-auto">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <p class="text-xs text-gray-400">© {{ new Date().getFullYear() }} ReserveNow Booking Systems. All rights reserved.</p>
-                <div class="flex items-center gap-5">
-                    <a href="#" class="text-xs text-gray-500 hover:text-gray-700 transition">Privacy Policy</a>
-                    <a href="#" class="text-xs text-gray-500 hover:text-gray-700 transition">Terms of Service</a>
-                    <a href="#" class="text-xs text-gray-500 hover:text-gray-700 transition">Cookie Settings</a>
-                </div>
-            </div>
-        </footer>
-
-    </div>
+    </AppLayout>
 </template>
