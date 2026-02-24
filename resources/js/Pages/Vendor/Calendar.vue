@@ -565,3 +565,4 @@ function getCardStyle(colorType) {
         </div>
     </VendorLayout>
 </template>
+

@@ -27,7 +27,7 @@ const activeFilter = ref(props.filters.filter || 'all');
 
 // Search and filter handlers
 function handleSearch() {
-    router.get(route('customers.index'), {
+    router.get(route('vendor.customers.index'), {
         search: searchQuery.value,
         filter: activeFilter.value,
     }, { preserveState: true, replace: true });
@@ -35,14 +35,14 @@ function handleSearch() {
 
 function setFilter(filter) {
     activeFilter.value = filter;
-    router.get(route('customers.index'), {
+    router.get(route('vendor.customers.index'), {
         search: searchQuery.value,
         filter: filter,
     }, { preserveState: true, replace: true });
 }
 
 function changePage(page) {
-    router.get(route('customers.index'), {
+    router.get(route('vendor.customers.index'), {
         page: page,
         search: searchQuery.value,
         filter: activeFilter.value,
@@ -278,7 +278,7 @@ function getStatusBadge(status) {
                         <!-- Actions -->
                         <td class="px-6 py-4">
                             <Link
-                                :href="route('customers.show', customer.id)"
+                                :href="route('vendor.customers.show', customer.id)"
                                 class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
                             >
                                 View

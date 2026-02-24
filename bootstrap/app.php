@@ -16,7 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        // Register middleware aliases
+        $middleware->alias([
+            'service.provider' => \App\Http\Middleware\ServiceProvider::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

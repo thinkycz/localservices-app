@@ -50,7 +50,7 @@ class RegisteredUserController extends Controller
 
         // Redirect based on user type
         if ($user->is_service_provider) {
-            return redirect(route('dashboard', absolute: false));
+            return redirect(route('vendor.dashboard', absolute: false));
         }
 
         return redirect(route('home', absolute: false));

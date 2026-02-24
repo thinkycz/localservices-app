@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Vendor;
 
+use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Service;
 use App\Models\ServiceOffering;
@@ -10,7 +11,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Str;
 
-class VendorServicesController extends Controller
+class ServicesController extends Controller
 {
     /**
      * Display a list of the vendor's services.

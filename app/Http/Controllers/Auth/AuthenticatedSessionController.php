@@ -35,7 +35,7 @@ class AuthenticatedSessionController extends Controller
 
         // Redirect based on user type
         if ($request->user()->is_service_provider) {
-            return redirect()->intended(route('dashboard', absolute: false));
+            return redirect()->intended(route('vendor.dashboard', absolute: false));
         }
 
         return redirect()->intended(route('home', absolute: false));

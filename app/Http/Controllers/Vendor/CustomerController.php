@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Vendor;
 
+use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use Illuminate\Http\Request;
 use Inertia\Response;
@@ -70,7 +71,7 @@ class CustomerController extends Controller
         $start = ($page - 1) * $perPage;
         $customers = $customerData->slice($start, $perPage)->values();
 
-        return Inertia::render('Customers/Index', [
+        return Inertia::render('Vendor/Customers/Index', [
             'customers' => $customers,
             'meta' => [
                 'current_page' => (int) $page,
@@ -142,7 +143,7 @@ class CustomerController extends Controller
             }),
         ];
 
-        return Inertia::render('Customers/Show', [
+        return Inertia::render('Vendor/Customers/Show', [
             'customer' => $customerData,
         ]);
     }
