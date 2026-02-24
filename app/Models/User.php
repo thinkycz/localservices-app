@@ -52,4 +52,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(Service::class);
     }
+
+    /**
+     * Get bookings made by this user (as customer).
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'user_id');
+    }
+
+    /**
+     * Get bookings for this user (as service provider).
+     */
+    public function providerBookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'provider_id');
+    }
 }
