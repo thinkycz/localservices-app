@@ -4,7 +4,6 @@ import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const searchQuery = ref('');
-const location = ref('New York, NY');
 
 const popularCategories = [
     { name: 'Plumbing',    icon: '🔧', slug: 'plumbing' },
@@ -53,20 +52,6 @@ function browseCategory(slug) {
                             placeholder="What service do you need?"
                             class="flex-1 py-3 text-gray-800 placeholder-gray-400 focus:outline-none text-base border-0"
                             @keyup.enter="handleSearch"
-                        />
-                    </div>
-                    <div class="hidden sm:flex items-center px-4 border-l border-gray-200 gap-3">
-                        <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <input
-                            v-model="location"
-                            type="text"
-                            placeholder="Location"
-                            class="w-36 py-3 text-gray-800 placeholder-gray-400 focus:outline-none text-base border-0"
                         />
                     </div>
                     <button

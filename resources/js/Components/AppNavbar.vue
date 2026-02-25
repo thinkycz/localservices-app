@@ -1,12 +1,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 
 const page = usePage();
 const auth = page.props.auth;
 
 const searchQuery = ref('');
-const location = ref('New York, NY');
 const showUserMenu = ref(false);
 
 // Check if current route is homepage
@@ -41,17 +41,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
                 <!-- Logo -->
                 <Link :href="route('home')" class="flex items-center gap-2 shrink-0">
-                    <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
-                        </svg>
-                    </div>
-                    <span class="text-xl font-bold text-gray-900">LocalServices</span>
+                    <ApplicationLogo />
                 </Link>
 
                 <!-- Search Bar -->
-                <form v-if="!isOnHomePage" @submit.prevent="handleSearch" class="flex-1 max-w-xl">
+                <form v-if="!isOnHomePage" @submit.prevent="handleSearch" class="flex-1 max-w-xl mx-auto">
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,17 +61,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         />
                     </div>
                 </form>
-
-                <!-- Location -->
-                <button v-if="!isOnHomePage" class="hidden md:flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-full text-sm text-gray-700 hover:bg-gray-50 shrink-0">
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>{{ location }}</span>
-                </button>
 
                 <!-- Right side -->
                 <div class="flex items-center gap-3 ml-auto shrink-0">
@@ -110,6 +93,17 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                     <p class="text-sm font-semibold text-gray-900 truncate">{{ auth.user.name }}</p>
                                     <p class="text-xs text-gray-500 truncate">{{ auth.user.email }}</p>
                                 </div>
+                                <Link
+                                    v-if="auth.user.is_service_provider"
+                                    :href="route('vendor.dashboard')"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+                                    @click="showUserMenu = false"
+                                >
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                                    </svg>
+                                    Vendor Dashboard
+                                </Link>
                                 <Link
                                     :href="route('profile.edit')"
                                     class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
