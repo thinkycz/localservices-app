@@ -17,6 +17,14 @@ Route::get('/services', [ServiceController::class, 'index'])->name('services.ind
 Route::get('/services/{slug}', [ServiceController::class, 'show'])->name('services.show');
 Route::get('/services/{slug}/book', [BookingController::class, 'show'])->name('services.book');
 
+// Booking routes (auth required)
+Route::middleware('auth')->group(function () {
+    Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
+    Route::get('/bookings/confirmation/{id}', [BookingController::class, 'confirmation'])->name('bookings.confirmation');
+    Route::get('/bookings', [BookingController::class, 'userBookings'])->name('bookings.index');
+    Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+});
+
 // Categories (public)
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 

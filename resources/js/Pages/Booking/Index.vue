@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
@@ -11,32 +11,45 @@ const props = defineProps({
 });
 
 // ── Form state ────────────────────────────────────────────────────────────────
-const form = ref({
-    firstName:    '',
-    lastName:     '',
-    email:        '',
-    phone:        '',
-    requirements: '',
+const form = useForm({
+    service_id: props.service.id,
+    service_offering_id: props.offering?.id,
+    provider_id: props.service.user_id,
+    booking_date: props.date,
+    start_time: props.time,
+    end_time: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    customer_notes: '',
 });
 
 const errors = ref({});
 
 function validateForm() {
     const e = {};
-    if (!form.value.firstName.trim()) e.firstName = 'First name is required.';
-    if (!form.value.lastName.trim())  e.lastName  = 'Last name is required.';
-    if (!form.value.email.trim())     e.email     = 'Email address is required.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email))
+    if (!form.first_name.trim()) e.first_name = 'First name is required.';
+    if (!form.last_name.trim())  e.last_name  = 'Last name is required.';
+    if (!form.email.trim())      e.email      = 'Email address is required.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
         e.email = 'Please enter a valid email address.';
-    if (!form.value.phone.trim())     e.phone     = 'Phone number is required.';
+    if (!form.phone.trim())      e.phone      = 'Phone number is required.';
     errors.value = e;
     return Object.keys(e).length === 0;
 }
 
-function continueToPayment() {
+function submitBooking() {
     if (!validateForm()) return;
-    // TODO: navigate to payment step (Step 2)
-    alert('Proceeding to payment step…');
+    
+    form.post(route('bookings.store'), {
+        onSuccess: () => {
+            // Redirect to confirmation page handled by controller
+        },
+        onError: (err) => {
+            errors.value = err;
+        }
+    });
 }
 
 // ── Derived booking info ──────────────────────────────────────────────────────
@@ -138,35 +151,35 @@ function cancel() {
                     <h1 class="text-2xl font-bold text-gray-900 mb-1">Confirm Service &amp; Details</h1>
                     <p class="text-sm text-gray-500 mb-7">Please provide your contact information to finalize the booking.</p>
 
-                    <form @submit.prevent="continueToPayment" novalidate>
+                    <form @submit.prevent="submitBooking" novalidate>
 
                         <!-- First Name + Last Name -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">First Name</label>
                                 <input
-                                    v-model="form.firstName"
+                                    v-model="form.first_name"
                                     type="text"
                                     placeholder="John"
                                     :class="[
                                         'w-full px-4 py-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition',
-                                        errors.firstName ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                                        errors.first_name ? 'border-red-400 bg-red-50' : 'border-gray-300'
                                     ]"
                                 />
-                                <p v-if="errors.firstName" class="text-xs text-red-500 mt-1">{{ errors.firstName }}</p>
+                                <p v-if="errors.first_name" class="text-xs text-red-500 mt-1">{{ errors.first_name }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Last Name</label>
                                 <input
-                                    v-model="form.lastName"
+                                    v-model="form.last_name"
                                     type="text"
                                     placeholder="Doe"
                                     :class="[
                                         'w-full px-4 py-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition',
-                                        errors.lastName ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                                        errors.last_name ? 'border-red-400 bg-red-50' : 'border-gray-300'
                                     ]"
                                 />
-                                <p v-if="errors.lastName" class="text-xs text-red-500 mt-1">{{ errors.lastName }}</p>
+                                <p v-if="errors.last_name" class="text-xs text-red-500 mt-1">{{ errors.last_name }}</p>
                             </div>
                         </div>
 
@@ -215,7 +228,7 @@ function cancel() {
                                 <span class="text-gray-400 font-normal">(Optional)</span>
                             </label>
                             <textarea
-                                v-model="form.requirements"
+                                v-model="form.customer_notes"
                                 rows="4"
                                 placeholder="Any specific requests or needs..."
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-y"
@@ -225,10 +238,12 @@ function cancel() {
                         <!-- Submit -->
                         <button
                             type="submit"
-                            class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-8 py-4 rounded-xl transition"
+                            :disabled="form.processing"
+                            class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-sm px-8 py-4 rounded-xl transition"
                         >
-                            Continue to Payment
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span v-if="form.processing">Processing...</span>
+                            <span v-else>Confirm Booking</span>
+                            <svg v-if="!form.processing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                             </svg>
                         </button>
