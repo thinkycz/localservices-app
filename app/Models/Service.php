@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Scout\Searchable;
 
 class Service extends Model
 {
+    use Searchable;
+
     protected $fillable = [
         'category_id',
         'user_id',
@@ -36,6 +39,25 @@ class Service extends Model
         'price_range' => 'integer',
     ];
 
+    /**
+     * Get the indexable data array for the model.
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'slug' => $this->slug,
+            'city' => $this->city,
+            'state' => $this->state,
+            'category' => $this->category?->name,
+            'price_range' => $this->price_range,
+            'rating' => $this->rating,
+            'is_available' => $this->is_available,
+        ];
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -54,6 +76,50 @@ class Service extends Model
     public function offerings(): HasMany
     {
         return $this->hasMany(ServiceOffering::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Get approved reviews only.
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(ServiceImage::class)->orderBy('order');
+    }
+
+    public function primaryImage()
+    {
+        return $this->hasOne(ServiceImage::class)->where('is_primary', true);
+    }
+
+    public function approvedReviews(): HasMany
+    {
+        return $this->hasMany(Review::class)->approved();
+    }
+
+    /**
+     * Update rating and reviews count.
+     */
+    public function updateRatingStats(): void
+    {
+        $stats = $this->reviews()
+            ->approved()
+            ->selectRaw('AVG(rating) as avg_rating, COUNT(*) as count')
+            ->first();
+
+        $this->update([
+            'rating' => round($stats->avg_rating ?? 0, 1),
+            'reviews_count' => $stats->count ?? 0,
+        ]);
     }
 
     /**

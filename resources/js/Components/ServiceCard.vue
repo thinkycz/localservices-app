@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import BookmarkButton from '@/Components/BookmarkButton.vue';
 import StarRating from '@/Components/StarRating.vue';
 
 const props = defineProps({
@@ -34,7 +35,10 @@ const formattedReviews = computed(() => {
 </script>
 
 <template>
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden flex hover:shadow-md transition-shadow duration-200">
+    <Link
+        :href="route('services.show', service.slug)"
+        class="bg-white rounded-xl border border-gray-200 overflow-hidden flex hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer group"
+    >
 
         <!-- Image -->
         <div class="w-44 shrink-0 bg-gray-100">
@@ -68,12 +72,12 @@ const formattedReviews = computed(() => {
                         <span class="text-sm font-medium text-gray-500">{{ priceSymbol }}</span>
                     </div>
                     <!-- Bookmark -->
-                    <button class="text-gray-400 hover:text-blue-600 transition shrink-0 mt-0.5">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                        </svg>
-                    </button>
+                    <BookmarkButton
+                        :service-id="service.id"
+                        :initial-bookmarked="service.is_bookmarked"
+                        size="sm"
+                        @click.stop
+                    />
                 </div>
 
                 <!-- Name -->
@@ -96,8 +100,8 @@ const formattedReviews = computed(() => {
                 </p>
             </div>
 
-            <!-- Bottom row: availability + CTA -->
-            <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+            <!-- Bottom row: availability -->
+            <div class="flex items-center mt-4 pt-3 border-t border-gray-100">
                 <!-- Availability -->
                 <div class="flex items-center gap-1.5 text-sm text-green-600 font-medium">
                     <!-- Calendar icon for today -->
@@ -114,15 +118,7 @@ const formattedReviews = computed(() => {
                         {{ service.available_at }}
                     </span>
                 </div>
-
-                <!-- View Service Button -->
-                <Link
-                    :href="route('services.show', service.slug)"
-                    class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors duration-150 whitespace-nowrap"
-                >
-                    View Service
-                </Link>
             </div>
         </div>
-    </div>
+    </Link>
 </template>

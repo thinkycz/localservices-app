@@ -3,95 +3,28 @@ import VendorLayout from '@/Layouts/VendorLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
-// ── Stats ──────────────────────────────────────────────────────────────────
-const stats = [
-    {
-        label: 'Total Bookings',
-        value: '1,284',
-        change: '+12%',
-        positive: true,
-        iconBg: 'bg-blue-50',
-        iconColor: 'text-blue-500',
-        icon: 'calendar-check',
-    },
-    {
-        label: 'Cancellations',
-        value: '12',
-        change: '-3%',
-        positive: false,
-        iconBg: 'bg-red-50',
-        iconColor: 'text-red-500',
-        icon: 'calendar-x',
-    },
-    {
-        label: 'New Customers',
-        value: '45',
-        change: '+8%',
-        positive: true,
-        iconBg: 'bg-orange-50',
-        iconColor: 'text-orange-500',
-        icon: 'user-plus',
-    },
-    {
-        label: 'Revenue',
-        value: '$4,820.00',
-        change: '+24%',
-        positive: true,
-        iconBg: 'bg-green-50',
-        iconColor: 'text-green-500',
-        icon: 'cash',
-    },
-];
+const props = defineProps({
+    stats: { type: Array, default: () => [] },
+    todayBookings: { type: Array, default: () => [] },
+    weekStats: { type: Object, default: () => ({}) },
+    servicePopularity: { type: Array, default: () => [] },
+    monthlyRevenue: { type: Array, default: () => [] },
+    recentBookings: { type: Array, default: () => [] },
+    overview: { type: Object, default: () => ({}) },
+});
 
-// ── Today's Schedule ───────────────────────────────────────────────────────
-const appointments = [
-    {
-        time: '09:00 AM',
-        duration: '60 min',
-        title: 'Consultation Session',
-        customer: 'Sarah Miller',
-        initials: 'SM',
-        avatarBg: 'bg-pink-200',
-        avatarText: 'text-pink-700',
-        status: 'CONFIRMED',
-        statusBg: 'bg-green-50',
-        statusText: 'text-green-600',
-        borderColor: 'border-blue-500',
-        completed: false,
-    },
-    {
-        time: '10:30 AM',
-        duration: '90 min',
-        title: 'Technical Audit',
-        customer: 'David Chen',
-        initials: 'DC',
-        avatarBg: 'bg-blue-200',
-        avatarText: 'text-blue-700',
-        status: 'PENDING',
-        statusBg: 'bg-orange-50',
-        statusText: 'text-orange-500',
-        borderColor: 'border-orange-400',
-        completed: false,
-    },
-    {
-        time: '08:00 AM',
-        duration: '45 min',
-        title: 'Quick Check-up',
-        customer: 'Mark Wilson',
-        initials: 'MW',
-        avatarBg: 'bg-gray-200',
-        avatarText: 'text-gray-600',
-        status: 'COMPLETED',
-        statusBg: 'bg-gray-100',
-        statusText: 'text-gray-400',
-        borderColor: 'border-gray-300',
-        completed: true,
-    },
-];
+// Alias for template compatibility
+const appointments = computed(() => props.todayBookings);
+const services = computed(() => props.servicePopularity.map(svc => ({
+    name: svc.service,
+    percent: svc.percentage,
+    barColor: 'bg-blue-500',
+})));
 
-// ── Mini Calendar ──────────────────────────────────────────────────────────
-const calendarMonth = ref(9); // 0-indexed: 9 = October
-const calendarYear = ref(2024);
+// Mini Calendar
+const today = new Date();
+const calendarMonth = ref(today.getMonth());
+const calendarYear = ref(today.getFullYear());
 
 const monthNames = [
     'January','February','March','April','May','June',
@@ -100,24 +33,21 @@ const monthNames = [
 
 const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-// Build a 6-row × 7-col calendar grid
+// Build calendar grid
 const calendarDays = computed(() => {
     const year = calendarYear.value;
     const month = calendarMonth.value;
-    const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+    const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrev = new Date(year, month, 0).getDate();
 
     const cells = [];
-    // Previous month tail
     for (let i = firstDay - 1; i >= 0; i--) {
         cells.push({ day: daysInPrev - i, current: false });
     }
-    // Current month
     for (let d = 1; d <= daysInMonth; d++) {
         cells.push({ day: d, current: true });
     }
-    // Next month head
     const remaining = 42 - cells.length;
     for (let d = 1; d <= remaining; d++) {
         cells.push({ day: d, current: false });
@@ -125,7 +55,6 @@ const calendarDays = computed(() => {
     return cells;
 });
 
-const today = new Date();
 const isToday = (cell) =>
     cell.current &&
     cell.day === today.getDate() &&
@@ -149,12 +78,47 @@ function nextMonth() {
     }
 }
 
-// ── Service Popularity ─────────────────────────────────────────────────────
-const services = [
-    { name: 'CONSULTATION', percent: 42, barColor: 'bg-blue-600' },
-    { name: 'TECH AUDIT',   percent: 28, barColor: 'bg-orange-400' },
-    { name: 'MAINTENANCE',  percent: 30, barColor: 'bg-green-500' },
-];
+// Format today's date
+const todayFormatted = computed(() => {
+    return today.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+});
+
+// Get today's schedule subtitle
+const todayScheduleSubtitle = computed(() => {
+    return today.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+});
+
+// Get avatar background color based on name
+function getAvatarColors(name) {
+    const colors = [
+        { bg: 'bg-pink-200', text: 'text-pink-700' },
+        { bg: 'bg-blue-200', text: 'text-blue-700' },
+        { bg: 'bg-green-200', text: 'text-green-700' },
+        { bg: 'bg-purple-200', text: 'text-purple-700' },
+        { bg: 'bg-orange-200', text: 'text-orange-700' },
+        { bg: 'bg-teal-200', text: 'text-teal-700' },
+    ];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+}
+
+function getStatusClasses(status) {
+    const statusMap = {
+        'PENDING': { bg: 'bg-orange-50', text: 'text-orange-500', border: 'border-orange-400' },
+        'CONFIRMED': { bg: 'bg-green-50', text: 'text-green-600', border: 'border-blue-500' },
+        'COMPLETED': { bg: 'bg-gray-100', text: 'text-gray-400', border: 'border-gray-300' },
+        'CANCELLED': { bg: 'bg-red-50', text: 'text-red-500', border: 'border-red-400' },
+    };
+    return statusMap[status] || statusMap['PENDING'];
+}
 </script>
 
 <template>
@@ -223,10 +187,11 @@ const services = [
             <div class="col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
                 <!-- Header -->
                 <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-50">
-                    <div>
-                        <h2 class="text-lg font-bold text-gray-900">Today's Schedule</h2>
-                        <p class="text-sm text-gray-400 mt-0.5">Thursday, October 24</p>
-                    </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900">Today's Schedule</h2>
+                    <p class="text-sm text-gray-400 mt-0.5">{{ todayScheduleSubtitle }}</p>
+                </div>
+
                     <div class="flex items-center gap-3">
                         <!-- Filter icon -->
                         <button class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
@@ -245,7 +210,7 @@ const services = [
                 <div class="flex-1 px-6 py-4 space-y-4">
                     <div
                         v-for="appt in appointments"
-                        :key="appt.title"
+                        :key="appt.id"
                         class="flex gap-4 items-stretch"
                     >
                         <!-- Time column -->
@@ -265,7 +230,7 @@ const services = [
                         <div
                             :class="[
                                 'flex-1 rounded-xl border-l-4 bg-gray-50 px-4 py-3',
-                                appt.borderColor,
+                                getStatusClasses(appt.status).border,
                                 appt.completed ? 'opacity-70' : '',
                             ]"
                         >
@@ -285,8 +250,8 @@ const services = [
                                     <span
                                         :class="[
                                             'text-xs font-bold px-2.5 py-0.5 rounded-full tracking-wide',
-                                            appt.statusBg,
-                                            appt.statusText,
+                                            getStatusClasses(appt.status).bg,
+                                            getStatusClasses(appt.status).text,
                                         ]"
                                     >
                                         {{ appt.status }}
@@ -301,11 +266,11 @@ const services = [
                                     <div
                                         :class="[
                                             'w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0',
-                                            appt.avatarBg,
-                                            appt.avatarText,
+                                            getAvatarColors(appt.customer).bg,
+                                            getAvatarColors(appt.customer).text,
                                         ]"
                                     >
-                                        {{ appt.initials }}
+                                        {{ appt.customer_initials }}
                                     </div>
                                     <span
                                         :class="[
@@ -353,8 +318,8 @@ const services = [
 
                 <!-- Footer link -->
                 <div class="px-6 py-4 border-t border-gray-50 text-center">
-                    <a href="#" class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                        See All 12 Bookings Today
+                    <a :href="route('vendor.calendar')" class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+                        See All {{ todayBookings.length }} Bookings Today
                     </a>
                 </div>
             </div>
@@ -444,6 +409,9 @@ const services = [
                             </div>
                         </div>
                     </div>
+                    <div v-if="services.length === 0" class="text-center py-4 text-gray-400 text-sm">
+                        No booking data available yet
+                    </div>
                 </div>
 
                 <!-- Business Tip -->
@@ -458,8 +426,9 @@ const services = [
                         <h3 class="font-bold text-base leading-tight">Business Tip</h3>
                     </div>
                     <p class="text-sm text-blue-100 leading-relaxed mb-4">
-                        You have 4 recurring customers booking today. Offer them a loyalty
-                        discount to increase retention.
+                        {{ overview.returning_customers > 0 
+                            ? `You have ${overview.returning_customers} returning customers. Offer them a loyalty discount to increase retention.` 
+                            : 'Build customer loyalty by offering discounts to returning customers and asking for reviews.' }}
                     </p>
                     <button class="w-full bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">
                         Action Tips
@@ -469,4 +438,3 @@ const services = [
         </div>
     </VendorLayout>
 </template>
-

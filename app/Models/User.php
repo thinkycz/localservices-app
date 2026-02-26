@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'is_service_provider',
+        'is_admin',
     ];
 
     /**
@@ -46,6 +47,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_service_provider' => 'boolean',
+            'is_admin' => 'boolean',
         ];
     }
 
@@ -68,5 +71,21 @@ class User extends Authenticatable
     public function providerBookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'provider_id');
+    }
+
+    /**
+     * Get notifications for this user.
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get unread notifications count.
+     */
+    public function unreadNotificationsCount(): int
+    {
+        return $this->notifications()->unread()->count();
     }
 }

@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import BookmarkButton from '@/Components/BookmarkButton.vue';
 import StarRating from '@/Components/StarRating.vue';
 
 const props = defineProps({
@@ -162,12 +163,11 @@ const mockReviews = [
                         </svg>
                         Share
                     </button>
-                    <button class="flex items-center gap-1.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                        </svg>
-                        Favorite
-                    </button>
+                    <BookmarkButton
+                        :service-id="service.id"
+                        :initial-bookmarked="service.is_bookmarked"
+                        size="md"
+                    />
                 </div>
             </div>
         </div>
@@ -214,10 +214,11 @@ const mockReviews = [
                             <div
                                 v-for="offering in filteredOfferings"
                                 :key="offering.id"
-                                class="bg-white rounded-xl border p-5 transition-colors"
+                                @click="toggleOffering(offering)"
+                                class="bg-white rounded-xl border p-5 transition-all cursor-pointer hover:shadow-md"
                                 :class="selectedOffering?.id === offering.id
-                                    ? 'border-blue-400 bg-blue-50/40'
-                                    : 'border-gray-200'"
+                                    ? 'border-blue-400 bg-blue-50/40 shadow-md'
+                                    : 'border-gray-200 hover:border-blue-300'"
                             >
                                 <div class="flex items-start justify-between gap-4">
                                     <!-- Info -->
@@ -250,7 +251,7 @@ const mockReviews = [
                                         </div>
                                     </div>
 
-                                    <!-- Price + toggle -->
+                                    <!-- Price + indicator -->
                                     <div class="flex items-center gap-3 shrink-0">
                                         <span
                                             class="text-lg font-bold"
@@ -258,13 +259,12 @@ const mockReviews = [
                                         >
                                             {{ formatPrice(offering.price) }}
                                         </span>
-                                        <button
-                                            @click="toggleOffering(offering)"
+                                        <div
                                             :class="[
                                                 'w-8 h-8 rounded-lg flex items-center justify-center transition',
                                                 selectedOffering?.id === offering.id
                                                     ? 'bg-blue-600 text-white'
-                                                    : 'border border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500'
+                                                    : 'border border-gray-300 text-gray-400'
                                             ]"
                                         >
                                             <svg v-if="selectedOffering?.id === offering.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,7 +273,7 @@ const mockReviews = [
                                             <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                             </svg>
-                                        </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -285,13 +285,13 @@ const mockReviews = [
                     </div>
 
                     <!-- ════════════════ REVIEWS ════════════════ -->
-                    <div class="mb-8">
-                        <div class="flex items-center justify-between mb-4">
+                    <div class="mt-10 mb-8">
+                        <div class="flex items-center justify-between mb-6">
                             <h2 class="text-base font-bold text-gray-900">What people are saying</h2>
                             <button class="text-sm text-blue-600 font-medium hover:underline">Write a review</button>
                         </div>
 
-                        <div class="space-y-4">
+                        <div class="space-y-5">
                             <div
                                 v-for="review in mockReviews"
                                 :key="review.id"
@@ -318,52 +318,73 @@ const mockReviews = [
                     </div>
 
                     <!-- ════════════════ ABOUT ════════════════ -->
-                    <div>
+                    <div class="mt-10">
 
                         <!-- About the Shop card -->
-                        <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-                            <h2 class="text-base font-bold text-gray-900 mb-3">About the Shop</h2>
-                            <p class="text-sm text-gray-600 leading-relaxed mb-5">{{ service.description }}</p>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                <!-- Location -->
-                                <div class="flex gap-3">
-                                    <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200 p-8 shadow-sm">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <div>
-                                        <div class="text-sm font-semibold text-gray-800 mb-0.5">Location</div>
-                                        <div class="text-sm text-gray-600">
+                                </div>
+                                <h2 class="text-lg font-bold text-gray-900">About the Shop</h2>
+                            </div>
+                            
+                            <p class="text-gray-600 leading-relaxed mb-8 text-base">{{ service.description }}</p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Location -->
+                                <div class="flex gap-4 p-4 bg-white rounded-xl border border-gray-100">
+                                    <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                                        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-gray-900 mb-1">Location</div>
+                                        <div class="text-gray-600 text-sm mb-2">
                                             {{ service.address ?? (service.city + ', ' + service.state) }}
                                         </div>
-                                        <a href="#" class="text-sm text-blue-600 hover:underline mt-1 inline-block">View on Map</a>
+                                        <a href="#" class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                                            View on Map
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </a>
                                     </div>
                                 </div>
 
                                 <!-- Opening Hours -->
-                                <div class="flex gap-3">
-                                    <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div>
-                                        <div class="text-sm font-semibold text-gray-800 mb-0.5">Opening Hours</div>
-                                        <div class="text-sm text-gray-600 leading-relaxed">
+                                <div class="flex gap-4 p-4 bg-white rounded-xl border border-gray-100">
+                                    <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
+                                        <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-gray-900 mb-1">Opening Hours</div>
+                                        <div class="text-gray-600 text-sm leading-relaxed">
                                             {{ service.opening_hours ?? 'Mon - Fri: 9:00 AM - 6:00 PM' }}
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Badge pill -->
-                        <div v-if="service.badge">
-                            <span :class="badgeClasses" class="text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">
-                                {{ service.badge }}
-                            </span>
+                            <!-- Badge pill -->
+                            <div v-if="service.badge" class="mt-6 pt-6 border-t border-gray-200">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-gray-500">Recognition:</span>
+                                    <span :class="badgeClasses" class="text-xs font-semibold px-3 py-1.5 rounded-full uppercase tracking-wide">
+                                        {{ service.badge }}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -371,57 +392,73 @@ const mockReviews = [
 
                 <!-- ── Right sidebar ─────────────────────────────────────────── -->
                 <div class="w-72 xl:w-80 shrink-0 sticky top-20">
-                    <div class="bg-white rounded-xl border border-gray-200 p-5">
+                    <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
 
-                        <h3 class="font-bold text-gray-900 text-base">Book Appointment</h3>
+                        <div class="flex items-center gap-2 mb-5 pb-4 border-b border-gray-100">
+                            <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <h3 class="font-bold text-gray-900 text-base">Book Appointment</h3>
+                        </div>
 
                         <!-- Selected service chip -->
                         <div
                             v-if="selectedOffering"
-                            class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-4"
+                            class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-5"
                         >
-                            <div class="flex items-center gap-2 min-w-0">
-                                <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
-                                </svg>
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
                                 <div class="min-w-0">
-                                    <div class="text-xs font-semibold text-gray-800 truncate">{{ selectedOffering.name }}</div>
+                                    <div class="text-sm font-semibold text-gray-900 truncate">{{ selectedOffering.name }}</div>
                                     <div class="text-xs text-gray-500">{{ selectedOffering.duration_minutes }} mins • {{ formatPrice(selectedOffering.price) }}</div>
                                 </div>
                             </div>
-                            <button @click="selectedOffering = null" class="text-gray-400 hover:text-gray-600 ml-2 shrink-0">
+                            <button @click="selectedOffering = null" class="text-gray-400 hover:text-red-500 ml-2 shrink-0 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
 
-                        <div v-else class="text-xs text-gray-400 bg-gray-50 border border-dashed border-gray-200 rounded-lg px-3 py-3 mb-4 text-center">
-                            Select a service from the Services tab
+                        <div v-else class="flex items-center gap-3 text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-xl px-4 py-4 mb-5">
+                            <div class="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <span>Select a service from the list</span>
                         </div>
 
                         <!-- Select Date -->
-                        <div class="mb-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-semibold text-gray-700">Select Date</span>
-                                <span class="text-xs font-semibold text-blue-600">
+                        <div class="mb-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm font-semibold text-gray-800">Select Date</span>
+                                <span class="text-sm font-bold text-blue-600">
                                     {{ MONTH_NAMES[calMonth] }} {{ calYear }}
                                 </span>
                             </div>
 
                             <!-- Calendar header -->
-                            <div class="flex items-center justify-between mb-1">
-                                <button @click="prevMonth" class="p-1 rounded hover:bg-gray-100 text-gray-500">
+                            <div class="flex items-center justify-between mb-2 bg-gray-50 rounded-lg p-2">
+                                <button @click="prevMonth" class="p-1.5 rounded-lg hover:bg-white hover:shadow-sm text-gray-600 transition-all">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
-                                <div class="grid grid-cols-7 flex-1 mx-1">
+                                <div class="grid grid-cols-7 flex-1 mx-2">
                                     <div v-for="d in ['S','M','T','W','T','F','S']" :key="d"
-                                        class="text-center text-xs font-medium text-gray-400 py-1">{{ d }}</div>
+                                        class="text-center text-xs font-semibold text-gray-500 py-1">{{ d }}</div>
                                 </div>
-                                <button @click="nextMonth" class="p-1 rounded hover:bg-gray-100 text-gray-500">
+                                <button @click="nextMonth" class="p-1.5 rounded-lg hover:bg-white hover:shadow-sm text-gray-600 transition-all">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                     </svg>
@@ -429,7 +466,7 @@ const mockReviews = [
                             </div>
 
                             <!-- Calendar grid -->
-                            <div class="grid grid-cols-7 gap-0.5">
+                            <div class="grid grid-cols-7 gap-1">
                                 <div
                                     v-for="(day, idx) in calendarDays"
                                     :key="idx"
@@ -439,10 +476,10 @@ const mockReviews = [
                                         v-if="day"
                                         @click="selectedDay = day"
                                         :class="[
-                                            'w-7 h-7 rounded-full text-xs font-medium transition',
+                                            'w-8 h-8 rounded-full text-sm font-medium transition-all',
                                             selectedDay === day
-                                                ? 'bg-blue-600 text-white'
-                                                : 'text-gray-700 hover:bg-gray-100'
+                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                                                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
                                         ]"
                                     >{{ day }}</button>
                                 </div>
@@ -450,27 +487,27 @@ const mockReviews = [
                         </div>
 
                         <!-- Available Times -->
-                        <div class="mb-4">
-                            <div class="text-xs font-semibold text-gray-700 mb-2">Available Times</div>
-                            <div class="grid grid-cols-3 gap-1.5">
+                        <div class="mb-5">
+                            <div class="text-sm font-semibold text-gray-800 mb-3">Available Times</div>
+                            <div class="grid grid-cols-2 gap-2">
                                 <button
                                     v-for="slot in TIME_SLOTS"
                                     :key="slot"
                                     @click="selectedTime = slot"
                                     :class="[
-                                        'py-1.5 text-xs font-medium rounded-lg border transition',
+                                        'py-2.5 text-sm font-medium rounded-xl border-2 transition-all',
                                         selectedTime === slot
-                                            ? 'border-blue-600 text-blue-600 bg-blue-50'
-                                            : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-500'
+                                            ? 'border-blue-600 text-blue-600 bg-blue-50 shadow-sm'
+                                            : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-500 hover:bg-gray-50'
                                     ]"
                                 >{{ slot }}</button>
                             </div>
                         </div>
 
                         <!-- Total Price -->
-                        <div class="flex items-center justify-between mb-4 pt-3 border-t border-gray-100">
-                            <span class="text-sm font-medium text-gray-700">Total Price</span>
-                            <span class="text-xl font-bold text-blue-600">
+                        <div class="flex items-center justify-between mb-5 pt-4 border-t border-gray-200">
+                            <span class="text-sm font-medium text-gray-600">Total Price</span>
+                            <span class="text-2xl font-bold text-blue-600">
                                 {{ selectedOffering ? formatPrice(selectedOffering.price) : '—' }}
                             </span>
                         </div>
@@ -480,29 +517,35 @@ const mockReviews = [
                             :disabled="!selectedOffering"
                             @click="goToBooking"
                             :class="[
-                                'w-full py-3 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2',
+                                'w-full py-4 rounded-xl text-base font-bold transition-all duration-200 flex items-center justify-center gap-2 shadow-sm',
                                 selectedOffering
-                                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    ? 'bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:shadow-blue-200 text-white transform hover:-translate-y-0.5'
                                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             ]"
                         >
-                            Confirm &amp; Pay
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span v-if="selectedOffering">Confirm &amp; Pay</span>
+                            <span v-else>Select a Service</span>
+                            <svg v-if="selectedOffering" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </button>
 
-                        <p class="text-xs text-gray-400 text-center mt-3 leading-relaxed">
-                            By booking, you agree to our 24-hour cancellation policy. No-show fees may apply.
-                        </p>
+                        <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                            <p class="text-xs text-gray-500 text-center leading-relaxed">
+                                By booking, you agree to our <span class="font-medium text-gray-700">24-hour cancellation policy</span>. No-show fees may apply.
+                            </p>
+                        </div>
 
                         <!-- Secure badge -->
-                        <div class="flex items-center justify-center gap-1.5 mt-3 text-xs text-gray-400">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-gray-100">
+                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
-                            Secure Booking Powered by LocalServices
+                            <span class="text-xs font-medium text-gray-500">Secure SSL Encrypted Payment</span>
                         </div>
 
                     </div>

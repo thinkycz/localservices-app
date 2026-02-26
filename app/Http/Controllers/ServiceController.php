@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bookmark;
 use App\Models\Category;
 use App\Models\Service;
 use Illuminate\Http\Request;
@@ -62,6 +63,21 @@ class ServiceController extends Controller
 
         $services = $query->paginate(20)->withQueryString();
 
+        // Add is_bookmarked flag for authenticated users
+        if ($request->user()) {
+            $userId = $request->user()->id;
+            $serviceIds = $services->pluck('id')->toArray();
+            $bookmarkedIds = Bookmark::where('user_id', $userId)
+                ->whereIn('service_id', $serviceIds)
+                ->pluck('service_id')
+                ->toArray();
+
+            $services->getCollection()->transform(function ($service) use ($bookmarkedIds) {
+                $service->is_bookmarked = in_array($service->id, $bookmarkedIds);
+                return $service;
+            });
+        }
+
         $categories = Category::withCount('services')->get();
 
         return Inertia::render('Services/Index', [
@@ -71,11 +87,18 @@ class ServiceController extends Controller
         ]);
     }
 
-    public function show(string $slug): Response
+    public function show(Request $request, string $slug): Response
     {
         $service = Service::with(['category', 'offerings'])
             ->where('slug', $slug)
             ->firstOrFail();
+
+        // Add is_bookmarked flag for authenticated users
+        if ($request->user()) {
+            $service->is_bookmarked = Bookmark::where('user_id', $request->user()->id)
+                ->where('service_id', $service->id)
+                ->exists();
+        }
 
         $related = Service::with('category')
             ->where('category_id', $service->category_id)
@@ -83,6 +106,21 @@ class ServiceController extends Controller
             ->orderBy('rating', 'desc')
             ->limit(3)
             ->get();
+
+        // Add is_bookmarked flag to related services for authenticated users
+        if ($request->user()) {
+            $userId = $request->user()->id;
+            $relatedIds = $related->pluck('id')->toArray();
+            $bookmarkedIds = Bookmark::where('user_id', $userId)
+                ->whereIn('service_id', $relatedIds)
+                ->pluck('service_id')
+                ->toArray();
+
+            $related->transform(function ($service) use ($bookmarkedIds) {
+                $service->is_bookmarked = in_array($service->id, $bookmarkedIds);
+                return $service;
+            });
+        }
 
         return Inertia::render('Services/Show', [
             'service' => $service,

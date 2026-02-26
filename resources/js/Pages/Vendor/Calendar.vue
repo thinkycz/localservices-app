@@ -1,19 +1,18 @@
 <script setup>
 import VendorLayout from '@/Layouts/VendorLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
-const currentView = ref('week');
+const props = defineProps({
+    bookings: { type: Array, default: () => [] },
+    weekDays: { type: Array, default: () => [] },
+    weekRange: { type: String, default: '' },
+    weekStats: { type: Object, default: () => ({}) },
+    currentView: { type: String, default: 'week' },
+    filters: { type: Object, default: () => ({}) },
+});
 
-const weekDays = [
-    { day: 'MON', date: 23, dayIndex: 0, isToday: false },
-    { day: 'TUE', date: 24, dayIndex: 1, isToday: false },
-    { day: 'WED', date: 25, dayIndex: 2, isToday: true },
-    { day: 'THU', date: 26, dayIndex: 3, isToday: false },
-    { day: 'FRI', date: 27, dayIndex: 4, isToday: false },
-    { day: 'SAT', date: 28, dayIndex: 5, isToday: false },
-    { day: 'SUN', date: 29, dayIndex: 6, isToday: false },
-];
+const currentView = ref(props.currentView || 'week');
 
 const startHour = 8;
 const endHour = 18;
@@ -31,150 +30,9 @@ const timeSlots = computed(() => {
 
 const gridHeight = computed(() => (endHour - startHour) * hourHeight);
 
-const bookings = ref([
-    {
-        id: 1,
-        customer: 'John Cooper',
-        service: 'Deep Tissue Massage',
-        serviceDetail: 'Deep Tissue Massage',
-        dayIndex: 0,
-        startHour: 9,
-        startMin: 0,
-        duration: 60,
-        colorType: 'blue',
-        status: 'confirmed',
-        initials: 'JC',
-        avatarBg: 'bg-blue-200',
-        avatarText: 'text-blue-700',
-        dateStr: 'Mon, Oct 23',
-        timeStr: '09:00 AM - 10:00 AM',
-        price: '$75.00',
-        customerType: 'Regular Customer',
-        notes: '',
-    },
-    {
-        id: 2,
-        customer: 'Sarah Miller',
-        service: 'Facial Therapy',
-        serviceDetail: 'Facial Therapy (Deep Cleanse)',
-        dayIndex: 2,
-        startHour: 9,
-        startMin: 30,
-        duration: 60,
-        colorType: 'yellow',
-        status: 'pending',
-        initials: 'SM',
-        avatarBg: 'bg-gray-200',
-        avatarText: 'text-gray-600',
-        dateStr: 'Wed, Oct 25',
-        timeStr: '09:30 AM - 10:30 AM',
-        price: '$85.00',
-        customerType: 'Regular Customer',
-        notes: '"Please use unscented oil if possible. First-time visit for this service."',
-    },
-    {
-        id: 3,
-        customer: 'Robert Dow',
-        service: 'Consultation',
-        serviceDetail: 'Consultation',
-        dayIndex: 4,
-        startHour: 9,
-        startMin: 0,
-        duration: 60,
-        colorType: 'blue',
-        status: 'confirmed',
-        initials: 'RD',
-        avatarBg: 'bg-purple-200',
-        avatarText: 'text-purple-700',
-        dateStr: 'Fri, Oct 27',
-        timeStr: '09:00 AM - 10:00 AM',
-        price: '$50.00',
-        customerType: 'New Customer',
-        notes: '',
-    },
-    {
-        id: 4,
-        customer: 'Blocked: Maintenance',
-        service: '',
-        serviceDetail: '',
-        dayIndex: 1,
-        startHour: 10,
-        startMin: 0,
-        duration: 90,
-        colorType: 'blocked',
-        status: 'blocked',
-        initials: '',
-        avatarBg: '',
-        avatarText: '',
-        dateStr: '',
-        timeStr: '',
-        price: '',
-        customerType: '',
-        notes: '',
-    },
-    {
-        id: 5,
-        customer: 'Alex Reed',
-        service: 'Spa Session',
-        serviceDetail: 'Spa Session (Full Body)',
-        dayIndex: 4,
-        startHour: 10,
-        startMin: 0,
-        duration: 60,
-        colorType: 'green',
-        status: 'confirmed',
-        initials: 'AR',
-        avatarBg: 'bg-green-200',
-        avatarText: 'text-green-700',
-        dateStr: 'Fri, Oct 27',
-        timeStr: '10:00 AM - 11:00 AM',
-        price: '$95.00',
-        customerType: 'Regular Customer',
-        notes: '',
-    },
-    {
-        id: 6,
-        customer: 'Lisa Wang',
-        service: 'Hot Stone',
-        serviceDetail: 'Hot Stone Massage',
-        dayIndex: 2,
-        startHour: 11,
-        startMin: 0,
-        duration: 60,
-        colorType: 'blue',
-        status: 'confirmed',
-        initials: 'LW',
-        avatarBg: 'bg-pink-200',
-        avatarText: 'text-pink-700',
-        dateStr: 'Wed, Oct 25',
-        timeStr: '11:00 AM - 12:00 PM',
-        price: '$90.00',
-        customerType: 'Regular Customer',
-        notes: '',
-    },
-    {
-        id: 7,
-        customer: 'Marcus T.',
-        service: 'Reiki',
-        serviceDetail: 'Reiki Session',
-        dayIndex: 4,
-        startHour: 11,
-        startMin: 0,
-        duration: 60,
-        colorType: 'blue',
-        status: 'confirmed',
-        initials: 'MT',
-        avatarBg: 'bg-orange-200',
-        avatarText: 'text-orange-700',
-        dateStr: 'Fri, Oct 27',
-        timeStr: '11:00 AM - 12:00 PM',
-        price: '$70.00',
-        customerType: 'New Customer',
-        notes: '',
-    },
-]);
+const bookings = ref(props.bookings);
 
-const selectedBooking = ref(bookings.value.find((b) => b.id === 2));
+const selectedBooking = ref(null);
 
 function selectBooking(booking) {
     if (booking.colorType === 'blocked') return;
@@ -189,6 +47,21 @@ function getBookingsForDay(dayIndex) {
     return bookings.value.filter((b) => b.dayIndex === dayIndex);
 }
 
+function navigateWeek(direction) {
+    const currentStart = new Date(props.filters.start_date);
+    const days = direction === 'prev' ? -7 : 7;
+    const newStart = new Date(currentStart);
+    newStart.setDate(newStart.getDate() + days);
+    const newEnd = new Date(newStart);
+    newEnd.setDate(newEnd.getDate() + 6);
+    
+    router.get(route('vendor.calendar'), {
+        start_date: newStart.toISOString().split('T')[0],
+        end_date: newEnd.toISOString().split('T')[0],
+        view: currentView.value,
+    }, { preserveState: true });
+}
+
 function getBookingTop(booking) {
     return (booking.startHour - startHour + booking.startMin / 60) * hourHeight;
 }
@@ -198,7 +71,15 @@ function getBookingHeight(booking) {
 }
 
 const currentTimeTop = computed(() => {
-    return (11 - startHour + 15 / 60) * hourHeight;
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+    return (currentHour - startHour + currentMin / 60) * hourHeight;
+});
+
+const currentTimeLabel = computed(() => {
+    const now = new Date();
+    return now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 });
 
 const lunchBreakTop = computed(() => (12 - startHour) * hourHeight);
@@ -218,6 +99,11 @@ const cardStyles = {
         wrapper: 'bg-green-50 border-l-4 border-green-500',
         name: 'text-green-800 font-semibold',
         service: 'text-green-600',
+    },
+    red: {
+        wrapper: 'bg-red-50 border-l-4 border-red-500',
+        name: 'text-red-800 font-semibold',
+        service: 'text-red-500',
     },
     blocked: {
         wrapper: 'border-l-4 border-gray-300',
@@ -241,18 +127,18 @@ function getCardStyle(colorType) {
             <div class="flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                        <button class="px-3 py-2 text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-200">
+                        <button @click="navigateWeek('prev')" class="px-3 py-2 text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-200">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                         </button>
-                        <button class="px-3 py-2 text-gray-500 hover:bg-gray-50 transition-colors">
+                        <button @click="navigateWeek('next')" class="px-3 py-2 text-gray-500 hover:bg-gray-50 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
                         </button>
                     </div>
-                    <h2 class="text-lg font-bold text-gray-900">Oct 23 – Oct 29, 2023</h2>
+                    <h2 class="text-lg font-bold text-gray-900">{{ weekRange }}</h2>
                 </div>
 
                 <div class="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -380,15 +266,16 @@ function getCardStyle(colorType) {
                                         </div>
                                     </template>
 
-                                    <!-- Current time line (today only) -->
-                                    <div
-                                        v-if="day.isToday"
-                                        class="absolute left-0 right-0 flex items-center pointer-events-none z-10"
-                                        :style="{ top: currentTimeTop + 'px' }"
-                                    >
-                                        <div class="w-2.5 h-2.5 bg-blue-600 rounded-full -ml-1.5 flex-shrink-0"></div>
-                                        <div class="flex-1 h-px bg-blue-500"></div>
-                                    </div>
+                            <!-- Current time line (today only) -->
+                            <div
+                                v-if="day.isToday && currentTimeTop >= 0 && currentTimeTop <= gridHeight"
+                                class="absolute left-0 right-0 flex items-center pointer-events-none z-10"
+                                :style="{ top: currentTimeTop + 'px' }"
+                            >
+                                <div class="w-2.5 h-2.5 bg-blue-600 rounded-full -ml-1.5 flex-shrink-0"></div>
+                                <div class="flex-1 h-px bg-blue-500"></div>
+                            </div>
+
                                 </div>
 
                                 <!-- Lunch break overlay -->
@@ -408,10 +295,11 @@ function getCardStyle(colorType) {
 
                             <!-- Current time label in gutter -->
                             <div
+                                v-if="currentTimeTop >= 0 && currentTimeTop <= gridHeight"
                                 class="absolute left-1 pointer-events-none z-20"
                                 :style="{ top: (currentTimeTop - 8) + 'px' }"
                             >
-                                <span class="text-xs font-bold text-blue-600">11:15</span>
+                                <span class="text-xs font-bold text-blue-600">{{ currentTimeLabel }}</span>
                             </div>
                         </div>
                     </div>
@@ -545,16 +433,35 @@ function getCardStyle(colorType) {
                                     <span class="text-xs font-bold text-amber-600">Waiting for your approval</span>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors">
+                                    <Link 
+                                        :href="route('vendor.bookings.cancel', selectedBooking.id)" 
+                                        method="post"
+                                        as="button"
+                                        class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                    >
                                         Decline
-                                    </button>
-                                    <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors">
+                                    </Link>
+                                    <Link 
+                                        :href="route('vendor.bookings.confirm', selectedBooking.id)" 
+                                        method="post"
+                                        as="button"
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                    >
                                         Approve
-                                    </button>
+                                    </Link>
                                 </div>
-                                <button class="w-full text-center text-xs text-gray-400 hover:text-gray-600 mt-3 transition-colors">
-                                    Reschedule booking
-                                </button>
+                            </div>
+
+                            <!-- Complete button (confirmed only) -->
+                            <div v-else-if="selectedBooking.status === 'confirmed'" class="px-5 py-4">
+                                <Link 
+                                    :href="route('vendor.bookings.complete', selectedBooking.id)" 
+                                    method="post"
+                                    as="button"
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                >
+                                    Mark as Completed
+                                </Link>
                             </div>
 
                         </div>
@@ -565,4 +472,3 @@ function getCardStyle(colorType) {
         </div>
     </VendorLayout>
 </template>
-

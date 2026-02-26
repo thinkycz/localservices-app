@@ -11,14 +11,14 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            ['name' => 'Plumbing',     'icon' => '🔧'],
-            ['name' => 'Electrical',   'icon' => '⚡'],
-            ['name' => 'HVAC Repair',  'icon' => '❄️'],
-            ['name' => 'Cleaning',     'icon' => '🧹'],
-            ['name' => 'Landscaping',  'icon' => '🌿'],
-            ['name' => 'Painting',     'icon' => '🎨'],
-            ['name' => 'Carpentry',    'icon' => '🪚'],
-            ['name' => 'Moving',       'icon' => '📦'],
+            ['name' => 'Barbershops',    'icon' => '💇'],
+            ['name' => 'Nail Salons',    'icon' => '💅'],
+            ['name' => 'Restaurants',    'icon' => '🍽️'],
+            ['name' => 'Coffee Shops',   'icon' => '☕'],
+            ['name' => 'Pet Grooming',   'icon' => '🐕'],
+            ['name' => 'Fitness & Gyms', 'icon' => '💪'],
+            ['name' => 'Spa & Massage',  'icon' => '💆'],
+            ['name' => 'Beauty Salons',  'icon' => '🎀'],
         ];
 
         foreach ($categories as $cat) {
@@ -29,3 +29,4 @@ class CategorySeeder extends Seeder
         }
     }
 }
+

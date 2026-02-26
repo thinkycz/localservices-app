@@ -11,7 +11,22 @@ function formatPrice(amount) {
 }
 
 function formatDate(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00');
+    if (!dateStr) return 'Invalid Date';
+    // Handle various date formats
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) {
+        // Try parsing as ISO date string
+        const isoDate = new Date(dateStr + 'T00:00:00');
+        if (!isNaN(isoDate.getTime())) {
+            return isoDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+            });
+        }
+        return 'Invalid Date';
+    }
     return d.toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
@@ -132,4 +147,3 @@ function formatDate(dateStr) {
         </div>
     </AppLayout>
 </template>
-
