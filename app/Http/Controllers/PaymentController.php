@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PaymentConfirmation;
 use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Services\NotificationService;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,10 +18,10 @@ class PaymentController extends Controller
     /**
      * Show payment page for a booking.
      */
-    public function show(Booking $booking): Response
+    public function show(Booking $booking): Response|RedirectResponse
     {
         // Ensure user owns this booking
-        if ($booking->user_id !== auth()->id()) {
+        if ($booking->user_id !== Auth::id()) {
             abort(403, 'Unauthorized');
         }
 
@@ -39,7 +43,7 @@ class PaymentController extends Controller
     public function createPaymentIntent(Booking $booking): JsonResponse
     {
         // Ensure user owns this booking
-        if ($booking->user_id !== auth()->id()) {
+        if ($booking->user_id !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -78,7 +82,7 @@ class PaymentController extends Controller
     public function confirmPayment(Request $request, Booking $booking): JsonResponse
     {
         // Ensure user owns this booking
-        if ($booking->user_id !== auth()->id()) {
+        if ($booking->user_id !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -100,8 +104,8 @@ class PaymentController extends Controller
                     'payment_notes' => 'Stripe PaymentIntent: ' . $validated['payment_intent_id'],
                 ]);
 
-                // Send confirmation email
-                // TODO: Dispatch job to send payment confirmation email
+                Mail::to($booking->customer->email)->send(new PaymentConfirmation($booking));
+                NotificationService::paymentReceived($booking);
 
                 return response()->json([
                     'success' => true,
@@ -124,7 +128,7 @@ class PaymentController extends Controller
     public function refund(Booking $booking): RedirectResponse
     {
         // Ensure user owns this booking or is admin
-        if ($booking->user_id !== auth()->id() && !auth()->user()->is_admin) {
+        if ($booking->user_id !== Auth::id() && !Auth::user()?->is_admin) {
             abort(403, 'Unauthorized');
         }
 
@@ -133,13 +137,26 @@ class PaymentController extends Controller
             return back()->with('error', 'No payment to refund.');
         }
 
-        // TODO: Implement Stripe refund logic
-        // This would extract the payment intent from payment_notes and create a refund
+        if (!preg_match('/Stripe PaymentIntent:\s*([^\s|]+)/', (string) $booking->payment_notes, $matches)) {
+            return back()->with('error', 'Unable to locate Stripe payment reference for this booking.');
+        }
 
-        $booking->update([
-            'payment_status' => 'refunded',
-            'payment_notes' => $booking->payment_notes . ' | Refunded: ' . now(),
-        ]);
+        $paymentIntentId = $matches[1];
+
+        try {
+            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+            $refund = \Stripe\Refund::create([
+                'payment_intent' => $paymentIntentId,
+            ]);
+
+            $booking->update([
+                'payment_status' => 'refunded',
+                'payment_notes' => trim((string) $booking->payment_notes . ' | Refund: ' . $refund->id . ' ' . now()),
+            ]);
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return back()->with('success', 'Refund processed successfully.');
     }

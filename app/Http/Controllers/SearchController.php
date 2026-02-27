@@ -21,22 +21,13 @@ class SearchController extends Controller
 
         // Use Scout for full-text search if query exists
         if ($query) {
-            $searchResults = Service::search($query, function ($searchEngine, $searchQuery) use ($filters) {
-                // Apply filters to Scout search
-                if (!empty($filters['categories'])) {
-                    $searchQuery->whereIn('category', (array) $filters['categories']);
-                }
-                if (!empty($filters['price_range'])) {
-                    $searchQuery->whereIn('price_range', (array) $filters['price_range']);
-                }
-                if (!empty($filters['min_rating'])) {
-                    $searchQuery->where('rating', '>=', (float) $filters['min_rating']);
-                }
-                if (!empty($filters['city'])) {
-                    $searchQuery->where('city', $filters['city']);
-                }
-                return $searchQuery;
-            })->paginate(20);
+            $searchResults = Service::search($query)
+                ->query(function ($builder) use ($filters) {
+                    $this->applyFilters($builder, $filters);
+                    $builder->with('category');
+                })
+                ->paginate(20)
+                ->withQueryString();
         } else {
             // Fallback to regular query
             $searchResults = $this->applyFilters(Service::query(), $filters)
@@ -97,7 +88,8 @@ class SearchController extends Controller
             ]);
 
         // Search in categories
-        $categories = Category::where('name', 'like', "%{$query}%")
+        $categories = Category::withCount('services')
+            ->where('name', 'like', "%{$query}%")
             ->take(3)
             ->get()
             ->map(fn ($category) => [

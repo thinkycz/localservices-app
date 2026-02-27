@@ -25,6 +25,10 @@ class User extends Authenticatable
         'phone',
         'is_service_provider',
         'is_admin',
+        'social_provider',
+        'social_id',
+        'has_local_password',
+        'last_login_at',
     ];
 
     /**
@@ -49,6 +53,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_service_provider' => 'boolean',
             'is_admin' => 'boolean',
+            'has_local_password' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -79,6 +85,11 @@ class User extends Authenticatable
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class)->orderBy('created_at', 'desc');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
     }
 
     /**

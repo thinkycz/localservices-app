@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactSubmissionReceived;
+use App\Models\ContactSubmission;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Mail;
 
 class PageController extends Controller
 {
@@ -77,8 +80,7 @@ class PageController extends Controller
             'type' => 'required|in:general,support,partnership,feedback',
         ]);
 
-        // Store contact submission
-        \App\Models\ContactSubmission::create([
+        $submission = ContactSubmission::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'subject' => $validated['subject'],
@@ -88,8 +90,10 @@ class PageController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        // Send notification email to admin
-        // TODO: Implement email notification
+        $to = config('services.contact.to') ?: config('mail.from.address');
+        if ($to) {
+            Mail::to($to)->send(new ContactSubmissionReceived($submission));
+        }
 
         return back()->with('success', 'Thank you for your message! We will get back to you within 24 hours.');
     }

@@ -46,6 +46,30 @@ class SocialAuthController extends Controller
                 ->with('error', 'Unable to login with ' . ucfirst($provider) . '. Please try again.');
         }
 
+        if (Auth::check() && session('social_linking') === $provider) {
+            session()->forget('social_linking');
+
+            $user = Auth::user();
+
+            $existing = User::where('social_provider', $provider)
+                ->where('social_id', $socialUser->getId())
+                ->where('id', '!=', $user->id)
+                ->first();
+
+            if ($existing) {
+                return redirect()->route('profile.settings')
+                    ->with('error', 'This ' . ucfirst($provider) . ' account is already linked to another user.');
+            }
+
+            $user->update([
+                'social_provider' => $provider,
+                'social_id' => $socialUser->getId(),
+            ]);
+
+            return redirect()->route('profile.settings')
+                ->with('success', ucfirst($provider) . ' account linked successfully.');
+        }
+
         // Check if user exists with this email
         $user = User::where('email', $socialUser->getEmail())->first();
 
@@ -58,9 +82,10 @@ class SocialAuthController extends Controller
                 ]);
             }
 
+            $user->forceFill(['last_login_at' => now()])->save();
             Auth::login($user, true);
 
-            return redirect()->intended(route('home'))
+            return redirect()->intended(route('dashboard'))
                 ->with('success', 'Welcome back, ' . $user->name . '!');
         }
 
@@ -72,11 +97,13 @@ class SocialAuthController extends Controller
             'social_provider' => $provider,
             'social_id' => $socialUser->getId(),
             'email_verified_at' => now(), // Social logins are pre-verified
+            'has_local_password' => false,
+            'last_login_at' => now(),
         ]);
 
         Auth::login($user, true);
 
-        return redirect()->route('home')
+        return redirect()->route('dashboard')
             ->with('success', 'Welcome to Local Services! Your account has been created.');
     }
 
@@ -91,30 +118,9 @@ class SocialAuthController extends Controller
             return back()->with('error', 'Invalid provider.');
         }
 
-        try {
-            $socialUser = Socialite::driver($provider)->user();
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to link account. Please try again.');
-        }
+        session(['social_linking' => $provider]);
 
-        $user = Auth::user();
-
-        // Check if another user has this social account
-        $existing = User::where('social_provider', $provider)
-            ->where('social_id', $socialUser->getId())
-            ->where('id', '!=', $user->id)
-            ->first();
-
-        if ($existing) {
-            return back()->with('error', 'This ' . ucfirst($provider) . ' account is already linked to another user.');
-        }
-
-        $user->update([
-            'social_provider' => $provider,
-            'social_id' => $socialUser->getId(),
-        ]);
-
-        return back()->with('success', ucfirst($provider) . ' account linked successfully.');
+        return Socialite::driver($provider)->redirect();
     }
 
     /**
@@ -128,8 +134,7 @@ class SocialAuthController extends Controller
             return back()->with('error', 'This account is not linked to ' . ucfirst($provider));
         }
 
-        // Don't allow unlinking if user has no password
-        if (empty($user->password) || $user->password === Hash::make('')) {
+        if (! $user->has_local_password) {
             return back()->with('error', 'Please set a password before unlinking your social account.');
         }
 

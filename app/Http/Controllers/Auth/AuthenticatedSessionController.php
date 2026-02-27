@@ -33,12 +33,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Redirect based on user type
-        if ($request->user()->is_service_provider) {
-            return redirect()->intended(route('vendor.dashboard', absolute: false));
-        }
+        $request->user()->forceFill(['last_login_at' => now()])->save();
 
-        return redirect()->intended(route('home', absolute: false));
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**

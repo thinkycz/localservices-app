@@ -9,6 +9,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -22,8 +23,8 @@ Route::get('/', function () {
         ->get();
 
     // Add is_bookmarked flag for authenticated users
-    if (auth()->check()) {
-        $userId = auth()->id();
+    if (Auth::check()) {
+        $userId = Auth::id();
         $serviceIds = $featuredServices->pluck('id')->toArray();
         $bookmarkedIds = \App\Models\Bookmark::where('user_id', $userId)
             ->whereIn('service_id', $serviceIds)
@@ -47,6 +48,20 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+Route::middleware('auth')->get('/dashboard', function () {
+    $user = Auth::user();
+
+    if ($user?->is_admin) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    if ($user?->is_service_provider) {
+        return redirect()->route('vendor.dashboard');
+    }
+
+    return redirect()->route('home');
+})->name('dashboard');
+
 // Services (public)
 Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
 Route::get('/services/{slug}', [ServiceController::class, 'show'])->name('services.show');
@@ -64,12 +79,29 @@ Route::middleware('auth')->group(function () {
     Route::get('/bookings/{id}/invoice', [PdfController::class, 'invoice'])->name('bookings.invoice');
 });
 
+// Payments (auth required)
+Route::middleware('auth')->group(function () {
+    Route::get('/payment/{booking}', [\App\Http\Controllers\PaymentController::class, 'show'])->name('payment.show');
+    Route::get('/payment-history', [\App\Http\Controllers\PaymentController::class, 'history'])->name('payment.history');
+    Route::post('/payment/{booking}/refund', [\App\Http\Controllers\PaymentController::class, 'refund'])->name('payment.refund');
+});
+
 // Reviews (public viewing, auth required for creating)
 Route::get('/services/{slug}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
 Route::middleware('auth')->group(function () {
     Route::get('/reviews/create/{bookingId}', [ReviewController::class, 'create'])->name('reviews.create');
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::get('/my-reviews', [ReviewController::class, 'userReviews'])->name('reviews.user');
+});
+
+// Notifications + Messages pages (auth required)
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+
+    Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
+    Route::get('/messages/{conversation}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show')->whereNumber('conversation');
+    Route::post('/services/{service}/message', [\App\Http\Controllers\MessageController::class, 'start'])->name('messages.start');
+    Route::post('/bookings/{booking}/message', [\App\Http\Controllers\MessageController::class, 'startFromBooking'])->name('messages.startFromBooking');
 });
 
 // Bookmarks (auth required)
