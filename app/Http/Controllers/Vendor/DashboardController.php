@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Service;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -25,7 +25,7 @@ class DashboardController extends Controller
 
         // Get all bookings for vendor's services
         $bookings = Booking::whereIn('service_id', $serviceIds)->get();
-        
+
         // Calculate stats
         $totalBookings = $bookings->count();
         $completedBookings = $bookings->where('status', 'completed')->count();
@@ -40,9 +40,9 @@ class DashboardController extends Controller
         $totalCustomers = $bookings->unique('user_id')->count();
 
         // Calculate new vs returning customers
-        $customerCounts = $bookings->groupBy('user_id')->map(fn($b) => $b->count());
-        $newCustomers = $customerCounts->filter(fn($count) => $count === 1)->count();
-        $returningCustomers = $customerCounts->filter(fn($count) => $count > 1)->count();
+        $customerCounts = $bookings->groupBy('user_id')->map(fn ($b) => $b->count());
+        $newCustomers = $customerCounts->filter(fn ($count) => $count === 1)->count();
+        $returningCustomers = $customerCounts->filter(fn ($count) => $count > 1)->count();
 
         // Today's bookings
         $today = Carbon::today();
@@ -61,7 +61,7 @@ class DashboardController extends Controller
 
         // Service popularity (based on booking count)
         $servicePopularity = $bookings->groupBy('service_id')
-            ->map(fn($b, $serviceId) => [
+            ->map(fn ($b, $serviceId) => [
                 'service' => Service::find($serviceId)?->name ?? 'Unknown',
                 'count' => $b->count(),
                 'percentage' => $totalBookings > 0 ? round(($b->count() / $totalBookings) * 100) : 0,
@@ -79,7 +79,7 @@ class DashboardController extends Controller
                 ->whereMonth('booking_date', $month->month)
                 ->where('status', '!=', 'cancelled')
                 ->get();
-            
+
             $monthlyRevenue[] = [
                 'month' => $month->format('M'),
                 'revenue' => $monthBookings->sum('total_price'),
@@ -93,7 +93,7 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
-            ->map(fn($booking) => [
+            ->map(fn ($booking) => [
                 'id' => $booking->id,
                 'customer_name' => $booking->customer->name,
                 'service_name' => $booking->service->name,
@@ -127,7 +127,7 @@ class DashboardController extends Controller
             [
                 'label' => 'New Customers',
                 'value' => $newCustomers,
-                'change' => '+' . $newCustomers . ' this month',
+                'change' => '+'.$newCustomers.' this month',
                 'positive' => true,
                 'icon' => 'user-plus',
                 'iconBg' => 'bg-green-100',
@@ -135,7 +135,7 @@ class DashboardController extends Controller
             ],
             [
                 'label' => 'Revenue',
-                'value' => '$' . number_format($totalRevenue, 2),
+                'value' => '$'.number_format($totalRevenue, 2),
                 'change' => $this->calculateRevenueChange($bookings),
                 'positive' => true,
                 'icon' => 'cash',
@@ -146,11 +146,11 @@ class DashboardController extends Controller
 
         return Inertia::render('Vendor/Dashboard', [
             'stats' => $stats,
-            'todayBookings' => $todayBookings->map(fn($b) => [
+            'todayBookings' => $todayBookings->map(fn ($b) => [
                 'id' => $b->id,
-                'time' => $b->start_time,
-                'end_time' => $b->end_time,
-                'duration' => $b->offering->duration_minutes ?? 60,
+                'time' => Carbon::parse($b->start_time)->format('g:i A'),
+                'end_time' => Carbon::parse($b->end_time)->format('g:i A'),
+                'duration' => ($b->offering->duration_minutes ?? 60).' min',
                 'title' => $b->offering->name ?? $b->service->name,
                 'customer' => $b->customer->name,
                 'customer_initials' => $this->getInitials($b->customer->name),
@@ -182,20 +182,20 @@ class DashboardController extends Controller
     private function calculateChange($bookings, $period = 'week')
     {
         $now = Carbon::now();
-        $currentPeriod = match($period) {
+        $currentPeriod = match ($period) {
             'week' => $now->copy()->startOfWeek(),
             'month' => $now->copy()->startOfMonth(),
             default => $now->copy()->startOfWeek(),
         };
-        
-        $previousPeriod = match($period) {
+
+        $previousPeriod = match ($period) {
             'week' => $now->copy()->subWeek()->startOfWeek(),
             'month' => $now->copy()->subMonth()->startOfMonth(),
             default => $now->copy()->subWeek()->startOfWeek(),
         };
 
-        $current = $bookings->filter(fn($b) => $b->created_at->gte($currentPeriod))->count();
-        $previous = $bookings->filter(fn($b) => $b->created_at->gte($previousPeriod) && $b->created_at->lt($currentPeriod))->count();
+        $current = $bookings->filter(fn ($b) => $b->created_at->gte($currentPeriod))->count();
+        $previous = $bookings->filter(fn ($b) => $b->created_at->gte($previousPeriod) && $b->created_at->lt($currentPeriod))->count();
 
         if ($previous === 0) {
             return $current > 0 ? '+100%' : '0%';
@@ -203,8 +203,8 @@ class DashboardController extends Controller
 
         $change = (($current - $previous) / $previous) * 100;
         $sign = $change >= 0 ? '+' : '';
-        
-        return $sign . round($change) . '%';
+
+        return $sign.round($change).'%';
     }
 
     /**
@@ -213,12 +213,14 @@ class DashboardController extends Controller
     private function calculateCancellationChange($bookings)
     {
         $total = $bookings->count();
-        if ($total === 0) return '0%';
-        
+        if ($total === 0) {
+            return '0%';
+        }
+
         $cancelled = $bookings->where('status', 'cancelled')->count();
         $rate = ($cancelled / $total) * 100;
-        
-        return round($rate) . '% rate';
+
+        return round($rate).'% rate';
     }
 
     /**
@@ -227,13 +229,11 @@ class DashboardController extends Controller
     private function calculateRevenueChange($bookings)
     {
         $now = Carbon::now();
-        $thisMonth = $bookings->filter(fn($b) => 
-            $b->created_at->gte($now->copy()->startOfMonth()) && 
+        $thisMonth = $bookings->filter(fn ($b) => $b->created_at->gte($now->copy()->startOfMonth()) &&
             $b->status !== 'cancelled'
         )->sum('total_price');
-        
-        $lastMonth = $bookings->filter(fn($b) => 
-            $b->created_at->gte($now->copy()->subMonth()->startOfMonth()) &&
+
+        $lastMonth = $bookings->filter(fn ($b) => $b->created_at->gte($now->copy()->subMonth()->startOfMonth()) &&
             $b->created_at->lt($now->copy()->startOfMonth()) &&
             $b->status !== 'cancelled'
         )->sum('total_price');
@@ -244,8 +244,8 @@ class DashboardController extends Controller
 
         $change = (($thisMonth - $lastMonth) / $lastMonth) * 100;
         $sign = $change >= 0 ? '+' : '';
-        
-        return $sign . round($change) . '%';
+
+        return $sign.round($change).'%';
     }
 
     /**
@@ -255,8 +255,9 @@ class DashboardController extends Controller
     {
         $words = explode(' ', trim($name));
         if (count($words) >= 2) {
-            return strtoupper($words[0][0] . $words[1][0]);
+            return strtoupper($words[0][0].$words[1][0]);
         }
+
         return strtoupper(substr($name, 0, 2));
     }
 }

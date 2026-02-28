@@ -1,6 +1,6 @@
 <script setup>
 import VendorLayout from '@/Layouts/VendorLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
 const props = defineProps({
@@ -25,6 +25,31 @@ const services = computed(() => props.servicePopularity.map(svc => ({
 const today = new Date();
 const calendarMonth = ref(today.getMonth());
 const calendarYear = ref(today.getFullYear());
+
+function toISODateLocal(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+const todayIso = computed(() => toISODateLocal(today));
+
+const weekStartIso = computed(() => {
+    const d = new Date(today);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    return toISODateLocal(d);
+});
+
+const weekEndIso = computed(() => {
+    const d = new Date(today);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff + 6);
+    return toISODateLocal(d);
+});
 
 const monthNames = [
     'January','February','March','April','May','June',
@@ -78,23 +103,18 @@ function nextMonth() {
     }
 }
 
-// Format today's date
-const todayFormatted = computed(() => {
-    return today.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        month: 'long', 
-        day: 'numeric' 
-    });
-});
+function formatScheduleDate(date) {
+    return new Intl.DateTimeFormat('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    }).format(date);
+}
 
-// Get today's schedule subtitle
-const todayScheduleSubtitle = computed(() => {
-    return today.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        month: 'long', 
-        day: 'numeric' 
-    });
-});
+const todayFormatted = computed(() => formatScheduleDate(today));
+
+const todayScheduleSubtitle = computed(() => formatScheduleDate(today));
 
 // Get avatar background color based on name
 function getAvatarColors(name) {
@@ -200,9 +220,12 @@ function getStatusClasses(status) {
                             </svg>
                         </button>
                         <!-- View Week button -->
-                        <button class="bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+                        <Link
+                            :href="route('vendor.calendar', { start_date: weekStartIso, end_date: weekEndIso, view: 'week' })"
+                            class="bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+                        >
                             View Week
-                        </button>
+                        </Link>
                     </div>
                 </div>
 
@@ -318,9 +341,12 @@ function getStatusClasses(status) {
 
                 <!-- Footer link -->
                 <div class="px-6 py-4 border-t border-gray-50 text-center">
-                    <a :href="route('vendor.calendar')" class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+                    <Link
+                        :href="route('vendor.bookings.index', { date_from: todayIso, date_to: todayIso, sort: 'date_asc' })"
+                        class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                    >
                         See All {{ todayBookings.length }} Bookings Today
-                    </a>
+                    </Link>
                 </div>
             </div>
 

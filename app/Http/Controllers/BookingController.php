@@ -7,8 +7,8 @@ use App\Mail\NewBookingNotification;
 use App\Models\Booking;
 use App\Models\Service;
 use App\Models\ServiceOffering;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,7 +20,7 @@ class BookingController extends Controller
      */
     public function show(string $slug, Request $request): Response
     {
-        $service = Service::with(['category', 'offerings', 'owner'])
+        $service = Service::with(['category', 'offerings', 'owner', 'businessHours'])
             ->where('slug', $slug)
             ->firstOrFail();
 
@@ -33,6 +33,20 @@ class BookingController extends Controller
         $serviceArray = $service->toArray();
         $serviceArray['user_id'] = $service->user_id;
 
+        // Get existing bookings for the selected date (for conflict checking)
+        $existingBookings = [];
+        if ($request->filled('date')) {
+            $existingBookings = Booking::where('service_id', $service->id)
+                ->whereDate('booking_date', $request->date)
+                ->whereIn('status', ['pending', 'confirmed'])
+                ->get(['start_time', 'end_time'])
+                ->map(fn($b) => [
+                    'start_time' => substr($b->start_time, 0, 5),
+                    'end_time' => substr($b->end_time, 0, 5),
+                ])
+                ->toArray();
+        }
+
         // Get authenticated user data for prefilling form
         $authUser = $request->user();
 
@@ -41,6 +55,7 @@ class BookingController extends Controller
             'offering' => $offering,
             'date' => $request->get('date'),
             'time' => $request->get('time'),
+            'existingBookings' => $existingBookings,
             'authUser' => $authUser ? [
                 'name' => $authUser->name,
                 'email' => $authUser->email,
@@ -67,15 +82,25 @@ class BookingController extends Controller
         ]);
 
         // Get the service to determine provider_id
-        $service = Service::findOrFail($validated['service_id']);
-        
+        $service = Service::with('businessHours')->findOrFail($validated['service_id']);
+
+        // Validate against business hours
+        $bookingDate = \Carbon\Carbon::parse($validated['booking_date']);
+        $dayOfWeek = (int) $bookingDate->dayOfWeek; // 0=Sunday, 6=Saturday
+
+        $businessHour = $service->businessHours->firstWhere('day_of_week', $dayOfWeek);
+
+        if ($service->businessHours->isNotEmpty() && !$businessHour) {
+            return back()->withErrors(['booking_date' => 'The service is not available on this day.']);
+        }
+
         // If provider_id is not provided, get it from the service's user_id
         $providerId = $validated['provider_id'] ?? $service->user_id;
-        
+
         // If still no provider, get the first service provider user as fallback
-        if (!$providerId) {
+        if (! $providerId) {
             $provider = \App\Models\User::where('is_service_provider', true)->first();
-            if (!$provider) {
+            if (! $provider) {
                 return back()->with('error', 'No service provider available for this service.');
             }
             $providerId = $provider->id;
@@ -83,11 +108,36 @@ class BookingController extends Controller
 
         // Get the offering to calculate total price
         $offering = ServiceOffering::findOrFail($validated['service_offering_id']);
-        
+
         // Calculate end time based on duration
-        // Try to parse time in various formats (12-hour or 24-hour)
         $startTime = \Carbon\Carbon::parse($validated['start_time']);
         $endTime = $startTime->copy()->addMinutes($offering->duration_minutes);
+
+        // Validate start/end time against business hours
+        if ($businessHour) {
+            $bhFrom = \Carbon\Carbon::parse($businessHour->time_from);
+            $bhTo = \Carbon\Carbon::parse($businessHour->time_to);
+
+            if ($startTime->format('H:i') < $bhFrom->format('H:i') || $endTime->format('H:i') > $bhTo->format('H:i')) {
+                return back()->withErrors(['start_time' => 'The selected time is outside of business hours (' . $businessHour->time_from . ' - ' . $businessHour->time_to . ').']);
+            }
+        }
+
+        // Check for overlapping bookings
+        $overlapping = Booking::where('service_id', $validated['service_id'])
+            ->whereDate('booking_date', $validated['booking_date'])
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where(function ($query) use ($startTime, $endTime) {
+                $query->where(function ($q) use ($startTime, $endTime) {
+                    $q->where('start_time', '<', $endTime->format('H:i:s'))
+                        ->where('end_time', '>', $startTime->format('H:i:s'));
+                });
+            })
+            ->exists();
+
+        if ($overlapping) {
+            return back()->withErrors(['start_time' => 'This time slot is already booked. Please choose a different time.']);
+        }
 
         // For guest bookings, we create a temporary record or require login
         // For now, we'll require authentication for booking
@@ -98,18 +148,18 @@ class BookingController extends Controller
             'provider_id' => $providerId,
             'status' => 'pending',
             'booking_date' => $validated['booking_date'],
-            'start_time' => $validated['start_time'],
-            'end_time' => $endTime->format('H:i'),
+            'start_time' => $startTime->format('H:i:s'),
+            'end_time' => $endTime->format('H:i:s'),
             'total_price' => $offering->price,
             'customer_notes' => $validated['customer_notes'] ?? null,
         ]);
 
         // Update user's name and phone if not set
         $user = $request->user();
-        if (!$user->name) {
+        if (! $user->name) {
             $user->update(['name' => $validated['full_name']]);
         }
-        if (!$user->phone) {
+        if (! $user->phone) {
             $user->update(['phone' => $validated['phone']]);
         }
 
@@ -156,6 +206,7 @@ class BookingController extends Controller
 
         $bookings->through(function ($booking) use ($reviewedBookingIds) {
             $booking->has_review = in_array($booking->id, $reviewedBookingIds);
+
             return $booking;
         });
 
@@ -174,7 +225,7 @@ class BookingController extends Controller
             ->findOrFail($id);
 
         // Only allow cancellation of pending or confirmed bookings
-        if (!in_array($booking->status, ['pending', 'confirmed'])) {
+        if (! in_array($booking->status, ['pending', 'confirmed'])) {
             return back()->with('error', 'This booking cannot be cancelled.');
         }
 

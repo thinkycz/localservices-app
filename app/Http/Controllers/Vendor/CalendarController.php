@@ -19,34 +19,47 @@ class CalendarController extends Controller
     {
         $user = $request->user();
 
+        $view = $request->get('view', 'week');
+
         // Get all services for this vendor
         $services = Service::where('user_id', $user->id)->get();
         $serviceIds = $services->pluck('id');
 
-        // Get date range from request or default to current week
-        $startDate = $request->get('start_date') 
-            ? Carbon::parse($request->get('start_date')) 
-            : Carbon::now()->startOfWeek();
-        
-        $endDate = $request->get('end_date') 
-            ? Carbon::parse($request->get('end_date')) 
-            : Carbon::now()->endOfWeek();
+        $referenceDate = $request->get('start_date')
+            ? Carbon::parse($request->get('start_date'))
+            : Carbon::now();
+
+        if ($view === 'today') {
+            $startDate = Carbon::now()->startOfDay();
+            $endDate = $startDate->copy();
+        } elseif ($view === 'day') {
+            $startDate = $referenceDate->copy()->startOfDay();
+            $endDate = $startDate->copy();
+        } elseif ($view === 'month') {
+            $startDate = $referenceDate->copy()->startOfMonth();
+            $endDate = $referenceDate->copy()->endOfMonth();
+        } else {
+            $startDate = $referenceDate->copy()->startOfWeek(Carbon::MONDAY);
+            $endDate = $referenceDate->copy()->endOfWeek(Carbon::SUNDAY);
+            $view = 'week';
+        }
 
         // Get all bookings for the date range
         $bookings = Booking::whereIn('service_id', $serviceIds)
-            ->whereBetween('booking_date', [$startDate, $endDate])
+            ->whereDate('booking_date', '>=', $startDate->toDateString())
+            ->whereDate('booking_date', '<=', $endDate->toDateString())
             ->with(['customer', 'service', 'offering'])
             ->orderBy('booking_date')
             ->orderBy('start_time')
             ->get();
 
         // Format bookings for the calendar
-        $formattedBookings = $bookings->map(function ($booking) {
+        $formattedBookings = $bookings->map(function ($booking) use ($startDate) {
             $startTime = Carbon::parse($booking->start_time);
             $endTime = Carbon::parse($booking->end_time);
-            
+
             // Determine color type based on status
-            $colorType = match($booking->status) {
+            $colorType = match ($booking->status) {
                 'pending' => 'yellow',
                 'confirmed' => 'blue',
                 'completed' => 'green',
@@ -65,7 +78,8 @@ class CalendarController extends Controller
                 'customer' => $booking->customer->name,
                 'service' => $booking->service->name,
                 'serviceDetail' => $booking->offering->name,
-                'dayIndex' => Carbon::parse($booking->booking_date)->dayOfWeekIso - 1, // Monday = 0
+                'dayIndex' => Carbon::parse($booking->booking_date)->startOfDay()->diffInDays($startDate->copy()->startOfDay()),
+                'fullDate' => Carbon::parse($booking->booking_date)->format('Y-m-d'),
                 'startHour' => (int) $startTime->format('H'),
                 'startMin' => (int) $startTime->format('i'),
                 'duration' => $booking->offering->duration_minutes,
@@ -75,24 +89,33 @@ class CalendarController extends Controller
                 'avatarBg' => $this->getAvatarBg($booking->customer->name),
                 'avatarText' => $this->getAvatarText($booking->customer->name),
                 'dateStr' => Carbon::parse($booking->booking_date)->format('D, M d'),
-                'timeStr' => $startTime->format('h:i A') . ' - ' . $endTime->format('h:i A'),
-                'price' => '$' . number_format($booking->total_price, 2),
+                'timeStr' => $startTime->format('h:i A').' - '.$endTime->format('h:i A'),
+                'price' => '$'.number_format($booking->total_price, 2),
                 'customerType' => $customerType,
-                'notes' => $booking->customer_notes ? '"' . $booking->customer_notes . '"' : '',
+                'notes' => $booking->customer_notes ? '"'.$booking->customer_notes.'"' : '',
             ];
         });
 
-        // Generate week days
+        $daysCount = $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay()) + 1;
+
         $weekDays = [];
-        for ($i = 0; $i < 7; $i++) {
+        for ($i = 0; $i < $daysCount; $i++) {
             $date = $startDate->copy()->addDays($i);
             $weekDays[] = [
-                'day' => $date->format('D'), // MON, TUE, etc.
+                'day' => $date->format('D'),
                 'date' => (int) $date->format('d'),
                 'dayIndex' => $i,
                 'isToday' => $date->isToday(),
                 'fullDate' => $date->format('Y-m-d'),
             ];
+        }
+
+        if ($view === 'month') {
+            $rangeLabel = $startDate->format('F Y');
+        } elseif ($view === 'day' || $view === 'today') {
+            $rangeLabel = $startDate->format('M d, Y');
+        } else {
+            $rangeLabel = $startDate->format('M d').' – '.$endDate->format('M d, Y');
         }
 
         // Calculate stats for the week
@@ -108,9 +131,9 @@ class CalendarController extends Controller
         return Inertia::render('Vendor/Calendar', [
             'bookings' => $formattedBookings,
             'weekDays' => $weekDays,
-            'weekRange' => $startDate->format('M d') . ' – ' . $endDate->format('M d, Y'),
+            'weekRange' => $rangeLabel,
             'weekStats' => $weekStats,
-            'currentView' => $request->get('view', 'week'),
+            'currentView' => $view,
             'filters' => [
                 'start_date' => $startDate->format('Y-m-d'),
                 'end_date' => $endDate->format('Y-m-d'),
@@ -125,8 +148,9 @@ class CalendarController extends Controller
     {
         $words = explode(' ', trim($name));
         if (count($words) >= 2) {
-            return strtoupper($words[0][0] . $words[1][0]);
+            return strtoupper($words[0][0].$words[1][0]);
         }
+
         return strtoupper(substr($name, 0, 2));
     }
 
@@ -137,6 +161,7 @@ class CalendarController extends Controller
     {
         $colors = ['bg-blue-200', 'bg-green-200', 'bg-purple-200', 'bg-pink-200', 'bg-orange-200', 'bg-teal-200'];
         $index = crc32($name) % count($colors);
+
         return $colors[$index];
     }
 
@@ -147,6 +172,7 @@ class CalendarController extends Controller
     {
         $colors = ['text-blue-700', 'text-green-700', 'text-purple-700', 'text-pink-700', 'text-orange-700', 'text-teal-700'];
         $index = crc32($name) % count($colors);
+
         return $colors[$index];
     }
 }

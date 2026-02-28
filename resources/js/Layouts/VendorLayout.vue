@@ -142,7 +142,8 @@ function navClass(name) {
                 <!-- Right side: Bell + User -->
                 <div class="flex items-center gap-4 ml-6">
                     <!-- Notification Bell -->
-                    <button
+                    <Link
+                        :href="route('notifications.index')"
                         class="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
                     >
                         <svg
@@ -161,7 +162,7 @@ function navClass(name) {
                         <span
                             class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"
                         ></span>
-                    </button>
+                    </Link>
 
                     <!-- Divider -->
                     <div class="w-px h-8 bg-gray-200"></div>

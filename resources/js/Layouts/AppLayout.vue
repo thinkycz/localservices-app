@@ -1,5 +1,6 @@
 <script setup>
 import AppNavbar from '@/Components/AppNavbar.vue';
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
@@ -28,10 +29,10 @@ import AppNavbar from '@/Components/AppNavbar.vue';
                     <div>
                         <h4 class="text-sm font-bold text-gray-900 mb-3">Quick Links</h4>
                         <ul class="space-y-2">
-                            <li><a href="#" class="text-sm text-gray-500 hover:text-blue-600 transition">Browse Services</a></li>
-                            <li><a href="#" class="text-sm text-gray-500 hover:text-blue-600 transition">My Bookings</a></li>
-                            <li><a href="#" class="text-sm text-gray-500 hover:text-blue-600 transition">List Your Service</a></li>
-                            <li><a href="#" class="text-sm text-gray-500 hover:text-blue-600 transition">Help &amp; Support</a></li>
+                            <li><Link :href="route('services.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">Browse Services</Link></li>
+                            <li><Link :href="route('bookings.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">My Bookings</Link></li>
+                            <li><Link :href="route('vendor.onboarding.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">List Your Service</Link></li>
+                            <li><Link :href="route('pages.faq')" class="text-sm text-gray-500 hover:text-blue-600 transition">Help &amp; Support</Link></li>
                         </ul>
                     </div>
                     <div>

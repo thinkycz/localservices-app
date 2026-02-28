@@ -1,7 +1,7 @@
 <script setup>
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 import { Head, router, Link } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
     bookings: { type: Array, default: () => [] },
@@ -13,6 +13,12 @@ const props = defineProps({
 });
 
 const currentView = ref(props.currentView || 'week');
+watch(
+    () => props.currentView,
+    (v) => {
+        currentView.value = v || 'week';
+    }
+);
 
 const startHour = 8;
 const endHour = 18;
@@ -30,7 +36,7 @@ const timeSlots = computed(() => {
 
 const gridHeight = computed(() => (endHour - startHour) * hourHeight);
 
-const bookings = ref(props.bookings);
+const bookings = computed(() => props.bookings || []);
 
 const selectedBooking = ref(null);
 
@@ -43,23 +49,110 @@ function closeDetails() {
     selectedBooking.value = null;
 }
 
-function getBookingsForDay(dayIndex) {
-    return bookings.value.filter((b) => b.dayIndex === dayIndex);
+function getBookingsForDay(day) {
+    return bookings.value.filter((b) => b.fullDate === day.fullDate);
 }
 
-function navigateWeek(direction) {
-    const currentStart = new Date(props.filters.start_date);
-    const days = direction === 'prev' ? -7 : 7;
-    const newStart = new Date(currentStart);
-    newStart.setDate(newStart.getDate() + days);
-    const newEnd = new Date(newStart);
-    newEnd.setDate(newEnd.getDate() + 6);
-    
-    router.get(route('vendor.calendar'), {
-        start_date: newStart.toISOString().split('T')[0],
-        end_date: newEnd.toISOString().split('T')[0],
-        view: currentView.value,
-    }, { preserveState: true });
+function parseISODate(iso) {
+    return iso ? new Date(`${iso}T00:00:00`) : new Date();
+}
+
+function toISODate(date) {
+    const d = new Date(date);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().split('T')[0];
+}
+
+function addDays(date, days) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    return d;
+}
+
+function addMonths(date, months) {
+    const d = new Date(date);
+    d.setMonth(d.getMonth() + months);
+    return d;
+}
+
+function startOfWeekMonday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = (day + 6) % 7;
+    return addDays(d, -diff);
+}
+
+function startOfMonth(date) {
+    const d = new Date(date);
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+function endOfMonth(date) {
+    const d = new Date(date);
+    return new Date(d.getFullYear(), d.getMonth() + 1, 0);
+}
+
+function navigate(direction) {
+    const dir = direction === 'prev' ? -1 : 1;
+    const baseDate = parseISODate(props.filters.start_date);
+    const viewForNav = currentView.value === 'today' ? 'day' : currentView.value;
+    if (currentView.value === 'today') currentView.value = 'day';
+
+    let start;
+    let end;
+
+    if (viewForNav === 'month') {
+        const shifted = addMonths(baseDate, dir);
+        start = startOfMonth(shifted);
+        end = endOfMonth(shifted);
+    } else if (viewForNav === 'day') {
+        start = addDays(baseDate, dir);
+        end = start;
+    } else {
+        start = addDays(baseDate, dir * 7);
+        end = addDays(start, 6);
+    }
+
+    router.get(
+        route('vendor.calendar'),
+        {
+            start_date: toISODate(start),
+            end_date: toISODate(end),
+            view: viewForNav,
+        },
+        { preserveState: true }
+    );
+}
+
+function changeView(view) {
+    currentView.value = view;
+
+    const today = new Date();
+    const baseDate = view === 'today' ? today : parseISODate(props.filters.start_date);
+
+    let start;
+    let end;
+
+    if (view === 'today' || view === 'day') {
+        start = baseDate;
+        end = baseDate;
+    } else if (view === 'month') {
+        start = startOfMonth(baseDate);
+        end = endOfMonth(baseDate);
+    } else {
+        start = startOfWeekMonday(baseDate);
+        end = addDays(start, 6);
+    }
+
+    router.get(
+        route('vendor.calendar'),
+        {
+            start_date: toISODate(start),
+            end_date: toISODate(end),
+            view,
+        },
+        { preserveState: true }
+    );
 }
 
 function getBookingTop(booking) {
@@ -115,6 +208,9 @@ const cardStyles = {
 function getCardStyle(colorType) {
     return cardStyles[colorType] || cardStyles.blue;
 }
+
+const dayColumnClass = computed(() => (currentView.value === 'month' ? 'flex-none w-44' : 'flex-1'));
+const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-w-max' : 'min-w-full'));
 </script>
 
 <template>
@@ -127,12 +223,12 @@ function getCardStyle(colorType) {
             <div class="flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                        <button @click="navigateWeek('prev')" class="px-3 py-2 text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-200">
+                        <button @click="navigate('prev')" class="px-3 py-2 text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-200">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                         </button>
-                        <button @click="navigateWeek('next')" class="px-3 py-2 text-gray-500 hover:bg-gray-50 transition-colors">
+                        <button @click="navigate('next')" class="px-3 py-2 text-gray-500 hover:bg-gray-50 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
@@ -145,22 +241,22 @@ function getCardStyle(colorType) {
                     <button
                         class="px-4 py-2 text-sm font-semibold transition-colors"
                         :class="currentView === 'today' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
-                        @click="currentView = 'today'"
+                        @click="changeView('today')"
                     >TODAY</button>
                     <button
                         class="px-4 py-2 text-sm font-semibold border-l border-gray-200 transition-colors"
                         :class="currentView === 'day' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
-                        @click="currentView = 'day'"
+                        @click="changeView('day')"
                     >Day</button>
                     <button
                         class="px-4 py-2 text-sm font-semibold border-l border-gray-200 transition-colors"
                         :class="currentView === 'week' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
-                        @click="currentView = 'week'"
+                        @click="changeView('week')"
                     >Week</button>
                     <button
                         class="px-4 py-2 text-sm font-semibold border-l border-gray-200 transition-colors"
                         :class="currentView === 'month' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
-                        @click="currentView = 'month'"
+                        @click="changeView('month')"
                     >Month</button>
                 </div>
             </div>
@@ -171,135 +267,139 @@ function getCardStyle(colorType) {
                 <!-- Calendar Grid -->
                 <div class="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-w-0">
 
-                    <!-- Day Header Row -->
-                    <div class="flex border-b border-gray-100 flex-shrink-0">
-                        <div class="w-20 flex-shrink-0 border-r border-gray-100"></div>
-                        <div
-                            v-for="day in weekDays"
-                            :key="day.dayIndex"
-                            class="flex-1 text-center py-3 border-r border-gray-100 last:border-r-0"
-                            :class="day.isToday ? 'bg-blue-50' : ''"
-                        >
-                            <div class="text-xs font-semibold text-gray-400 tracking-widest uppercase">{{ day.day }}</div>
-                            <div
-                                class="mt-1 text-xl font-bold w-9 h-9 rounded-full mx-auto flex items-center justify-center"
-                                :class="day.isToday ? 'bg-blue-600 text-white' : 'text-gray-800'"
-                            >{{ day.date }}</div>
-                        </div>
-                    </div>
+                    <div class="flex-1 overflow-x-auto min-w-0">
+                        <div :class="[calendarInnerClass, 'h-full flex flex-col']">
 
-                    <!-- Scrollable Time Grid -->
-                    <div class="flex-1 overflow-y-auto">
-                        <div class="flex relative" :style="{ height: gridHeight + 'px' }">
-
-                            <!-- Time Labels -->
-                            <div class="w-20 flex-shrink-0 border-r border-gray-100 relative">
-                                <div
-                                    v-for="(slot, idx) in timeSlots"
-                                    :key="idx"
-                                    class="absolute right-3 text-xs text-gray-400 font-medium whitespace-nowrap"
-                                    :style="{ top: (idx * hourHeight - 8) + 'px' }"
-                                >{{ slot }}</div>
-                            </div>
-
-                            <!-- Day Columns -->
-                            <div class="flex flex-1 relative">
+                            <!-- Day Header Row -->
+                            <div class="flex border-b border-gray-100 flex-shrink-0">
+                                <div class="w-20 flex-shrink-0 border-r border-gray-100"></div>
                                 <div
                                     v-for="day in weekDays"
                                     :key="day.dayIndex"
-                                    class="flex-1 relative border-r border-gray-100 last:border-r-0"
-                                    :class="day.isToday ? 'bg-blue-50/20' : ''"
+                                    class="text-center py-3 border-r border-gray-100 last:border-r-0"
+                                    :class="[dayColumnClass, day.isToday ? 'bg-blue-50' : '']"
                                 >
-                                    <!-- Hour lines -->
+                                    <div class="text-xs font-semibold text-gray-400 tracking-widest uppercase">{{ day.day }}</div>
                                     <div
-                                        v-for="(_, idx) in timeSlots"
-                                        :key="'hr-' + idx"
-                                        class="absolute left-0 right-0 border-t border-gray-100"
-                                        :style="{ top: (idx * hourHeight) + 'px' }"
-                                    ></div>
-                                    <!-- Half-hour lines -->
-                                    <div
-                                        v-for="(_, idx) in timeSlots"
-                                        :key="'hf-' + idx"
-                                        class="absolute left-0 right-0 border-t border-dashed border-gray-100"
-                                        :style="{ top: (idx * hourHeight + hourHeight / 2) + 'px' }"
-                                    ></div>
-
-                                    <!-- Booking Cards -->
-                                    <template v-for="booking in getBookingsForDay(day.dayIndex)" :key="booking.id">
-                                        <!-- Blocked -->
-                                        <div
-                                            v-if="booking.colorType === 'blocked'"
-                                            class="absolute left-1 right-1 rounded-lg overflow-hidden border-l-4 border-gray-300 cursor-default"
-                                            :style="{ top: (getBookingTop(booking) + 4) + 'px', height: (getBookingHeight(booking) - 8) + 'px' }"
-                                        >
-                                            <div
-                                                class="w-full h-full flex items-center justify-center"
-                                                style="background-color:#f3f4f6;background-image:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(0,0,0,0.06) 6px,rgba(0,0,0,0.06) 12px);"
-                                            >
-                                                <span class="text-xs font-semibold text-gray-500 bg-white/80 px-2 py-0.5 rounded">
-                                                    {{ booking.customer }}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Regular -->
-                                        <div
-                                            v-else
-                                            class="absolute left-1 right-1 rounded-lg px-2 py-1.5 cursor-pointer transition-all duration-150 hover:shadow-md"
-                                            :class="[
-                                                getCardStyle(booking.colorType).wrapper,
-                                                selectedBooking && selectedBooking.id === booking.id ? 'ring-2 ring-blue-400 ring-offset-1' : '',
-                                            ]"
-                                            :style="{ top: (getBookingTop(booking) + 4) + 'px', height: (getBookingHeight(booking) - 8) + 'px' }"
-                                            @click="selectBooking(booking)"
-                                        >
-                                            <div class="flex items-start justify-between gap-1">
-                                                <span class="text-xs leading-tight truncate" :class="getCardStyle(booking.colorType).name">
-                                                    {{ booking.customer }}
-                                                </span>
-                                                <span v-if="booking.status === 'pending'" class="text-amber-400 text-xs flex-shrink-0">★</span>
-                                            </div>
-                                            <div class="text-xs mt-0.5 leading-tight truncate" :class="getCardStyle(booking.colorType).service">
-                                                {{ booking.service }}
-                                            </div>
-                                        </div>
-                                    </template>
-
-                            <!-- Current time line (today only) -->
-                            <div
-                                v-if="day.isToday && currentTimeTop >= 0 && currentTimeTop <= gridHeight"
-                                class="absolute left-0 right-0 flex items-center pointer-events-none z-10"
-                                :style="{ top: currentTimeTop + 'px' }"
-                            >
-                                <div class="w-2.5 h-2.5 bg-blue-600 rounded-full -ml-1.5 flex-shrink-0"></div>
-                                <div class="flex-1 h-px bg-blue-500"></div>
+                                        class="mt-1 text-xl font-bold w-9 h-9 rounded-full mx-auto flex items-center justify-center"
+                                        :class="day.isToday ? 'bg-blue-600 text-white' : 'text-gray-800'"
+                                    >{{ day.date }}</div>
+                                </div>
                             </div>
 
-                                </div>
+                            <!-- Scrollable Time Grid -->
+                            <div class="flex-1 overflow-y-auto min-h-0">
+                                <div class="flex relative" :style="{ height: gridHeight + 'px' }">
 
-                                <!-- Lunch break overlay -->
-                                <div
-                                    class="absolute left-0 right-0 flex items-center pointer-events-none z-20"
-                                    :style="{ top: lunchBreakTop + 'px' }"
-                                >
-                                    <div class="flex items-center gap-2 w-full px-2">
-                                        <div class="h-px bg-gray-300 w-4 flex-shrink-0"></div>
-                                        <span class="text-xs font-bold text-gray-400 tracking-widest uppercase whitespace-nowrap bg-white/90 px-1">
-                                            LUNCH BREAK
-                                        </span>
-                                        <div class="h-px bg-gray-300 flex-1"></div>
+                                    <!-- Time Labels -->
+                                    <div class="w-20 flex-shrink-0 border-r border-gray-100 relative">
+                                        <div
+                                            v-for="(slot, idx) in timeSlots"
+                                            :key="idx"
+                                            class="absolute right-3 text-xs text-gray-400 font-medium whitespace-nowrap"
+                                            :style="{ top: (idx * hourHeight - 8) + 'px' }"
+                                        >{{ slot }}</div>
+                                    </div>
+
+                                    <!-- Day Columns -->
+                                    <div class="flex flex-1 relative">
+                                        <div
+                                            v-for="day in weekDays"
+                                            :key="day.dayIndex"
+                                            class="relative border-r border-gray-100 last:border-r-0"
+                                            :class="[dayColumnClass, day.isToday ? 'bg-blue-50/20' : '']"
+                                        >
+                                            <!-- Hour lines -->
+                                            <div
+                                                v-for="(_, idx) in timeSlots"
+                                                :key="'hr-' + idx"
+                                                class="absolute left-0 right-0 border-t border-gray-100"
+                                                :style="{ top: (idx * hourHeight) + 'px' }"
+                                            ></div>
+                                            <!-- Half-hour lines -->
+                                            <div
+                                                v-for="(_, idx) in timeSlots"
+                                                :key="'hf-' + idx"
+                                                class="absolute left-0 right-0 border-t border-dashed border-gray-100"
+                                                :style="{ top: (idx * hourHeight + hourHeight / 2) + 'px' }"
+                                            ></div>
+
+                                            <!-- Booking Cards -->
+                                            <template v-for="booking in getBookingsForDay(day)" :key="booking.id">
+                                                <!-- Blocked -->
+                                                <div
+                                                    v-if="booking.colorType === 'blocked'"
+                                                    class="absolute left-1 right-1 rounded-lg overflow-hidden border-l-4 border-gray-300 cursor-default"
+                                                    :style="{ top: (getBookingTop(booking) + 4) + 'px', height: (getBookingHeight(booking) - 8) + 'px' }"
+                                                >
+                                                    <div
+                                                        class="w-full h-full flex items-center justify-center"
+                                                        style="background-color:#f3f4f6;background-image:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(0,0,0,0.06) 6px,rgba(0,0,0,0.06) 12px);"
+                                                    >
+                                                        <span class="text-xs font-semibold text-gray-500 bg-white/80 px-2 py-0.5 rounded">
+                                                            {{ booking.customer }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Regular -->
+                                                <div
+                                                    v-else
+                                                    class="absolute left-1 right-1 rounded-lg px-2 py-1.5 cursor-pointer transition-all duration-150 hover:shadow-md"
+                                                    :class="[
+                                                        getCardStyle(booking.colorType).wrapper,
+                                                        selectedBooking && selectedBooking.id === booking.id ? 'ring-2 ring-blue-400 ring-offset-1' : '',
+                                                    ]"
+                                                    :style="{ top: (getBookingTop(booking) + 4) + 'px', height: (getBookingHeight(booking) - 8) + 'px' }"
+                                                    @click="selectBooking(booking)"
+                                                >
+                                                    <div class="flex items-start justify-between gap-1">
+                                                        <span class="text-xs leading-tight truncate" :class="getCardStyle(booking.colorType).name">
+                                                            {{ booking.customer }}
+                                                        </span>
+                                                        <span v-if="booking.status === 'pending'" class="text-amber-400 text-xs flex-shrink-0">★</span>
+                                                    </div>
+                                                    <div class="text-xs mt-0.5 leading-tight truncate" :class="getCardStyle(booking.colorType).service">
+                                                        {{ booking.service }}
+                                                    </div>
+                                                </div>
+                                            </template>
+
+                                            <!-- Current time line (today only) -->
+                                            <div
+                                                v-if="day.isToday && currentTimeTop >= 0 && currentTimeTop <= gridHeight"
+                                                class="absolute left-0 right-0 flex items-center pointer-events-none z-10"
+                                                :style="{ top: currentTimeTop + 'px' }"
+                                            >
+                                                <div class="w-2.5 h-2.5 bg-blue-600 rounded-full -ml-1.5 flex-shrink-0"></div>
+                                                <div class="flex-1 h-px bg-blue-500"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Lunch break overlay -->
+                                        <div
+                                            class="absolute left-0 right-0 flex items-center pointer-events-none z-20"
+                                            :style="{ top: lunchBreakTop + 'px' }"
+                                        >
+                                            <div class="flex items-center gap-2 w-full px-2">
+                                                <div class="h-px bg-gray-300 w-4 flex-shrink-0"></div>
+                                                <span class="text-xs font-bold text-gray-400 tracking-widest uppercase whitespace-nowrap bg-white/90 px-1">
+                                                    LUNCH BREAK
+                                                </span>
+                                                <div class="h-px bg-gray-300 flex-1"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Current time label in gutter -->
+                                    <div
+                                        v-if="currentTimeTop >= 0 && currentTimeTop <= gridHeight"
+                                        class="absolute left-1 pointer-events-none z-20"
+                                        :style="{ top: (currentTimeTop - 8) + 'px' }"
+                                    >
+                                        <span class="text-xs font-bold text-blue-600">{{ currentTimeLabel }}</span>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Current time label in gutter -->
-                            <div
-                                v-if="currentTimeTop >= 0 && currentTimeTop <= gridHeight"
-                                class="absolute left-1 pointer-events-none z-20"
-                                :style="{ top: (currentTimeTop - 8) + 'px' }"
-                            >
-                                <span class="text-xs font-bold text-blue-600">{{ currentTimeLabel }}</span>
                             </div>
                         </div>
                     </div>

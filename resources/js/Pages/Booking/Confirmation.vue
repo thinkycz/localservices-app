@@ -34,6 +34,28 @@ function formatDate(dateStr) {
         year: 'numeric',
     });
 }
+
+function formatTime(time) {
+    if (!time) return '';
+    const s = String(time).trim();
+    if (!s) return '';
+    if (/[ap]m\b/.test(s) && !s.includes('T')) return s;
+
+    const asDate = new Date(s);
+    if (!Number.isNaN(asDate.getTime())) {
+        return asDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/);
+    if (m) {
+        const h = Number(m[1]);
+        const min = Number(m[2]);
+        const d = new Date(1970, 0, 1, h, min, 0);
+        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    return s;
+}
 </script>
 
 <template>
@@ -80,7 +102,7 @@ function formatDate(dateStr) {
                                 </div>
                                 <div>
                                     <p class="text-sm text-gray-500">Time</p>
-                                    <p class="font-semibold text-gray-900">{{ booking.start_time }} - {{ booking.end_time }}</p>
+                                    <p class="font-semibold text-gray-900">{{ formatTime(booking.start_time) }} - {{ formatTime(booking.end_time) }}</p>
                                 </div>
                             </div>
 

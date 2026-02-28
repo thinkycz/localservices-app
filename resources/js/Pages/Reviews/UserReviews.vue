@@ -18,6 +18,28 @@ function formatDate(date) {
         day: 'numeric',
     });
 }
+
+function formatTime(time) {
+    if (!time) return '';
+    const s = String(time).trim();
+    if (!s) return '';
+    if (/[ap]m\b/.test(s) && !s.includes('T')) return s;
+
+    const asDate = new Date(s);
+    if (!Number.isNaN(asDate.getTime())) {
+        return asDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/);
+    if (m) {
+        const h = Number(m[1]);
+        const min = Number(m[2]);
+        const d = new Date(1970, 0, 1, h, min, 0);
+        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    return s;
+}
 </script>
 
 <template>
@@ -90,7 +112,7 @@ function formatDate(date) {
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
-                                        {{ review.booking.start_time }}
+                                        {{ formatTime(review.booking.start_time) }}
                                     </span>
                                 </div>
                             </div>

@@ -139,7 +139,7 @@
             
             <div class="detail-row">
                 <span class="label">Time</span>
-                <span class="value">{{ $booking->start_time }} - {{ $booking->end_time }}</span>
+                <span class="value">{{ \Carbon\Carbon::parse($booking->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('g:i A') }}</span>
             </div>
             
             <div class="detail-row">

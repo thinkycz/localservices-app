@@ -73,7 +73,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/bookings/confirmation/{id}', [BookingController::class, 'confirmation'])->name('bookings.confirmation');
     Route::get('/bookings', [BookingController::class, 'userBookings'])->name('bookings.index');
     Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
-    
+
     // PDF Downloads
     Route::get('/bookings/{id}/pdf', [PdfController::class, 'bookingConfirmation'])->name('bookings.pdf');
     Route::get('/bookings/{id}/invoice', [PdfController::class, 'invoice'])->name('bookings.invoice');
@@ -167,6 +167,7 @@ Route::prefix('vendor')->middleware(['auth', 'verified', 'service.provider'])->g
     Route::get('/services', [\App\Http\Controllers\Vendor\ServicesController::class, 'index'])->name('vendor.services.index');
     Route::get('/services/create', [\App\Http\Controllers\Vendor\ServicesController::class, 'create'])->name('vendor.services.create');
     Route::post('/services', [\App\Http\Controllers\Vendor\ServicesController::class, 'store'])->name('vendor.services.store');
+    Route::get('/services/{id}', [\App\Http\Controllers\Vendor\ServicesController::class, 'show'])->name('vendor.services.show');
     Route::get('/services/{id}/edit', [\App\Http\Controllers\Vendor\ServicesController::class, 'edit'])->name('vendor.services.edit');
     Route::put('/services/{id}', [\App\Http\Controllers\Vendor\ServicesController::class, 'update'])->name('vendor.services.update');
     Route::delete('/services/{id}', [\App\Http\Controllers\Vendor\ServicesController::class, 'destroy'])->name('vendor.services.destroy');
@@ -176,6 +177,9 @@ Route::prefix('vendor')->middleware(['auth', 'verified', 'service.provider'])->g
     Route::post('/services/{serviceId}/offerings', [\App\Http\Controllers\Vendor\ServicesController::class, 'storeOffering'])->name('vendor.services.offerings.store');
     Route::put('/services/{serviceId}/offerings/{offeringId}', [\App\Http\Controllers\Vendor\ServicesController::class, 'updateOffering'])->name('vendor.services.offerings.update');
     Route::delete('/services/{serviceId}/offerings/{offeringId}', [\App\Http\Controllers\Vendor\ServicesController::class, 'destroyOffering'])->name('vendor.services.offerings.destroy');
+
+    // Business Hours
+    Route::post('/services/{serviceId}/business-hours', [\App\Http\Controllers\Vendor\ServicesController::class, 'storeBusinessHours'])->name('vendor.services.business-hours.store');
 });
 
 // Profile (auth required)
@@ -189,7 +193,7 @@ Route::middleware('auth')->group(function () {
 // Admin Routes
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
-    
+
     // User Management
     Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/{user}', [\App\Http\Controllers\Admin\UserController::class, 'show'])->name('admin.users.show');
@@ -213,10 +217,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/auth/{provider}/link', [\App\Http\Controllers\Auth\SocialAuthController::class, 'link'])
         ->name('social.link')
         ->where('provider', 'google|facebook');
-    
+
     Route::post('/auth/{provider}/unlink', [\App\Http\Controllers\Auth\SocialAuthController::class, 'unlink'])
         ->name('social.unlink')
         ->where('provider', 'google|facebook');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

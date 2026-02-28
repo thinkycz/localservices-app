@@ -216,7 +216,7 @@
                         <span style="color: #6b7280; font-size: 12px;">{{ $booking->offering->name }}</span>
                     </td>
                     <td>{{ $booking->booking_date->format('M d, Y') }}</td>
-                    <td>{{ $booking->start_time->format('g:i A') }} - {{ $booking->end_time->format('g:i A') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($booking->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('g:i A') }}</td>
                     <td class="text-right">${{ number_format($booking->total_price, 2) }}</td>
                 </tr>
             </tbody>

@@ -27,7 +27,7 @@
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-600">Time:</span>
-                  <span class="font-medium">{{ booking.start_time }} - {{ booking.end_time }}</span>
+                  <span class="font-medium">{{ formatTime(booking.start_time) }} - {{ formatTime(booking.end_time) }}</span>
                 </div>
                 <div class="border-t pt-2 mt-2">
                   <div class="flex justify-between text-lg font-bold">
@@ -223,5 +223,27 @@ const formatDate = (dateString) => {
     month: 'long',
     day: 'numeric',
   });
+};
+
+const formatTime = (time) => {
+  if (!time) return '';
+  const s = String(time).trim();
+  if (!s) return '';
+  if (/[ap]m\b/.test(s) && !s.includes('T')) return s;
+
+  const asDate = new Date(s);
+  if (!Number.isNaN(asDate.getTime())) {
+    return asDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+
+  const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/);
+  if (m) {
+    const h = Number(m[1]);
+    const min = Number(m[2]);
+    const d = new Date(1970, 0, 1, h, min, 0);
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+
+  return s;
 };
 </script>

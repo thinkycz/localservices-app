@@ -18,8 +18,8 @@ class ServiceController extends Controller
         // Search by keyword
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->q.'%')
-                    ->orWhere('description', 'like', '%'.$request->q.'%');
+                $q->where('name', 'like', '%' . $request->q . '%')
+                    ->orWhere('description', 'like', '%' . $request->q . '%');
             });
         }
 
@@ -89,7 +89,7 @@ class ServiceController extends Controller
 
     public function show(Request $request, string $slug): Response
     {
-        $service = Service::with(['category', 'offerings'])
+        $service = Service::with(['category', 'offerings', 'businessHours'])
             ->where('slug', $slug)
             ->firstOrFail();
 

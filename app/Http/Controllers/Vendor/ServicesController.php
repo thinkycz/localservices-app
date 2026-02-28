@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
+use App\Models\BusinessHour;
 use App\Models\Category;
 use App\Models\Service;
 use App\Models\ServiceOffering;
@@ -26,8 +27,8 @@ class ServicesController extends Controller
         // Search functionality
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->q.'%')
-                    ->orWhere('description', 'like', '%'.$request->q.'%');
+                $q->where('name', 'like', '%' . $request->q . '%')
+                    ->orWhere('description', 'like', '%' . $request->q . '%');
             });
         }
 
@@ -110,23 +111,23 @@ class ServicesController extends Controller
         $counter = 1;
         $originalSlug = $validated['slug'];
         while (Service::where('slug', $validated['slug'])->exists()) {
-            $validated['slug'] = $originalSlug.'-'.$counter++;
+            $validated['slug'] = $originalSlug . '-' . $counter++;
         }
 
         $service = Service::create($validated);
 
-        return redirect()->route('vendor.services.edit', $service->id)
+        return redirect()->route('vendor.services.show', $service->id)
             ->with('success', 'Service created successfully. Now add your service offerings.');
     }
 
     /**
-     * Show the form for editing a service.
+     * Show the detailed dashboard for a service.
      */
-    public function edit(Request $request, int $id): Response
+    public function show(Request $request, int $id): Response
     {
         $user = $request->user();
 
-        $service = Service::with(['category', 'offerings'])
+        $service = Service::with(['category', 'offerings', 'businessHours'])
             ->where('user_id', $user->id)
             ->findOrFail($id);
 
@@ -141,10 +142,29 @@ class ServicesController extends Controller
             'total_revenue' => $bookings->where('status', '!=', 'cancelled')->sum('total_price'),
         ];
 
-        return Inertia::render('Vendor/Services/Edit', [
+        return Inertia::render('Vendor/Services/Show', [
             'service' => $service,
             'categories' => $categories,
             'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Show the form for editing a service.
+     */
+    public function edit(Request $request, int $id): Response
+    {
+        $user = $request->user();
+
+        $service = Service::with(['category'])
+            ->where('user_id', $user->id)
+            ->findOrFail($id);
+
+        $categories = Category::all();
+
+        return Inertia::render('Vendor/Services/Edit', [
+            'service' => $service,
+            'categories' => $categories,
         ]);
     }
 
@@ -178,7 +198,7 @@ class ServicesController extends Controller
             $counter = 1;
             $originalSlug = $validated['slug'];
             while (Service::where('slug', $validated['slug'])->where('id', '!=', $id)->exists()) {
-                $validated['slug'] = $originalSlug.'-'.$counter++;
+                $validated['slug'] = $originalSlug . '-' . $counter++;
             }
         }
 
@@ -287,5 +307,34 @@ class ServicesController extends Controller
 
         return back()->with('success', "Service is now {$status}.");
     }
-}
 
+    /**
+     * Store / sync business hours for a service.
+     */
+    public function storeBusinessHours(Request $request, int $serviceId)
+    {
+        $user = $request->user();
+        $service = Service::where('user_id', $user->id)->findOrFail($serviceId);
+
+        $validated = $request->validate([
+            'hours' => 'present|array',
+            'hours.*.day_of_week' => 'required|integer|between:0,6',
+            'hours.*.time_from' => 'required|string|date_format:H:i',
+            'hours.*.time_to' => 'required|string|date_format:H:i|after:hours.*.time_from',
+        ]);
+
+        // Delete existing and re-create
+        $service->businessHours()->delete();
+
+        foreach ($validated['hours'] as $hour) {
+            BusinessHour::create([
+                'service_id' => $service->id,
+                'day_of_week' => $hour['day_of_week'],
+                'time_from' => $hour['time_from'],
+                'time_to' => $hour['time_to'],
+            ]);
+        }
+
+        return back()->with('success', 'Business hours updated successfully.');
+    }
+}

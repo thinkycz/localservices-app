@@ -222,7 +222,7 @@ class BookingController extends Controller
     /**
      * Get available time slots for a service on a specific date.
      */
-    public function getAvailableSlots(Request $request, int $serviceId): Response
+    public function getAvailableSlots(Request $request, int $serviceId)
     {
         $user = $request->user();
 
@@ -233,6 +233,20 @@ class BookingController extends Controller
         ]);
 
         $date = $validated['date'];
+        $dayOfWeek = (int) \Carbon\Carbon::parse($date)->dayOfWeek;
+
+        // Get business hours for this day
+        $businessHour = $service->businessHours()->where('day_of_week', $dayOfWeek)->first();
+
+        // If no business hours set for this day, return empty slots
+        if ($service->businessHours()->exists() && !$businessHour) {
+            return response()->json([
+                'service_id' => $serviceId,
+                'date' => $date,
+                'slots' => [],
+                'closed' => true,
+            ]);
+        }
 
         // Get existing bookings for this service on this date
         $existingBookings = Booking::where('service_id', $serviceId)
@@ -240,10 +254,14 @@ class BookingController extends Controller
             ->whereIn('status', ['pending', 'confirmed'])
             ->get(['start_time', 'end_time']);
 
-        // Generate time slots (9 AM to 6 PM, 30 min intervals)
+        // Use business hours if available, otherwise default to 9-6
+        $startHour = $businessHour ? $businessHour->time_from : '09:00';
+        $endHour = $businessHour ? $businessHour->time_to : '18:00';
+
+        // Generate time slots (30 min intervals)
         $slots = [];
-        $start = strtotime('09:00');
-        $end = strtotime('18:00');
+        $start = strtotime($startHour);
+        $end = strtotime($endHour);
 
         for ($time = $start; $time < $end; $time += 1800) { // 30 min intervals
             $slotStart = date('H:i', $time);

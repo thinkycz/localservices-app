@@ -9,6 +9,7 @@ const props = defineProps({
     date:     { type: String, default: null },
     time:     { type: String, default: null },
     authUser: { type: Object, default: null },
+    existingBookings: { type: Array, default: () => [] },
 });
 
 // ── Form state ────────────────────────────────────────────────────────────────
@@ -34,6 +35,72 @@ function validateForm() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
         e.email = 'Please enter a valid email address.';
     if (!form.phone?.trim())      e.phone      = 'Phone number is required.';
+
+    // Business hours validation
+    const businessHours = props.service.business_hours ?? [];
+    if (businessHours.length > 0 && form.booking_date) {
+        const bookingDate = new Date(form.booking_date + 'T00:00:00');
+        const dayOfWeek = bookingDate.getDay();
+        const bh = businessHours.find(h => h.day_of_week === dayOfWeek);
+
+        if (!bh) {
+            e.booking_date = 'The service is not available on this day.';
+        } else if (form.start_time) {
+            // Parse the start_time (could be 12h format like "1:00 PM" or 24h like "13:00")
+            let timeStr = form.start_time;
+            let hours, minutes;
+            const ampmMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+            if (ampmMatch) {
+                hours = parseInt(ampmMatch[1]);
+                minutes = parseInt(ampmMatch[2]);
+                if (ampmMatch[3].toUpperCase() === 'PM' && hours !== 12) hours += 12;
+                if (ampmMatch[3].toUpperCase() === 'AM' && hours === 12) hours = 0;
+            } else {
+                const parts = timeStr.split(':');
+                hours = parseInt(parts[0]);
+                minutes = parseInt(parts[1]);
+            }
+            const startMinutes = hours * 60 + minutes;
+            const [bhFromH, bhFromM] = bh.time_from.split(':').map(Number);
+            const [bhToH, bhToM] = bh.time_to.split(':').map(Number);
+            const bhFromMinutes = bhFromH * 60 + bhFromM;
+            const bhToMinutes = bhToH * 60 + bhToM;
+
+            if (startMinutes < bhFromMinutes || startMinutes >= bhToMinutes) {
+                e.start_time = `Time must be between ${bh.time_from} and ${bh.time_to}.`;
+            }
+        }
+    }
+
+    // Existing booking conflict check
+    if (!e.start_time && form.start_time && props.existingBookings.length > 0 && props.offering) {
+        let timeStr = form.start_time;
+        let hours, minutes;
+        const ampmMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (ampmMatch) {
+            hours = parseInt(ampmMatch[1]);
+            minutes = parseInt(ampmMatch[2]);
+            if (ampmMatch[3].toUpperCase() === 'PM' && hours !== 12) hours += 12;
+            if (ampmMatch[3].toUpperCase() === 'AM' && hours === 12) hours = 0;
+        } else {
+            const parts = timeStr.split(':');
+            hours = parseInt(parts[0]);
+            minutes = parseInt(parts[1]);
+        }
+        const startStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        const endMinutes = hours * 60 + minutes + props.offering.duration_minutes;
+        const endH = Math.floor(endMinutes / 60);
+        const endM = endMinutes % 60;
+        const endStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+
+        for (const booking of props.existingBookings) {
+            if (startStr < booking.end_time && endStr > booking.start_time) {
+                e.start_time = 'This time slot is already booked. Please choose a different time.';
+                break;
+            }
+        }
+    }
+
     errors.value = e;
     return Object.keys(e).length === 0;
 }
@@ -158,6 +225,21 @@ function formatPrice(amount) {
                     <div class="lg:col-span-2">
                         <div class="bg-white rounded-xl border border-gray-200 p-6">
                             <h2 class="text-lg font-semibold text-gray-900 mb-5">Your Information</h2>
+
+                            <!-- Business hours / conflict warnings -->
+                            <div v-if="errors.booking_date || errors.start_time || form.errors?.booking_date || form.errors?.start_time" class="mb-5 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                    <div class="text-sm text-red-700">
+                                        <p v-if="errors.booking_date">{{ errors.booking_date }}</p>
+                                        <p v-if="errors.start_time">{{ errors.start_time }}</p>
+                                        <p v-if="form.errors?.booking_date">{{ form.errors.booking_date }}</p>
+                                        <p v-if="form.errors?.start_time">{{ form.errors.start_time }}</p>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <form @submit.prevent="submitBooking" class="space-y-5">
                                 <!-- Full Name -->
