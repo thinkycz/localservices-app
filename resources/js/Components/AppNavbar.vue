@@ -22,8 +22,14 @@ function handleSearch() {
 }
 
 function logout() {
-    router.post(route('logout'));
+    showUserMenu.value = false;
+    router.post(route('logout'), {}, {
+        onSuccess: () => {
+            window.location.href = '/';
+        },
+    });
 }
+
 
 function handleClickOutside(e) {
     if (!e.target.closest('#user-menu-wrapper')) {
@@ -65,6 +71,15 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
                 <!-- Right side -->
                 <div class="flex items-center gap-3 ml-auto shrink-0">
+                    <!-- Become Vendor Button (Auth, Non-Vendor) -->
+                    <Link
+                        v-if="auth?.user && !auth.user.is_service_provider"
+                        :href="route('vendor.onboarding.index')"
+                        class="hidden sm:flex items-center text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:text-blue-600 px-4 py-2 rounded-full transition-colors"
+                    >
+                        Become a provider
+                    </Link>
+
                     <!-- Notification Bell -->
                     <NotificationDropdown v-if="auth?.user" />
 
@@ -153,7 +168,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                 </Link>
                                 <button
                                     @click="logout"
-                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
+                                    type="button"
+                                    class="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition text-left focus:outline-none cursor-pointer"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -164,12 +180,18 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         </div>
                     </template>
                     <template v-else>
-                        <Link :href="route('login')" class="text-sm font-medium text-gray-700 hover:text-blue-600">
+                        <Link
+                            :href="route('vendor.onboarding.index')"
+                            class="hidden sm:flex items-center text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:text-blue-600 px-4 py-2 rounded-full transition-colors"
+                        >
+                            Become a provider
+                        </Link>
+                        <Link :href="route('login')" class="text-sm font-medium text-gray-700 hover:text-blue-600 ml-2">
                             Log in
                         </Link>
                         <Link
                             :href="route('register')"
-                            class="text-sm font-medium bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition"
+                            class="text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-full hover:from-blue-700 hover:to-indigo-700 transition shadow-sm ml-2"
                         >
                             Sign up
                         </Link>

@@ -32,7 +32,7 @@ const submit = () => {
         <!-- Heading -->
         <div class="mb-8">
             <h2 class="text-2xl font-bold text-gray-900">Welcome back</h2>
-            <p class="text-sm text-gray-500 mt-1">Sign in to your LocalServices account</p>
+            <p class="text-sm text-gray-500 mt-1">Sign in to your Bookable account</p>
         </div>
 
         <!-- Status message -->

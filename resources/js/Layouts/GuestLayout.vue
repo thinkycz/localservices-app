@@ -6,26 +6,26 @@ import { Link } from '@inertiajs/vue3';
     <div class="min-h-screen flex">
 
         <!-- ── Left Brand Panel ─────────────────────────────────────── -->
-        <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 flex-col justify-between p-12 relative overflow-hidden">
+        <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 flex-col justify-between p-12 relative overflow-hidden">
             <!-- Background decoration circles -->
             <div class="absolute -top-24 -left-24 w-96 h-96 bg-blue-500 rounded-full opacity-20"></div>
             <div class="absolute -bottom-32 -right-16 w-80 h-80 bg-blue-400 rounded-full opacity-20"></div>
 
             <!-- Logo -->
-            <Link :href="route('home')" class="flex items-center gap-3 relative z-10">
-                <div class="w-10 h-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+            <Link :href="route('home')" class="flex items-center gap-2.5 relative z-10">
+                <div class="w-10 h-10 bg-white/15 backdrop-blur rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 4.5A2.5 2.5 0 016.5 2H12v9l-3-2.5L6 11V4.5z" fill="currentColor" opacity="0.5"/>
+                        <path d="M12 2h5.5A2.5 2.5 0 0120 4.5v15a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 19.5V11l5-2.5L12 11V2z" stroke="currentColor" stroke-width="1.5" fill="none"/>
                     </svg>
                 </div>
-                <span class="text-2xl font-bold text-white">LocalServices</span>
+                <span class="text-2xl text-white" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">Bookable</span>
             </Link>
 
             <!-- Center content -->
             <div class="relative z-10">
                 <h1 class="text-4xl font-bold text-white leading-tight mb-4">
-                    Find Trusted Local Services
+                    Book Services You Trust
                 </h1>
                 <p class="text-blue-100 text-lg mb-10 leading-relaxed">
                     Connect with top-rated professionals in your area for any home service need.
@@ -95,14 +95,14 @@ import { Link } from '@inertiajs/vue3';
         <div class="flex-1 flex flex-col justify-center items-center bg-gray-50 px-6 py-12 lg:px-16">
             <!-- Mobile logo (shown only on small screens) -->
             <div class="lg:hidden mb-8">
-                <Link :href="route('home')" class="flex items-center gap-2">
-                    <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+                <Link :href="route('home')" class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+                        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
+                            <path d="M4 4.5A2.5 2.5 0 016.5 2H12v9l-3-2.5L6 11V4.5z" fill="currentColor" opacity="0.5"/>
+                            <path d="M12 2h5.5A2.5 2.5 0 0120 4.5v15a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 19.5V11l5-2.5L12 11V2z" stroke="currentColor" stroke-width="1.5" fill="none"/>
                         </svg>
                     </div>
-                    <span class="text-xl font-bold text-gray-900">LocalServices</span>
+                    <span class="text-xl text-gray-900" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">Bookable</span>
                 </Link>
             </div>
 

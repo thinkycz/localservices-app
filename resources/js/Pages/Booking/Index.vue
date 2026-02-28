@@ -46,7 +46,6 @@ function validateForm() {
         if (!bh) {
             e.booking_date = 'The service is not available on this day.';
         } else if (form.start_time) {
-            // Parse the start_time (could be 12h format like "1:00 PM" or 24h like "13:00")
             let timeStr = form.start_time;
             let hours, minutes;
             const ampmMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -106,22 +105,8 @@ function validateForm() {
 }
 
 function submitBooking() {
-    console.log('Button clicked!');
-    console.log('Form data:', form.data());
-    
-    try {
-        console.log('Route:', route('bookings.store'));
-    } catch (e) {
-        console.log('Route error:', e);
-    }
-    
-    if (!validateForm()) {
-        console.log('Validation failed:', errors.value);
-        return;
-    }
-    
-    console.log('Submitting form...');
-    
+    if (!validateForm()) return;
+
     form.transform((data) => ({
         ...data,
         service_id: form.service_id,
@@ -135,178 +120,239 @@ function submitBooking() {
         phone: form.phone,
         customer_notes: form.customer_notes,
     }));
-    
-    // Get the URL - try route helper first, fallback to hardcoded
+
     let url = '/bookings';
-    try {
-        url = route('bookings.store');
-    } catch (e) {
-        console.log('Route helper failed, using fallback URL');
-    }
-    
-    console.log('Submitting to URL:', url);
-    
+    try { url = route('bookings.store'); } catch (e) { /* fallback */ }
+
     form.post(url, {
-        onSuccess: (page) => {
-            console.log('Success:', page);
-        },
-        onError: (errors) => {
-            console.log('Error:', errors);
-            errors.value = errors;
-        },
-        onFinish: () => {
-            console.log('Form submission finished');
-        }
+        onError: (errs) => { errors.value = errs; },
     });
 }
 
 function formatPrice(amount) {
-    return `$${Number(amount).toFixed(2)}`;
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
 }
 </script>
 
 <template>
     <AppLayout>
-        <div class="min-h-screen bg-gray-50 py-8">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Header -->
+        <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                <!-- Back link -->
                 <div class="mb-6">
-                    <Link :href="route('services.show', service.slug)" class="text-blue-600 hover:text-blue-800 text-sm inline-flex items-center transition">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Back to Service
+                    <Link :href="route('services.show', service.slug)" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                        Back to {{ service.name }}
                     </Link>
-                    <h1 class="text-2xl font-bold text-gray-900 mt-2">Book Appointment</h1>
                 </div>
 
                 <!-- Two Column Layout -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Left Column: Service Summary -->
-                    <div class="lg:col-span-1 space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+                    <!-- Left Column: Summary (2 cols) -->
+                    <div class="lg:col-span-2 space-y-4">
+
                         <!-- Service Card -->
-                        <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Service</h2>
-                            <p class="font-semibold text-gray-900 text-lg">{{ service.name }}</p>
-                            <p class="text-sm text-gray-500 mt-1">{{ service.category?.name }}</p>
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-white font-bold text-base">{{ service.name }}</h2>
+                                        <p class="text-blue-100 text-xs">{{ service.category?.name }}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Selected Package -->
-                        <div v-if="offering" class="bg-white rounded-xl border border-gray-200 p-5">
-                            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Selected Package</h2>
-                            <p class="font-semibold text-gray-900">{{ offering.name }}</p>
-                            <div class="flex items-center justify-between mt-3">
-                                <span class="text-sm text-gray-500">{{ offering.duration_minutes }} min</span>
-                                <span class="text-xl font-bold text-blue-600">{{ formatPrice(offering.price) }}</span>
+                        <div v-if="offering" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+                                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Selected Package</span>
+                            </div>
+                            <h3 class="font-bold text-gray-900 text-sm mb-3">{{ offering.name }}</h3>
+                            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
+                                <span class="text-sm text-gray-600 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {{ offering.duration_minutes }} mins
+                                </span>
+                                <span class="text-lg font-bold text-blue-600">{{ formatPrice(offering.price) }}</span>
                             </div>
                         </div>
 
                         <!-- Date & Time -->
-                        <div v-if="date || time" class="bg-white rounded-xl border border-gray-200 p-5">
-                            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Appointment</h2>
-                            <div class="space-y-2">
-                                <div v-if="date" class="flex items-center text-gray-700 text-sm">
-                                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div v-if="date || time" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center">
+                                    <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
-                                    {{ date }}
                                 </div>
-                                <div v-if="time" class="flex items-center text-gray-700 text-sm">
-                                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Appointment</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div v-if="date" class="flex items-center gap-2.5 text-sm p-3 bg-gray-50 rounded-xl">
+                                    <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span class="font-semibold text-gray-900">{{ formatDate(date) }}</span>
+                                </div>
+                                <div v-if="time" class="flex items-center gap-2.5 text-sm p-3 bg-gray-50 rounded-xl">
+                                    <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    {{ time }}
+                                    <span class="font-semibold text-gray-900">{{ time }}</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Cancellation info -->
+                        <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 flex items-start gap-3">
+                            <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="text-xs text-gray-600 leading-relaxed">
+                                <span class="font-semibold text-gray-700">Free cancellation</span> up to 24 hours before your appointment. No-show fees may apply.
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Column: Booking Form -->
-                    <div class="lg:col-span-2">
-                        <div class="bg-white rounded-xl border border-gray-200 p-6">
-                            <h2 class="text-lg font-semibold text-gray-900 mb-5">Your Information</h2>
+                    <!-- Right Column: Booking Form (3 cols) -->
+                    <div class="lg:col-span-3">
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-                            <!-- Business hours / conflict warnings -->
-                            <div v-if="errors.booking_date || errors.start_time || form.errors?.booking_date || form.errors?.start_time" class="mb-5 p-4 bg-red-50 border border-red-200 rounded-lg">
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                    </svg>
-                                    <div class="text-sm text-red-700">
-                                        <p v-if="errors.booking_date">{{ errors.booking_date }}</p>
-                                        <p v-if="errors.start_time">{{ errors.start_time }}</p>
-                                        <p v-if="form.errors?.booking_date">{{ form.errors.booking_date }}</p>
-                                        <p v-if="form.errors?.start_time">{{ form.errors.start_time }}</p>
+                            <!-- Form Header -->
+                            <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-base font-bold text-gray-900">Your Information</h2>
+                                        <p class="text-xs text-gray-500">Fill in your details to complete the booking</p>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <form @submit.prevent="submitBooking" class="space-y-5">
-                                <!-- Full Name -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
-                                    <input
-                                        v-model="form.full_name"
-                                        type="text"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                        :class="{ 'border-red-500': errors.full_name }"
-                                        placeholder="Enter your full name"
-                                    />
-                                    <p v-if="errors.full_name" class="mt-1 text-sm text-red-600">{{ errors.full_name }}</p>
-                                </div>
 
-                                <!-- Email & Phone -->
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
-                                        <input
-                                            v-model="form.email"
-                                            type="email"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                            :class="{ 'border-red-500': errors.email }"
-                                            placeholder="you@example.com"
-                                        />
-                                        <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label>
-                                        <input
-                                            v-model="form.phone"
-                                            type="tel"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                            :class="{ 'border-red-500': errors.phone }"
-                                            placeholder="(555) 123-4567"
-                                        />
-                                        <p v-if="errors.phone" class="mt-1 text-sm text-red-600">{{ errors.phone }}</p>
+                            <div class="p-6">
+
+                                <!-- Business hours / conflict warnings -->
+                                <div v-if="errors.booking_date || errors.start_time || form.errors?.booking_date || form.errors?.start_time" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                                    <div class="flex items-start gap-2.5">
+                                        <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                        </svg>
+                                        <div class="text-sm text-red-700">
+                                            <p v-if="errors.booking_date">{{ errors.booking_date }}</p>
+                                            <p v-if="errors.start_time">{{ errors.start_time }}</p>
+                                            <p v-if="form.errors?.booking_date">{{ form.errors.booking_date }}</p>
+                                            <p v-if="form.errors?.start_time">{{ form.errors.start_time }}</p>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Notes -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Notes (optional)</label>
-                                    <textarea
-                                        v-model="form.customer_notes"
-                                        rows="3"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
-                                        placeholder="Any special requests..."
-                                    ></textarea>
-                                </div>
+                                <form @submit.prevent="submitBooking" class="space-y-5">
+                                    <!-- Full Name -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Full Name <span class="text-red-400">*</span></label>
+                                        <input
+                                            v-model="form.full_name"
+                                            type="text"
+                                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors"
+                                            :class="{ 'border-red-300 focus:ring-red-500': errors.full_name }"
+                                            placeholder="Enter your full name"
+                                        />
+                                        <p v-if="errors.full_name" class="mt-1.5 text-xs text-red-500">{{ errors.full_name }}</p>
+                                    </div>
 
-                                <!-- Submit -->
-                                <div class="pt-2">
+                                    <!-- Email & Phone -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email <span class="text-red-400">*</span></label>
+                                            <input
+                                                v-model="form.email"
+                                                type="email"
+                                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors"
+                                                :class="{ 'border-red-300 focus:ring-red-500': errors.email }"
+                                                placeholder="you@example.com"
+                                            />
+                                            <p v-if="errors.email" class="mt-1.5 text-xs text-red-500">{{ errors.email }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Phone <span class="text-red-400">*</span></label>
+                                            <input
+                                                v-model="form.phone"
+                                                type="tel"
+                                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors"
+                                                :class="{ 'border-red-300 focus:ring-red-500': errors.phone }"
+                                                placeholder="(555) 123-4567"
+                                            />
+                                            <p v-if="errors.phone" class="mt-1.5 text-xs text-red-500">{{ errors.phone }}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Notes -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Special Requests <span class="text-gray-400 font-normal">(optional)</span></label>
+                                        <textarea
+                                            v-model="form.customer_notes"
+                                            rows="3"
+                                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none focus:bg-white transition-colors"
+                                            placeholder="Any special requests or notes for the provider..."
+                                        ></textarea>
+                                    </div>
+
+                                    <!-- Summary bar -->
+                                    <div v-if="offering" class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                        <div class="text-sm text-gray-600">
+                                            <span class="font-semibold text-gray-900">{{ offering.name }}</span>
+                                            <span class="mx-1.5 text-gray-300">·</span>
+                                            {{ offering.duration_minutes }} mins
+                                        </div>
+                                        <span class="text-xl font-bold text-gray-900">{{ formatPrice(offering.price) }}</span>
+                                    </div>
+
+                                    <!-- Submit -->
                                     <button
                                         type="submit"
                                         :disabled="form.processing"
-                                        class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2.5 px-4 rounded-lg transition text-sm"
+                                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-400 disabled:to-indigo-400 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-blue-200/50 hover:shadow-xl hover:shadow-blue-300/50 text-sm flex items-center justify-center gap-2 transform hover:-translate-y-0.5 disabled:transform-none disabled:shadow-none"
                                     >
-                                        <svg v-if="form.processing" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <svg v-if="form.processing" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        {{ form.processing ? 'Processing...' : 'Confirm Booking' }}
+                                        <template v-if="form.processing">Processing...</template>
+                                        <template v-else>
+                                            Confirm Booking
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                            </svg>
+                                        </template>
                                     </button>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
