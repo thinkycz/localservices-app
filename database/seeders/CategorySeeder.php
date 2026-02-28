@@ -12,13 +12,6 @@ class CategorySeeder extends Seeder
     {
         $categories = [
             ['name' => 'Barbershops',    'icon' => '💇'],
-            ['name' => 'Nail Salons',    'icon' => '💅'],
-            ['name' => 'Restaurants',    'icon' => '🍽️'],
-            ['name' => 'Coffee Shops',   'icon' => '☕'],
-            ['name' => 'Pet Grooming',   'icon' => '🐕'],
-            ['name' => 'Fitness & Gyms', 'icon' => '💪'],
-            ['name' => 'Spa & Massage',  'icon' => '💆'],
-            ['name' => 'Beauty Salons',  'icon' => '🎀'],
         ];
 
         foreach ($categories as $cat) {
@@ -29,4 +22,3 @@ class CategorySeeder extends Seeder
         }
     }
 }
-
