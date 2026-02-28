@@ -28,13 +28,14 @@ class Service extends Model
         'city',
         'state',
         'address',
-        'opening_hours',
+        'is_online_only',
         'latitude',
         'longitude',
     ];
 
     protected $casts = [
         'is_available' => 'boolean',
+        'is_online_only' => 'boolean',
         'rating' => 'float',
         'price_range' => 'integer',
     ];

@@ -100,9 +100,16 @@ class ServicesController extends Controller
             'address' => 'nullable|string|max:500',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:50',
-            'opening_hours' => 'nullable|string|max:500',
+            'is_online_only' => 'boolean',
             'is_available' => 'boolean',
+            'business_hours' => 'nullable|array',
+            'business_hours.*.day_of_week' => 'required|integer|between:0,6',
+            'business_hours.*.time_from' => 'required|string',
+            'business_hours.*.time_to' => 'required|string',
         ]);
+
+        $businessHoursData = $validated['business_hours'] ?? [];
+        unset($validated['business_hours']);
 
         $validated['user_id'] = $request->user()->id;
         $validated['slug'] = Str::slug($validated['name']);
@@ -115,6 +122,16 @@ class ServicesController extends Controller
         }
 
         $service = Service::create($validated);
+
+        // Save business hours
+        foreach ($businessHoursData as $hour) {
+            BusinessHour::create([
+                'service_id' => $service->id,
+                'day_of_week' => $hour['day_of_week'],
+                'time_from' => $hour['time_from'],
+                'time_to' => $hour['time_to'],
+            ]);
+        }
 
         return redirect()->route('vendor.services.show', $service->id)
             ->with('success', 'Service created successfully. Now add your service offerings.');
@@ -156,7 +173,7 @@ class ServicesController extends Controller
     {
         $user = $request->user();
 
-        $service = Service::with(['category'])
+        $service = Service::with(['category', 'businessHours'])
             ->where('user_id', $user->id)
             ->findOrFail($id);
 
@@ -187,10 +204,17 @@ class ServicesController extends Controller
             'address' => 'nullable|string|max:500',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:50',
-            'opening_hours' => 'nullable|string|max:500',
+            'is_online_only' => 'boolean',
             'is_available' => 'boolean',
             'image' => 'nullable|string|max:500',
+            'business_hours' => 'nullable|array',
+            'business_hours.*.day_of_week' => 'required|integer|between:0,6',
+            'business_hours.*.time_from' => 'required|string',
+            'business_hours.*.time_to' => 'required|string',
         ]);
+
+        $businessHoursData = $validated['business_hours'] ?? [];
+        unset($validated['business_hours']);
 
         // Update slug if name changed
         if ($service->name !== $validated['name']) {
@@ -203,6 +227,17 @@ class ServicesController extends Controller
         }
 
         $service->update($validated);
+
+        // Sync business hours
+        $service->businessHours()->delete();
+        foreach ($businessHoursData as $hour) {
+            BusinessHour::create([
+                'service_id' => $service->id,
+                'day_of_week' => $hour['day_of_week'],
+                'time_from' => $hour['time_from'],
+                'time_to' => $hour['time_to'],
+            ]);
+        }
 
         return back()->with('success', 'Service updated successfully.');
     }

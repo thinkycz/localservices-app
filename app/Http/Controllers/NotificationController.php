@@ -6,26 +6,9 @@ use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class NotificationController extends Controller
 {
-    /**
-     * Display all notifications for the user.
-     */
-    public function index(Request $request): Response
-    {
-        $notifications = $request->user()
-            ->notifications()
-            ->with('user')
-            ->paginate(20);
-
-        return Inertia::render('Notifications/Index', [
-            'notifications' => $notifications,
-        ]);
-    }
 
     /**
      * Get recent notifications for the dropdown (API).

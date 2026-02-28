@@ -8,6 +8,7 @@ import StarRating from '@/Components/StarRating.vue';
 const props = defineProps({
     service: { type: Object, required: true },
     related:  { type: Array,  default: () => [] },
+    bookings: { type: Array,  default: () => [] },
 });
 
 // ── Offerings / filter ────────────────────────────────────────────────────────
@@ -123,6 +124,21 @@ const availableTimeSlots = computed(() => {
     const duration = selectedOffering.value.duration_minutes || 60; // fallback if missing
     const interval = 30; // 30-minute booking intervals
     
+    // Parse bookings for the selected day
+    const selectedDateStr = `${calYear.value}-${String(calMonth.value + 1).padStart(2, '0')}-${String(selectedDay.value).padStart(2, '0')}`;
+    const dayBookings = props.bookings.filter(b => {
+        // Handle both YYYY-MM-DD and YYYY-MM-DDTHH...
+        const bDate = String(b.booking_date).split('T')[0].substring(0, 10);
+        return bDate === selectedDateStr;
+    }).map(b => {
+        const [sh, sm] = String(b.start_time).split(':').map(Number);
+        const [eh, em] = String(b.end_time).split(':').map(Number);
+        return {
+            start: sh * 60 + sm,
+            end: eh * 60 + em
+        };
+    });
+    
     // If selecting today, filter out past time slots (with a 30m grace period)
     const isToday = today.getFullYear() === calYear.value && 
                     today.getMonth() === calMonth.value && 
@@ -135,7 +151,15 @@ const availableTimeSlots = computed(() => {
     
     while (currentSlotMins + duration <= endMins) {
         // Skip if it's today and the slot is too soon or in the past
-        const isSlotValid = !isToday || (currentSlotMins > currentMins + 30);
+        const isPast = isToday && (currentSlotMins <= currentMins + 30);
+        
+        // Skip if the slot overlaps with any existing booking
+        const slotEnd = currentSlotMins + duration;
+        const isOverlapping = dayBookings.some(b => 
+            currentSlotMins < b.end && slotEnd > b.start
+        );
+
+        const isSlotValid = !isPast && !isOverlapping;
         
         if (isSlotValid) {
             let h = Math.floor(currentSlotMins / 60);

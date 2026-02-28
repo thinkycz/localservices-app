@@ -27,12 +27,22 @@ function applyFilters() {
 
 function getStatusClasses(status) {
     const classes = {
-        pending: 'bg-yellow-100 text-yellow-800',
-        confirmed: 'bg-blue-100 text-blue-800',
-        completed: 'bg-green-100 text-green-800',
-        cancelled: 'bg-red-100 text-red-800',
+        pending: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20',
+        confirmed: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/20',
+        completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20',
+        cancelled: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20',
     };
-    return classes[status] || 'bg-gray-100 text-gray-800';
+    return classes[status] || 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20';
+}
+
+function getStatusDot(status) {
+    const dots = {
+        pending: 'bg-amber-500',
+        confirmed: 'bg-blue-500',
+        completed: 'bg-emerald-500',
+        cancelled: 'bg-red-500',
+    };
+    return dots[status] || 'bg-gray-500';
 }
 
 function formatDate(date) {
@@ -70,16 +80,10 @@ function formatTime(time) {
     <Head title="Bookings" />
 
     <VendorLayout activePage="bookings">
-        <!-- Page Header -->
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Bookings</h1>
-                <p class="text-sm text-gray-500 mt-1">Manage your service bookings</p>
-            </div>
-        </div>
+        <div class="flex flex-col gap-6">
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-5 gap-4 mb-6">
+            <div class="grid grid-cols-5 gap-4">
                 <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                     <div class="flex items-start justify-between mb-3">
                         <div class="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center">
@@ -142,7 +146,7 @@ function formatTime(time) {
             </div>
 
             <!-- Search and Filter Bar -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                 <div class="flex items-center gap-4">
                     <!-- Search -->
                     <div class="flex-1 relative">
@@ -159,7 +163,7 @@ function formatTime(time) {
                     </div>
                     
                     <!-- Filter Buttons -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <button
                             @click="statusFilter = ''; applyFilters()"
                             :class="[
@@ -204,6 +208,17 @@ function formatTime(time) {
                         >
                             Completed
                         </button>
+                        <button
+                            @click="statusFilter = 'cancelled'; applyFilters()"
+                            :class="[
+                                'px-4 py-2 text-sm font-medium rounded-xl transition-colors',
+                                statusFilter === 'cancelled'
+                                    ? 'bg-gray-900 text-white'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                            ]"
+                        >
+                            Cancelled
+                        </button>
                     </div>
                 </div>
             </div>
@@ -212,54 +227,56 @@ function formatTime(time) {
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <table class="w-full">
                     <thead>
-                        <tr class="border-b border-gray-100">
-                            <th class="text-left px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Customer</th>
-                            <th class="text-left px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Service</th>
-                            <th class="text-left px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Date & Time</th>
-                            <th class="text-left px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Price</th>
-                            <th class="text-left px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-4"></th>
+                        <tr class="bg-gray-50/50">
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date & Time</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3.5"></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100">
                         <tr
                             v-for="booking in bookings.data"
                             :key="booking.id"
-                            class="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                            class="group hover:bg-blue-50/30 transition-colors cursor-pointer"
+                            @click="router.visit(route('vendor.bookings.show', booking.id))"
                         >
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 shadow-sm">
                                         {{ booking.customer.name.charAt(0).toUpperCase() }}
                                     </div>
-                                    <div>
-                                        <div class="font-semibold text-gray-900 text-sm">{{ booking.customer.name }}</div>
-                                        <div class="text-xs text-gray-400">{{ booking.customer.email }}</div>
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-gray-900 text-sm truncate">{{ booking.customer.name }}</div>
+                                        <div class="text-xs text-gray-400 truncate">{{ booking.customer.email }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="font-semibold text-gray-900 text-sm">{{ booking.service.name }}</div>
-                                <div class="text-xs text-gray-400">{{ booking.offering.name }}</div>
+                                <div class="font-medium text-gray-900 text-sm">{{ booking.service.name }}</div>
+                                <div class="text-xs text-gray-400 mt-0.5">{{ booking.offering.name }}</div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-sm text-gray-600">{{ formatDate(booking.booking_date) }}</div>
-                                <div class="text-xs text-gray-400">{{ formatTime(booking.start_time) }} - {{ formatTime(booking.end_time) }}</div>
+                                <div class="text-sm font-medium text-gray-800">{{ formatDate(booking.booking_date) }}</div>
+                                <div class="text-xs text-gray-400 mt-0.5">{{ formatTime(booking.start_time) }} – {{ formatTime(booking.end_time) }}</div>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="text-sm font-bold text-gray-900">${{ Number(booking.total_price).toFixed(2) }}</span>
                             </td>
                             <td class="px-6 py-4">
-                                <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusClasses(booking.status)]">
+                                <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium', getStatusClasses(booking.status)]">
+                                    <span :class="['w-1.5 h-1.5 rounded-full', getStatusDot(booking.status)]"></span>
                                     {{ booking.status.charAt(0).toUpperCase() + booking.status.slice(1) }}
                                 </span>
                             </td>
                             <td class="px-6 py-4">
                                 <Link
                                     :href="route('vendor.bookings.show', booking.id)"
-                                    class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                                    class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 group-hover:text-blue-600 transition-colors"
+                                    @click.stop
                                 >
-                                    View
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                     </svg>
@@ -268,13 +285,13 @@ function formatTime(time) {
                         </tr>
                         <!-- Empty State -->
                         <tr v-if="bookings.data.length === 0">
-                            <td colspan="6" class="px-6 py-12 text-center">
-                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <td colspan="6" class="px-6 py-16 text-center">
+                                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                     <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                                     </svg>
                                 </div>
-                                <h3 class="text-lg font-semibold text-gray-900 mb-1">No bookings yet</h3>
+                                <h3 class="text-base font-semibold text-gray-900 mb-1">No bookings found</h3>
                                 <p class="text-sm text-gray-500">Bookings will appear here once customers make reservations.</p>
                             </td>
                         </tr>
@@ -282,11 +299,11 @@ function formatTime(time) {
                 </table>
 
                 <!-- Pagination -->
-                <div v-if="bookings.total > bookings.per_page" class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                <div v-if="bookings.total > bookings.per_page" class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30">
                     <div class="text-sm text-gray-500">
-                        Showing {{ bookings.from }} to {{ bookings.to }} of {{ bookings.total }} results
+                        Showing <span class="font-medium text-gray-700">{{ bookings.from }}</span> to <span class="font-medium text-gray-700">{{ bookings.to }}</span> of <span class="font-medium text-gray-700">{{ bookings.total }}</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <button
                             v-for="page in Math.ceil(bookings.total / bookings.per_page)"
                             :key="page"
@@ -294,8 +311,8 @@ function formatTime(time) {
                             :class="[
                                 'w-9 h-9 rounded-lg text-sm font-medium transition-colors',
                                 page === bookings.current_page
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-gray-600 hover:bg-gray-100'
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'text-gray-600 hover:bg-white hover:shadow-sm'
                             ]"
                         >
                             {{ page }}
@@ -303,5 +320,6 @@ function formatTime(time) {
                     </div>
                 </div>
             </div>
+        </div>
     </VendorLayout>
 </template>

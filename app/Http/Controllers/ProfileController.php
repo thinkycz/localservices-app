@@ -25,17 +25,6 @@ class ProfileController extends Controller
     }
 
     /**
-     * Display the service provider settings form.
-     */
-    public function settings(Request $request): Response
-    {
-        return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => session('status'),
-        ]);
-    }
-
-    /**
      * Update the user's profile information.
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
@@ -47,10 +36,6 @@ class ProfileController extends Controller
         }
 
         $request->user()->save();
-
-        if ($request->user()->is_service_provider) {
-            return Redirect::route('profile.settings');
-        }
 
         return Redirect::route('profile.edit');
     }

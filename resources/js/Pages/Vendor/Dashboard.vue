@@ -1,7 +1,7 @@
 <script setup>
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
     stats: { type: Array, default: () => [] },
@@ -13,18 +13,23 @@ const props = defineProps({
     overview: { type: Object, default: () => ({}) },
 });
 
-// Alias for template compatibility
 const appointments = computed(() => props.todayBookings);
-const services = computed(() => props.servicePopularity.map(svc => ({
+
+const barColors = [
+    'bg-blue-500',
+    'bg-emerald-500',
+    'bg-violet-500',
+    'bg-amber-500',
+    'bg-rose-500',
+];
+
+const services = computed(() => props.servicePopularity.map((svc, i) => ({
     name: svc.service,
     percent: svc.percentage,
-    barColor: 'bg-blue-500',
+    barColor: barColors[i % barColors.length],
 })));
 
-// Mini Calendar
 const today = new Date();
-const calendarMonth = ref(today.getMonth());
-const calendarYear = ref(today.getFullYear());
 
 function toISODateLocal(date) {
     const y = date.getFullYear();
@@ -51,58 +56,6 @@ const weekEndIso = computed(() => {
     return toISODateLocal(d);
 });
 
-const monthNames = [
-    'January','February','March','April','May','June',
-    'July','August','September','October','November','December',
-];
-
-const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
-// Build calendar grid
-const calendarDays = computed(() => {
-    const year = calendarYear.value;
-    const month = calendarMonth.value;
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const daysInPrev = new Date(year, month, 0).getDate();
-
-    const cells = [];
-    for (let i = firstDay - 1; i >= 0; i--) {
-        cells.push({ day: daysInPrev - i, current: false });
-    }
-    for (let d = 1; d <= daysInMonth; d++) {
-        cells.push({ day: d, current: true });
-    }
-    const remaining = 42 - cells.length;
-    for (let d = 1; d <= remaining; d++) {
-        cells.push({ day: d, current: false });
-    }
-    return cells;
-});
-
-const isToday = (cell) =>
-    cell.current &&
-    cell.day === today.getDate() &&
-    calendarMonth.value === today.getMonth() &&
-    calendarYear.value === today.getFullYear();
-
-function prevMonth() {
-    if (calendarMonth.value === 0) {
-        calendarMonth.value = 11;
-        calendarYear.value--;
-    } else {
-        calendarMonth.value--;
-    }
-}
-function nextMonth() {
-    if (calendarMonth.value === 11) {
-        calendarMonth.value = 0;
-        calendarYear.value++;
-    } else {
-        calendarMonth.value++;
-    }
-}
-
 function formatScheduleDate(date) {
     return new Intl.DateTimeFormat('en-US', {
         weekday: 'long',
@@ -112,32 +65,39 @@ function formatScheduleDate(date) {
     }).format(date);
 }
 
-const todayFormatted = computed(() => formatScheduleDate(today));
-
 const todayScheduleSubtitle = computed(() => formatScheduleDate(today));
 
-// Get avatar background color based on name
 function getAvatarColors(name) {
     const colors = [
-        { bg: 'bg-pink-200', text: 'text-pink-700' },
-        { bg: 'bg-blue-200', text: 'text-blue-700' },
-        { bg: 'bg-green-200', text: 'text-green-700' },
-        { bg: 'bg-purple-200', text: 'text-purple-700' },
-        { bg: 'bg-orange-200', text: 'text-orange-700' },
-        { bg: 'bg-teal-200', text: 'text-teal-700' },
+        { bg: 'bg-pink-100', text: 'text-pink-600' },
+        { bg: 'bg-blue-100', text: 'text-blue-600' },
+        { bg: 'bg-emerald-100', text: 'text-emerald-600' },
+        { bg: 'bg-violet-100', text: 'text-violet-600' },
+        { bg: 'bg-amber-100', text: 'text-amber-600' },
+        { bg: 'bg-teal-100', text: 'text-teal-600' },
     ];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
 }
 
 function getStatusClasses(status) {
+    const s = status.toUpperCase();
     const statusMap = {
-        'PENDING': { bg: 'bg-orange-50', text: 'text-orange-500', border: 'border-orange-400' },
-        'CONFIRMED': { bg: 'bg-green-50', text: 'text-green-600', border: 'border-blue-500' },
-        'COMPLETED': { bg: 'bg-gray-100', text: 'text-gray-400', border: 'border-gray-300' },
-        'CANCELLED': { bg: 'bg-red-50', text: 'text-red-500', border: 'border-red-400' },
+        'PENDING': { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-400', dot: 'bg-amber-400' },
+        'CONFIRMED': { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-500', dot: 'bg-blue-500' },
+        'COMPLETED': { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-400', dot: 'bg-emerald-400' },
+        'CANCELLED': { bg: 'bg-red-50', text: 'text-red-500', border: 'border-red-400', dot: 'bg-red-400' },
     };
-    return statusMap[status] || statusMap['PENDING'];
+    return statusMap[s] || statusMap['PENDING'];
+}
+
+function formatPrice(price) {
+    return '$' + Number(price).toFixed(2);
+}
+
+function formatDate(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 </script>
 
@@ -150,7 +110,7 @@ function getStatusClasses(status) {
             <div
                 v-for="stat in stats"
                 :key="stat.label"
-                class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+                class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
                 <div class="flex items-start justify-between mb-4">
                     <!-- Icon -->
@@ -202,35 +162,36 @@ function getStatusClasses(status) {
         </div>
 
         <!-- ── Main Grid: Schedule + Right Panel ──────────────────────── -->
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-3 gap-4 mb-6">
             <!-- Today's Schedule (spans 2 cols) -->
             <div class="col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
                 <!-- Header -->
                 <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-50">
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900">Today's Schedule</h2>
-                    <p class="text-sm text-gray-400 mt-0.5">{{ todayScheduleSubtitle }}</p>
-                </div>
-
-                    <div class="flex items-center gap-3">
-                        <!-- Filter icon -->
-                        <button class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
-                            </svg>
-                        </button>
-                        <!-- View Week button -->
-                        <Link
-                            :href="route('vendor.calendar', { start_date: weekStartIso, end_date: weekEndIso, view: 'week' })"
-                            class="bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
-                        >
-                            View Week
-                        </Link>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Today's Schedule</h2>
+                        <p class="text-sm text-gray-400 mt-0.5">{{ todayScheduleSubtitle }}</p>
                     </div>
+                    <Link
+                        :href="route('vendor.calendar', { start_date: weekStartIso, end_date: weekEndIso, view: 'week' })"
+                        class="bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+                    >
+                        View Week
+                    </Link>
                 </div>
 
                 <!-- Appointment List -->
-                <div class="flex-1 px-6 py-4 space-y-4">
+                <div class="flex-1 px-6 py-4 space-y-3">
+                    <!-- Empty state -->
+                    <div v-if="appointments.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-sm font-semibold text-gray-500 mb-1">No bookings today</h3>
+                        <p class="text-xs text-gray-400">Your schedule is clear for today. Enjoy your free time!</p>
+                    </div>
+
                     <div
                         v-for="appt in appointments"
                         :key="appt.id"
@@ -250,14 +211,15 @@ function getStatusClasses(status) {
                         </div>
 
                         <!-- Card -->
-                        <div
+                        <Link
+                            :href="route('vendor.bookings.show', appt.id)"
                             :class="[
-                                'flex-1 rounded-xl border-l-4 bg-gray-50 px-4 py-3',
+                                'flex-1 rounded-xl border-l-4 bg-gray-50 hover:bg-gray-100 px-4 py-3 transition-colors cursor-pointer',
                                 getStatusClasses(appt.status).border,
                                 appt.completed ? 'opacity-70' : '',
                             ]"
                         >
-                            <div class="flex items-start justify-between">
+                            <div class="flex items-center justify-between">
                                 <!-- Title + Status -->
                                 <div class="flex items-center gap-3 flex-wrap">
                                     <span
@@ -283,9 +245,8 @@ function getStatusClasses(status) {
                             </div>
 
                             <!-- Customer row -->
-                            <div class="flex items-center justify-between mt-2">
+                            <div class="flex items-center mt-2">
                                 <div class="flex items-center gap-2">
-                                    <!-- Avatar -->
                                     <div
                                         :class="[
                                             'w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0',
@@ -304,43 +265,13 @@ function getStatusClasses(status) {
                                         {{ appt.customer }}
                                     </span>
                                 </div>
-
-                                <!-- Action icons -->
-                                <div class="flex items-center gap-2">
-                                    <button
-                                        :class="[
-                                            'p-1.5 rounded-lg transition-colors',
-                                            appt.completed
-                                                ? 'text-gray-300'
-                                                : 'text-blue-400 hover:bg-blue-50',
-                                        ]"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                                        </svg>
-                                    </button>
-                                    <button
-                                        :class="[
-                                            'p-1.5 rounded-lg transition-colors',
-                                            appt.completed
-                                                ? 'text-gray-300'
-                                                : 'text-gray-400 hover:bg-gray-100',
-                                        ]"
-                                    >
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                            <circle cx="12" cy="5" r="1.5"/>
-                                            <circle cx="12" cy="12" r="1.5"/>
-                                            <circle cx="12" cy="19" r="1.5"/>
-                                        </svg>
-                                    </button>
-                                </div>
                             </div>
-                        </div>
+                        </Link>
                     </div>
                 </div>
 
                 <!-- Footer link -->
-                <div class="px-6 py-4 border-t border-gray-50 text-center">
+                <div v-if="appointments.length > 0" class="px-6 py-4 border-t border-gray-50 text-center">
                     <Link
                         :href="route('vendor.bookings.index', { date_from: todayIso, date_to: todayIso, sort: 'date_asc' })"
                         class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
@@ -353,66 +284,6 @@ function getStatusClasses(status) {
             <!-- ── Right Panel ──────────────────────────────────────── -->
             <div class="col-span-1 flex flex-col gap-4">
 
-                <!-- Mini Calendar -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                    <!-- Month header -->
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-gray-900 text-sm">
-                            {{ monthNames[calendarMonth] }} {{ calendarYear }}
-                        </h3>
-                        <div class="flex items-center gap-1">
-                            <button
-                                @click="prevMonth"
-                                class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                                </svg>
-                            </button>
-                            <button
-                                @click="nextMonth"
-                                class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Day headers -->
-                    <div class="grid grid-cols-7 mb-2">
-                        <div
-                            v-for="d in dayHeaders"
-                            :key="d + Math.random()"
-                            class="text-center text-xs font-medium text-gray-400 py-1"
-                        >
-                            {{ d }}
-                        </div>
-                    </div>
-
-                    <!-- Day cells -->
-                    <div class="grid grid-cols-7 gap-y-1">
-                        <div
-                            v-for="(cell, idx) in calendarDays"
-                            :key="idx"
-                            class="flex items-center justify-center"
-                        >
-                            <span
-                                :class="[
-                                    'w-7 h-7 flex items-center justify-center rounded-full text-xs font-medium cursor-pointer transition-colors',
-                                    isToday(cell)
-                                        ? 'bg-blue-600 text-white font-bold'
-                                        : cell.current
-                                        ? 'text-gray-700 hover:bg-gray-100'
-                                        : 'text-gray-300',
-                                ]"
-                            >
-                                {{ cell.day }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Service Popularity -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -439,28 +310,90 @@ function getStatusClasses(status) {
                         No booking data available yet
                     </div>
                 </div>
-
-                <!-- Business Tip -->
-                <div class="bg-blue-600 rounded-2xl p-5 text-white">
-                    <div class="flex items-start gap-3 mb-3">
-                        <!-- Lightbulb icon -->
-                        <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                            </svg>
-                        </div>
-                        <h3 class="font-bold text-base leading-tight">Business Tip</h3>
-                    </div>
-                    <p class="text-sm text-blue-100 leading-relaxed mb-4">
-                        {{ overview.returning_customers > 0 
-                            ? `You have ${overview.returning_customers} returning customers. Offer them a loyalty discount to increase retention.` 
-                            : 'Build customer loyalty by offering discounts to returning customers and asking for reviews.' }}
-                    </p>
-                    <button class="w-full bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">
-                        Action Tips
-                    </button>
-                </div>
             </div>
+        </div>
+
+        <!-- ── Recent Bookings ──────────────────────────────────────── -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-50">
+                <h2 class="text-lg font-bold text-gray-900">Recent Bookings</h2>
+                <Link
+                    :href="route('vendor.bookings.index')"
+                    class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                    View All
+                </Link>
+            </div>
+
+            <div v-if="recentBookings.length === 0" class="px-6 py-12 text-center">
+                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+                    <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                </div>
+                <h3 class="text-sm font-semibold text-gray-500 mb-1">No bookings yet</h3>
+                <p class="text-xs text-gray-400">Bookings will appear here once customers start booking your services.</p>
+            </div>
+
+            <table v-else class="w-full">
+                <thead>
+                    <tr class="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <th class="px-6 py-3">Customer</th>
+                        <th class="px-6 py-3">Service</th>
+                        <th class="px-6 py-3">Date</th>
+                        <th class="px-6 py-3">Time</th>
+                        <th class="px-6 py-3">Status</th>
+                        <th class="px-6 py-3 text-right">Price</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <tr
+                        v-for="booking in recentBookings"
+                        :key="booking.id"
+                        class="hover:bg-gray-50 transition-colors cursor-pointer"
+                        @click="$inertia.visit(route('vendor.bookings.show', booking.id))"
+                    >
+                        <td class="px-6 py-3.5">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    :class="[
+                                        'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0',
+                                        getAvatarColors(booking.customer_name).bg,
+                                        getAvatarColors(booking.customer_name).text,
+                                    ]"
+                                >
+                                    {{ booking.customer_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() }}
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">{{ booking.customer_name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <span class="text-sm text-gray-600">{{ booking.offering_name }}</span>
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <span class="text-sm text-gray-600">{{ formatDate(booking.date) }}</span>
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <span class="text-sm text-gray-600">{{ booking.time }}</span>
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <span
+                                :class="[
+                                    'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full',
+                                    getStatusClasses(booking.status).bg,
+                                    getStatusClasses(booking.status).text,
+                                ]"
+                            >
+                                <span :class="['w-1.5 h-1.5 rounded-full', getStatusClasses(booking.status).dot]"></span>
+                                {{ booking.status.charAt(0).toUpperCase() + booking.status.slice(1) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-3.5 text-right">
+                            <span class="text-sm font-semibold text-gray-900">{{ formatPrice(booking.price) }}</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </VendorLayout>
 </template>

@@ -29,7 +29,6 @@ const selectedPriceRanges = ref(
 );
 
 const minRating = ref(props.filters.min_rating ? Number(props.filters.min_rating) : null);
-const distance = ref(15);
 
 function toggleCategory(slug) {
     const idx = selectedCategories.value.indexOf(slug);
@@ -71,7 +70,6 @@ function clearAll() {
     selectedCategories.value = [];
     selectedPriceRanges.value = [];
     minRating.value = null;
-    distance.value = 15;
     router.get(route('services.index'), props.filters.q ? { q: props.filters.q } : {});
 }
 
@@ -171,24 +169,6 @@ const priceLabels = ['$', '$$', '$$$', '$$$$'];
             </div>
         </div>
 
-        <!-- Distance -->
-        <div class="mb-6">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Distance</h4>
-                <span class="text-sm font-semibold text-blue-600">{{ distance }} miles</span>
-            </div>
-            <input
-                v-model="distance"
-                type="range"
-                min="0"
-                max="50"
-                step="1"
-                class="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600"
-            />
-            <div class="flex justify-between text-xs text-gray-400 mt-1">
-                <span>0 MI</span>
-                <span>50 MI</span>
-            </div>
-        </div>
+
     </aside>
 </template>

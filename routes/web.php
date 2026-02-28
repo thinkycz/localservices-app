@@ -94,10 +94,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-reviews', [ReviewController::class, 'userReviews'])->name('reviews.user');
 });
 
-// Notifications + Messages pages (auth required)
+// Messages pages (auth required)
 Route::middleware('auth')->group(function () {
-    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
-
     Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
     Route::get('/messages/{conversation}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show')->whereNumber('conversation');
     Route::post('/services/{service}/message', [\App\Http\Controllers\MessageController::class, 'start'])->name('messages.start');
@@ -185,7 +183,6 @@ Route::prefix('vendor')->middleware(['auth', 'verified', 'service.provider'])->g
 // Profile (auth required)
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::get('/settings', [ProfileController::class, 'settings'])->name('profile.settings');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });

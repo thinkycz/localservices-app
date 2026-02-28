@@ -20,13 +20,26 @@ watch(
     }
 );
 
-const startHour = 8;
-const endHour = 18;
 const hourHeight = 80;
+
+const startHour = computed(() => {
+    if (!bookings.value.length) return 8;
+    const minHour = Math.min(...bookings.value.map(b => b.startHour));
+    return Math.min(minHour, 6);
+});
+
+const endHour = computed(() => {
+    if (!bookings.value.length) return 18;
+    const maxHour = Math.max(...bookings.value.map(b => {
+        const endH = b.startHour + Math.ceil((b.startMin + b.duration) / 60);
+        return endH;
+    }));
+    return Math.max(maxHour, 18);
+});
 
 const timeSlots = computed(() => {
     const slots = [];
-    for (let h = startHour; h <= endHour; h++) {
+    for (let h = startHour.value; h <= endHour.value; h++) {
         const period = h < 12 ? 'AM' : 'PM';
         const display = h > 12 ? h - 12 : h === 0 ? 12 : h;
         slots.push(`${String(display).padStart(2, '0')}:00 ${period}`);
@@ -34,7 +47,7 @@ const timeSlots = computed(() => {
     return slots;
 });
 
-const gridHeight = computed(() => (endHour - startHour) * hourHeight);
+const gridHeight = computed(() => (endHour.value - startHour.value) * hourHeight);
 
 const bookings = computed(() => props.bookings || []);
 
@@ -156,7 +169,7 @@ function changeView(view) {
 }
 
 function getBookingTop(booking) {
-    return (booking.startHour - startHour + booking.startMin / 60) * hourHeight;
+    return (booking.startHour - startHour.value + booking.startMin / 60) * hourHeight;
 }
 
 function getBookingHeight(booking) {
@@ -167,7 +180,7 @@ const currentTimeTop = computed(() => {
     const now = new Date();
     const currentHour = now.getHours();
     const currentMin = now.getMinutes();
-    return (currentHour - startHour + currentMin / 60) * hourHeight;
+    return (currentHour - startHour.value + currentMin / 60) * hourHeight;
 });
 
 const currentTimeLabel = computed(() => {
@@ -175,7 +188,7 @@ const currentTimeLabel = computed(() => {
     return now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 });
 
-const lunchBreakTop = computed(() => (12 - startHour) * hourHeight);
+const lunchBreakTop = computed(() => (12 - startHour.value) * hourHeight);
 
 const cardStyles = {
     blue: {
@@ -510,58 +523,109 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
 
                             <!-- Action buttons -->
                             <div class="px-5 py-4 space-y-2 border-b border-gray-100">
-                                <button class="w-full flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors">
+                                <Link
+                                    :href="route('vendor.bookings.show', selectedBooking.id)"
+                                    class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    View Booking
+                                </Link>
+                                <a
+                                    v-if="selectedBooking.customerEmail"
+                                    :href="'mailto:' + selectedBooking.customerEmail"
+                                    class="w-full flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                     </svg>
                                     Send Email
-                                </button>
-                                <button class="w-full flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors">
+                                </a>
+                                <a
+                                    v-if="selectedBooking.customerPhone"
+                                    :href="'tel:' + selectedBooking.customerPhone"
+                                    class="w-full flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                                     </svg>
                                     Call Customer
-                                </button>
+                                </a>
                             </div>
 
-                            <!-- Approval section (pending only) -->
-                            <div v-if="selectedBooking.status === 'pending'" class="px-5 py-4">
-                                <div class="flex items-center gap-2 mb-3">
-                                    <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span class="text-xs font-bold text-amber-600">Waiting for your approval</span>
-                                </div>
-                                <div class="flex gap-2">
-                                    <Link 
-                                        :href="route('vendor.bookings.cancel', selectedBooking.id)" 
-                                        method="post"
-                                        as="button"
-                                        class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors"
-                                    >
-                                        Decline
-                                    </Link>
-                                    <Link 
-                                        :href="route('vendor.bookings.confirm', selectedBooking.id)" 
-                                        method="post"
-                                        as="button"
-                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
-                                    >
-                                        Approve
-                                    </Link>
-                                </div>
-                            </div>
+                            <!-- Status actions -->
+                            <div class="px-5 py-4">
+                                <!-- Pending: Approve + Decline -->
+                                <template v-if="selectedBooking.status === 'pending'">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span class="text-xs font-bold text-amber-600">Waiting for your approval</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <Link 
+                                            :href="route('vendor.bookings.cancel', selectedBooking.id)" 
+                                            method="post"
+                                            as="button"
+                                            class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                        >
+                                            Decline
+                                        </Link>
+                                        <Link 
+                                            :href="route('vendor.bookings.confirm', selectedBooking.id)" 
+                                            method="post"
+                                            as="button"
+                                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                        >
+                                            Approve
+                                        </Link>
+                                    </div>
+                                </template>
 
-                            <!-- Complete button (confirmed only) -->
-                            <div v-else-if="selectedBooking.status === 'confirmed'" class="px-5 py-4">
-                                <Link 
-                                    :href="route('vendor.bookings.complete', selectedBooking.id)" 
-                                    method="post"
-                                    as="button"
-                                    class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
-                                >
-                                    Mark as Completed
-                                </Link>
+                                <!-- Confirmed: Complete + Cancel -->
+                                <template v-else-if="selectedBooking.status === 'confirmed'">
+                                    <div class="flex gap-2">
+                                        <Link 
+                                            :href="route('vendor.bookings.cancel', selectedBooking.id)" 
+                                            method="post"
+                                            as="button"
+                                            class="flex-1 border border-red-200 hover:bg-red-50 text-red-600 font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                        >
+                                            Cancel
+                                        </Link>
+                                        <Link 
+                                            :href="route('vendor.bookings.complete', selectedBooking.id)" 
+                                            method="post"
+                                            as="button"
+                                            class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                        >
+                                            Mark Completed
+                                        </Link>
+                                    </div>
+                                </template>
+
+                                <!-- Completed -->
+                                <template v-else-if="selectedBooking.status === 'completed'">
+                                    <div class="flex items-center gap-2 text-green-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span class="text-xs font-bold">Completed</span>
+                                    </div>
+                                </template>
+
+                                <!-- Cancelled -->
+                                <template v-else-if="selectedBooking.status === 'cancelled'">
+                                    <div class="flex items-center gap-2 text-red-500">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span class="text-xs font-bold">Cancelled</span>
+                                    </div>
+                                </template>
                             </div>
 
                         </div>

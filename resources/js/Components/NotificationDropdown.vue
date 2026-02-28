@@ -70,21 +70,14 @@
         </div>
       </div>
 
-      <div class="p-3 border-t border-gray-200 text-center">
-        <Link
-          :href="route('notifications.index')"
-          class="text-sm text-blue-600 hover:text-blue-800 font-medium"
-        >
-          View all notifications
-        </Link>
-      </div>
+
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 
 const isOpen = ref(false);
 const notifications = ref([]);

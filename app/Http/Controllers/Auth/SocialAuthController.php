@@ -57,7 +57,7 @@ class SocialAuthController extends Controller
                 ->first();
 
             if ($existing) {
-                return redirect()->route('profile.settings')
+                return redirect()->route('profile.edit')
                     ->with('error', 'This ' . ucfirst($provider) . ' account is already linked to another user.');
             }
 
@@ -66,7 +66,7 @@ class SocialAuthController extends Controller
                 'social_id' => $socialUser->getId(),
             ]);
 
-            return redirect()->route('profile.settings')
+            return redirect()->route('profile.edit')
                 ->with('success', ucfirst($provider) . ' account linked successfully.');
         }
 

@@ -122,9 +122,15 @@ class ServiceController extends Controller
             });
         }
 
+        $bookings = \App\Models\Booking::where('provider_id', $service->user_id)
+            ->where('booking_date', '>=', now()->toDateString())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->get(['booking_date', 'start_time', 'end_time']);
+
         return Inertia::render('Services/Show', [
             'service' => $service,
             'related' => $related,
+            'bookings' => $bookings,
         ]);
     }
 }

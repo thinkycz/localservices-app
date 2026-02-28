@@ -34,7 +34,7 @@ class ServiceSeeder extends Seeder
                 'city' => 'New York',
                 'state' => 'NY',
                 'address' => '123 Main St, New York, NY 10001',
-                'opening_hours' => 'Mon - Fri: 9:00 AM - 7:00 PM | Sat: 9:00 AM - 5:00 PM',
+                'is_online_only' => false,
                 'latitude' => 40.7484,
                 'longitude' => -73.9857,
             ],

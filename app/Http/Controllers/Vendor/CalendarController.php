@@ -89,10 +89,12 @@ class CalendarController extends Controller
                 'avatarBg' => $this->getAvatarBg($booking->customer->name),
                 'avatarText' => $this->getAvatarText($booking->customer->name),
                 'dateStr' => Carbon::parse($booking->booking_date)->format('D, M d'),
-                'timeStr' => $startTime->format('h:i A').' - '.$endTime->format('h:i A'),
-                'price' => '$'.number_format($booking->total_price, 2),
+                'timeStr' => $startTime->format('h:i A') . ' - ' . $endTime->format('h:i A'),
+                'price' => '$' . number_format($booking->total_price, 2),
                 'customerType' => $customerType,
-                'notes' => $booking->customer_notes ? '"'.$booking->customer_notes.'"' : '',
+                'notes' => $booking->customer_notes ? '"' . $booking->customer_notes . '"' : '',
+                'customerEmail' => $booking->customer->email,
+                'customerPhone' => $booking->customer->phone,
             ];
         });
 
@@ -115,7 +117,7 @@ class CalendarController extends Controller
         } elseif ($view === 'day' || $view === 'today') {
             $rangeLabel = $startDate->format('M d, Y');
         } else {
-            $rangeLabel = $startDate->format('M d').' – '.$endDate->format('M d, Y');
+            $rangeLabel = $startDate->format('M d') . ' – ' . $endDate->format('M d, Y');
         }
 
         // Calculate stats for the week
@@ -148,7 +150,7 @@ class CalendarController extends Controller
     {
         $words = explode(' ', trim($name));
         if (count($words) >= 2) {
-            return strtoupper($words[0][0].$words[1][0]);
+            return strtoupper($words[0][0] . $words[1][0]);
         }
 
         return strtoupper(substr($name, 0, 2));
