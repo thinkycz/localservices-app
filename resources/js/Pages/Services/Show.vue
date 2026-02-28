@@ -51,6 +51,7 @@ const today = new Date();
 const calMonth = ref(today.getMonth());
 const calYear  = ref(today.getFullYear());
 const selectedDay = ref(today.getDate());
+const selectedTime = ref(null);
 
 const MONTH_NAMES = [
     'January','February','March','April','May','June',
@@ -68,16 +69,100 @@ const calendarDays = computed(() => {
 function prevMonth() {
     if (calMonth.value === 0) { calMonth.value = 11; calYear.value--; }
     else calMonth.value--;
+    
+    // Auto-select first available day in the new month
     selectedDay.value = null;
+    selectedTime.value = null;
 }
 function nextMonth() {
     if (calMonth.value === 11) { calMonth.value = 0; calYear.value++; }
     else calMonth.value++;
+    
+    // Auto-select first available day in the new month
     selectedDay.value = null;
+    selectedTime.value = null;
 }
 
-const TIME_SLOTS = ['10:00 AM', '11:30 AM', '1:00 PM', '2:30 PM', '4:00 PM', '5:30 PM'];
-const selectedTime = ref('1:00 PM');
+// ── Business Hours Logic ──────────────────────────────────────────────────────
+const businessHours = computed(() => props.service.business_hours || []);
+
+function isDayAvailable(day) {
+    if (!day) return false;
+    
+    // Create date object for the day we're checking
+    const checkDate = new Date(calYear.value, calMonth.value, day);
+    
+    // Strip time from today for comparison
+    const todayStr = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    
+    // Past days are not available
+    if (checkDate.getTime() < todayStr) return false;
+    
+    // 0 = Sunday, 1 = Monday, etc. matching the DB
+    const dayOfWeek = checkDate.getDay();
+    
+    // Check if the service has hours for this day of the week
+    return businessHours.value.some(h => h.day_of_week === dayOfWeek);
+}
+
+const availableTimeSlots = computed(() => {
+    if (!selectedDay.value || !selectedOffering.value || businessHours.value.length === 0) return [];
+    
+    const selectedDate = new Date(calYear.value, calMonth.value, selectedDay.value);
+    const dayOfWeek = selectedDate.getDay();
+    
+    const dayHours = businessHours.value.find(h => h.day_of_week === dayOfWeek);
+    if (!dayHours) return []; // No hours for this day
+    
+    const fromParts = dayHours.time_from.split(':').map(Number);
+    const toParts = dayHours.time_to.split(':').map(Number);
+    
+    const startMins = fromParts[0] * 60 + fromParts[1];
+    const endMins = toParts[0] * 60 + toParts[1];
+    
+    const duration = selectedOffering.value.duration_minutes || 60; // fallback if missing
+    const interval = 30; // 30-minute booking intervals
+    
+    // If selecting today, filter out past time slots (with a 30m grace period)
+    const isToday = today.getFullYear() === calYear.value && 
+                    today.getMonth() === calMonth.value && 
+                    today.getDate() === selectedDay.value;
+                    
+    const currentMins = today.getHours() * 60 + today.getMinutes();
+    
+    const slots = [];
+    let currentSlotMins = startMins;
+    
+    while (currentSlotMins + duration <= endMins) {
+        // Skip if it's today and the slot is too soon or in the past
+        const isSlotValid = !isToday || (currentSlotMins > currentMins + 30);
+        
+        if (isSlotValid) {
+            let h = Math.floor(currentSlotMins / 60);
+            let m = currentSlotMins % 60;
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            let displayH = h % 12;
+            if (displayH === 0) displayH = 12;
+            
+            slots.push(`${displayH}:${m.toString().padStart(2, '0')} ${ampm}`);
+        }
+        
+        currentSlotMins += interval;
+    }
+    
+    return slots;
+});
+
+// Auto-select first available date if nothing is selected
+if (!selectedDay.value || !isDayAvailable(selectedDay.value)) {
+    const nextAvailable = calendarDays.value.find(d => typeof d === 'number' && isDayAvailable(d));
+    if (nextAvailable) {
+        selectedDay.value = nextAvailable;
+    } else {
+        selectedDay.value = null; // Whole month might be booked/unavailable
+    }
+}
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const formattedReviews = computed(() => {
@@ -470,16 +555,19 @@ const mockReviews = [
                                 <div
                                     v-for="(day, idx) in calendarDays"
                                     :key="idx"
-                                    class="aspect-square flex items-center justify-center"
+                                    class="aspect-square flex items-center justify-center p-0.5"
                                 >
                                     <button
                                         v-if="day"
-                                        @click="selectedDay = day"
+                                        @click="isDayAvailable(day) ? selectedDay = day : null"
+                                        :disabled="!isDayAvailable(day)"
                                         :class="[
-                                            'w-8 h-8 rounded-full text-sm font-medium transition-all',
-                                            selectedDay === day
-                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                                                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                                            'w-full h-full rounded-full text-sm font-medium transition-all flex items-center justify-center',
+                                            !isDayAvailable(day)
+                                                ? 'text-gray-300 cursor-not-allowed'
+                                                : selectedDay === day
+                                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                                                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
                                         ]"
                                     >{{ day }}</button>
                                 </div>
@@ -489,13 +577,26 @@ const mockReviews = [
                         <!-- Available Times -->
                         <div class="mb-5">
                             <div class="text-sm font-semibold text-gray-800 mb-3">Available Times</div>
-                            <div class="grid grid-cols-2 gap-2">
+                            
+                            <div v-if="!selectedOffering" class="text-sm text-gray-500 italic py-2">
+                                Please select a service package first.
+                            </div>
+                            <div v-else-if="!selectedDay" class="text-sm text-gray-500 italic py-2">
+                                Please select an available date.
+                            </div>
+                            <div v-else-if="availableTimeSlots.length === 0" class="text-sm text-gray-500 py-2 p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-start gap-2">
+                                <svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>No time slots available for this date. The selected package takes {{ selectedOffering.duration_minutes }} mins.</span>
+                            </div>
+                            <div v-else class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                                 <button
-                                    v-for="slot in TIME_SLOTS"
+                                    v-for="slot in availableTimeSlots"
                                     :key="slot"
                                     @click="selectedTime = slot"
                                     :class="[
-                                        'py-2.5 text-sm font-medium rounded-xl border-2 transition-all',
+                                        'py-2 text-sm font-medium rounded-xl border-2 transition-all',
                                         selectedTime === slot
                                             ? 'border-blue-600 text-blue-600 bg-blue-50 shadow-sm'
                                             : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-500 hover:bg-gray-50'
@@ -514,18 +615,20 @@ const mockReviews = [
 
                         <!-- CTA -->
                         <button
-                            :disabled="!selectedOffering"
+                            :disabled="!selectedOffering || !selectedTime || !selectedDay"
                             @click="goToBooking"
                             :class="[
                                 'w-full py-4 rounded-xl text-base font-bold transition-all duration-200 flex items-center justify-center gap-2 shadow-sm',
-                                selectedOffering
+                                selectedOffering && selectedTime && selectedDay
                                     ? 'bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:shadow-blue-200 text-white transform hover:-translate-y-0.5'
                                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             ]"
                         >
-                            <span v-if="selectedOffering">Confirm &amp; Pay</span>
-                            <span v-else>Select a Service</span>
-                            <svg v-if="selectedOffering" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span v-if="selectedOffering && selectedTime && selectedDay">Confirm &amp; Pay</span>
+                            <span v-else-if="!selectedOffering">Select a Service</span>
+                            <span v-else-if="!selectedDay">Select a Date</span>
+                            <span v-else>Select a Time Slot</span>
+                            <svg v-if="selectedOffering && selectedTime && selectedDay" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                             </svg>
                             <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
