@@ -15,7 +15,7 @@ class ReviewController extends Controller
     /**
      * Display the review form for a completed booking.
      */
-    public function create(Request $request, int $bookingId): Response
+    public function create(Request $request, int $bookingId): Response|RedirectResponse
     {
         $booking = Booking::with(['service', 'offering', 'provider'])
             ->where('user_id', $request->user()->id)
@@ -76,49 +76,6 @@ class ReviewController extends Controller
 
         return redirect()->route('bookings.index')
             ->with('success', 'Thank you for your review!');
-    }
-
-    /**
-     * Display reviews for a service.
-     */
-    public function index(Request $request, string $serviceSlug): Response
-    {
-        $service = Service::where('slug', $serviceSlug)
-            ->with(['category', 'owner'])
-            ->firstOrFail();
-
-        $reviews = Review::with('user')
-            ->where('service_id', $service->id)
-            ->approved()
-            ->orderBy('reviewed_at', 'desc')
-            ->paginate(10);
-
-        // Calculate rating distribution
-        $ratingStats = Review::where('service_id', $service->id)
-            ->approved()
-            ->selectRaw('rating, COUNT(*) as count')
-            ->groupBy('rating')
-            ->pluck('count', 'rating')
-            ->toArray();
-
-        $ratingDistribution = [];
-        for ($i = 5; $i >= 1; $i--) {
-            $count = $ratingStats[$i] ?? 0;
-            $percentage = $service->reviews_count > 0 
-                ? round(($count / $service->reviews_count) * 100) 
-                : 0;
-            $ratingDistribution[] = [
-                'stars' => $i,
-                'count' => $count,
-                'percentage' => $percentage,
-            ];
-        }
-
-        return Inertia::render('Reviews/Index', [
-            'service' => $service,
-            'reviews' => $reviews,
-            'ratingDistribution' => $ratingDistribution,
-        ]);
     }
 
     /**

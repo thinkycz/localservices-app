@@ -146,21 +146,6 @@ if (!selectedDay.value || !isDayAvailable(selectedDay.value)) {
     selectedDay.value = nextAvailable || null;
 }
 
-// ── Share ─────────────────────────────────────────────────────────────────────
-function shareService() {
-    const url = window.location.href;
-    const title = props.service.name;
-    if (navigator.share) {
-        navigator.share({ title, url }).catch(() => {});
-    } else {
-        navigator.clipboard.writeText(url).then(() => {
-            shareTooltip.value = true;
-            setTimeout(() => { shareTooltip.value = false; }, 2000);
-        });
-    }
-}
-const shareTooltip = ref(false);
-
 // ── Review modal ──────────────────────────────────────────────────────────────
 const showReviewModal = ref(false);
 const reviewForm = ref({ rating: 5, text: '' });
@@ -266,23 +251,6 @@ const mockReviews = [
                         </div>
                     </div>
 
-                    <!-- Share + Favorite -->
-                    <div class="flex items-center gap-2 shrink-0">
-                        <div class="relative">
-                            <button @click="shareService" class="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-all border border-white/20 hover:border-white/40">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                                </svg>
-                                Share
-                            </button>
-                            <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
-                                <div v-if="shareTooltip" class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
-                                    Link copied!
-                                </div>
-                            </transition>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

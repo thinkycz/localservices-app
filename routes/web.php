@@ -72,17 +72,13 @@ Route::middleware('auth')->group(function () {
 });
 
 // Reviews (public viewing, auth required for creating)
-Route::get('/services/{slug}/reviews', [ReviewController::class, 'index'])->name('reviews.index');
 Route::middleware('auth')->group(function () {
     Route::get('/reviews/create/{bookingId}', [ReviewController::class, 'create'])->name('reviews.create');
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::get('/my-reviews', [ReviewController::class, 'userReviews'])->name('reviews.user');
 });
 
-
-
 // Static Pages
-Route::get('/about', [PageController::class, 'about'])->name('pages.about');
 Route::get('/terms', [PageController::class, 'terms'])->name('pages.terms');
 Route::get('/privacy', [PageController::class, 'privacy'])->name('pages.privacy');
 Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');
@@ -104,9 +100,6 @@ Route::middleware(['auth', 'verified'])->prefix('become-vendor')->name('vendor.o
 Route::prefix('vendor')->middleware(['auth', 'verified', 'service.provider'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [\App\Http\Controllers\Vendor\DashboardController::class, 'index'])->name('vendor.dashboard');
-
-    // Analytics
-    Route::get('/analytics', [\App\Http\Controllers\Vendor\AnalyticsController::class, 'index'])->name('vendor.analytics');
 
     // Calendar
     Route::get('/calendar', [\App\Http\Controllers\Vendor\CalendarController::class, 'index'])->name('vendor.calendar');

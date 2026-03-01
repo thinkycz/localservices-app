@@ -12,17 +12,6 @@ use Illuminate\Support\Facades\Mail;
 class PageController extends Controller
 {
     /**
-     * Display the About page.
-     */
-    public function about(): Response
-    {
-        return Inertia::render('Pages/About', [
-            'title' => 'About Us',
-            'content' => $this->getAboutContent(),
-        ]);
-    }
-
-    /**
      * Display the Terms of Service page.
      */
     public function terms(): Response
@@ -96,45 +85,6 @@ class PageController extends Controller
         }
 
         return back()->with('success', 'Thank you for your message! We will get back to you within 24 hours.');
-    }
-
-    /**
-     * Get About page content.
-     */
-    private function getAboutContent(): array
-    {
-        return [
-            'mission' => 'Local Services connects skilled service providers with customers who need quality services. Our mission is to make finding and booking local services simple, reliable, and trustworthy.',
-            'story' => 'Founded in 2024, Local Services started with a simple idea: make it easier for people to find trusted local professionals. Today, we serve thousands of customers and service providers across the country.',
-            'values' => [
-                [
-                    'title' => 'Trust & Safety',
-                    'description' => 'We verify all service providers and maintain strict quality standards.',
-                    'icon' => 'shield-check',
-                ],
-                [
-                    'title' => 'Convenience',
-                    'description' => 'Book services anytime, anywhere with our easy-to-use platform.',
-                    'icon' => 'clock',
-                ],
-                [
-                    'title' => 'Quality',
-                    'description' => 'We partner only with skilled professionals who meet our high standards.',
-                    'icon' => 'star',
-                ],
-                [
-                    'title' => 'Community',
-                    'description' => 'Supporting local businesses and building stronger communities.',
-                    'icon' => 'users',
-                ],
-            ],
-            'stats' => [
-                'providers' => '2,500+',
-                'customers' => '50,000+',
-                'bookings' => '100,000+',
-                'cities' => '150+',
-            ],
-        ];
     }
 
     /**
