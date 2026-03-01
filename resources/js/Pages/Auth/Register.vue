@@ -20,18 +20,18 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Register" />
+        <Head :title="$t('Register')" />
 
         <!-- Heading -->
         <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-900">Create your account</h2>
-            <p class="text-sm text-gray-500 mt-1">Join thousands of customers finding trusted local services</p>
+            <h2 class="text-2xl font-bold text-gray-900">{{ $t('Create your account') }}</h2>
+            <p class="text-sm text-gray-500 mt-1">{{ $t('Join thousands of customers finding trusted local services') }}</p>
         </div>
 
         <form @submit.prevent="submit" class="space-y-5">
             <!-- Account Type Slider -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">I want to register as</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">{{ $t('I want to register as') }}</label>
                 <div class="flex items-center gap-3 bg-gray-100 p-1.5 rounded-xl">
                     <button
                         type="button"
@@ -46,9 +46,7 @@ const submit = () => {
                         <div class="flex items-center justify-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                            Regular Customer
-                        </div>
+                            </svg>{{ $t('Regular Customer') }}</div>
                     </button>
                     <button
                         type="button"
@@ -63,9 +61,7 @@ const submit = () => {
                         <div class="flex items-center justify-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                            Service Provider
-                        </div>
+                            </svg>{{ $t('Service Provider') }}</div>
                     </button>
                 </div>
                 <p class="text-xs text-gray-500 mt-2">
@@ -76,7 +72,7 @@ const submit = () => {
 
             <!-- Full Name -->
             <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-1.5">Full name</label>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('Full name') }}</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,7 +86,7 @@ const submit = () => {
                         required
                         autofocus
                         autocomplete="name"
-                        placeholder="John Smith"
+                        :placeholder="$t('John Smith')"
                         class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         :class="{ 'border-red-400 focus:ring-red-400': form.errors.name }"
                     />
@@ -100,7 +96,7 @@ const submit = () => {
 
             <!-- Email -->
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('Email address') }}</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +109,7 @@ const submit = () => {
                         v-model="form.email"
                         required
                         autocomplete="username"
-                        placeholder="you@example.com"
+                        :placeholder="$t('you@example.com')"
                         class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         :class="{ 'border-red-400 focus:ring-red-400': form.errors.email }"
                     />
@@ -123,7 +119,7 @@ const submit = () => {
 
             <!-- Password -->
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('Password') }}</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +132,7 @@ const submit = () => {
                         v-model="form.password"
                         required
                         autocomplete="new-password"
-                        placeholder="Min. 8 characters"
+                        :placeholder="$t('Min. 8 characters')"
                         class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         :class="{ 'border-red-400 focus:ring-red-400': form.errors.password }"
                     />
@@ -146,7 +142,7 @@ const submit = () => {
 
             <!-- Confirm Password -->
             <div>
-                <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1.5">Confirm password</label>
+                <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('Confirm password') }}</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,7 +155,7 @@ const submit = () => {
                         v-model="form.password_confirmation"
                         required
                         autocomplete="new-password"
-                        placeholder="Re-enter your password"
+                        :placeholder="$t('Re-enter your password')"
                         class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         :class="{ 'border-red-400 focus:ring-red-400': form.errors.password_confirmation }"
                     />
@@ -183,11 +179,7 @@ const submit = () => {
 
         <!-- Login link -->
         <div class="mt-6 text-center">
-            <p class="text-sm text-gray-500">
-                Already have an account?
-                <Link :href="route('login')" class="font-semibold text-blue-600 hover:text-blue-700 transition">
-                    Sign in
-                </Link>
+            <p class="text-sm text-gray-500">{{ $t('Already have an account?') }}<Link :href="route('login')" class="font-semibold text-blue-600 hover:text-blue-700 transition">{{ $t('Sign in') }}</Link>
             </p>
         </div>
     </GuestLayout>

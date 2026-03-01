@@ -56,10 +56,8 @@ function formatReviews(n) {
 
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 relative">
                 <div class="max-w-2xl">
-                    <h1 class="text-3xl md:text-4xl font-bold text-white mb-3 leading-tight">
-                        Find & Book Local Services
-                    </h1>
-                    <p class="text-blue-200 text-lg mb-8">Browse top-rated professionals and book appointments instantly.</p>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white mb-3 leading-tight">{{ $t('Find & Book Local Services') }}</h1>
+                    <p class="text-blue-200 text-lg mb-8">{{ $t('Browse top-rated professionals and book appointments instantly.') }}</p>
 
                     <!-- Search bar -->
                     <form @submit.prevent="doSearch" class="flex gap-2">
@@ -70,16 +68,14 @@ function formatReviews(n) {
                             <input
                                 v-model="searchQuery"
                                 type="text"
-                                placeholder="Search services..."
+                                :placeholder="$t('Search services...')"
                                 class="w-full pl-12 pr-4 py-3.5 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-xl text-white placeholder-blue-200/60 focus:outline-none focus:border-white/40 focus:bg-white/15 transition-all text-sm"
                             />
                         </div>
                         <button
                             type="submit"
                             class="px-6 py-3.5 bg-white text-gray-900 font-bold rounded-xl hover:bg-blue-50 transition-colors text-sm shrink-0"
-                        >
-                            Search
-                        </button>
+                        >{{ $t('Search') }}</button>
                     </form>
                 </div>
             </div>
@@ -88,7 +84,7 @@ function formatReviews(n) {
         <!-- Categories -->
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div class="flex items-center justify-between mb-5">
-                <h2 class="text-lg font-bold text-gray-900">Browse by Category</h2>
+                <h2 class="text-lg font-bold text-gray-900">{{ $t('Browse by Category') }}</h2>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
                 <button
@@ -111,12 +107,10 @@ function formatReviews(n) {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between mb-5">
                     <div>
-                        <h2 class="text-lg font-bold text-gray-900">Featured Services</h2>
-                        <p class="text-sm text-gray-500 mt-0.5">Top-rated professionals ready to help</p>
+                        <h2 class="text-lg font-bold text-gray-900">{{ $t('Featured Services') }}</h2>
+                        <p class="text-sm text-gray-500 mt-0.5">{{ $t('Top-rated professionals ready to help') }}</p>
                     </div>
-                    <Link :href="route('services.index')" class="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                        View all
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    <Link :href="route('services.index')" class="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">{{ $t('View all') }}<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </Link>
                 </div>
 
@@ -132,7 +126,7 @@ function formatReviews(n) {
                             <img
                                 v-if="service.image"
                                 :src="service.image"
-                                :alt="service.name"
+                                ::alt="$t('service.name')"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                             <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -179,10 +173,8 @@ function formatReviews(n) {
                                     </svg>
                                     {{ service.available_at }}
                                 </span>
-                                <span v-else class="text-[11px] text-gray-400">Check availability</span>
-                                <span class="text-[11px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
-                                    View
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                <span v-else class="text-[11px] text-gray-400">{{ $t('Check availability') }}</span>
+                                <span class="text-[11px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">{{ $t('View') }}<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                 </span>
                             </div>
                         </div>
@@ -196,7 +188,7 @@ function formatReviews(n) {
                                 d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
                         </svg>
                     </div>
-                    <p class="text-gray-500 text-sm">No services available yet. Check back soon!</p>
+                    <p class="text-gray-500 text-sm">{{ $t('No services available yet. Check back soon!') }}</p>
                 </div>
             </div>
         </section>
@@ -204,8 +196,8 @@ function formatReviews(n) {
         <!-- How It Works -->
         <section class="py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h2 class="text-lg font-bold text-gray-900 mb-2 text-center">How It Works</h2>
-                <p class="text-sm text-gray-500 text-center mb-8">Get started in three simple steps</p>
+                <h2 class="text-lg font-bold text-gray-900 mb-2 text-center">{{ $t('How It Works') }}</h2>
+                <p class="text-sm text-gray-500 text-center mb-8">{{ $t('Get started in three simple steps') }}</p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 text-center hover:shadow-md transition-shadow">
                         <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center mx-auto mb-4">
@@ -213,9 +205,9 @@ function formatReviews(n) {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
-                        <div class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">Step 1</div>
-                        <h3 class="font-bold text-gray-900 mb-1.5">Find</h3>
-                        <p class="text-sm text-gray-500 leading-relaxed">Search and browse services by category or rating.</p>
+                        <div class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">{{ $t('Step 1') }}</div>
+                        <h3 class="font-bold text-gray-900 mb-1.5">{{ $t('Find') }}</h3>
+                        <p class="text-sm text-gray-500 leading-relaxed">{{ $t('Search and browse services by category or rating.') }}</p>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 text-center hover:shadow-md transition-shadow">
                         <div class="w-12 h-12 bg-gradient-to-br from-green-100 to-green-50 rounded-xl flex items-center justify-center mx-auto mb-4">
@@ -223,9 +215,9 @@ function formatReviews(n) {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <div class="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-2">Step 2</div>
-                        <h3 class="font-bold text-gray-900 mb-1.5">Book</h3>
-                        <p class="text-sm text-gray-500 leading-relaxed">Select your preferred time and book instantly.</p>
+                        <div class="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-2">{{ $t('Step 2') }}</div>
+                        <h3 class="font-bold text-gray-900 mb-1.5">{{ $t('Book') }}</h3>
+                        <p class="text-sm text-gray-500 leading-relaxed">{{ $t('Select your preferred time and book instantly.') }}</p>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 text-center hover:shadow-md transition-shadow">
                         <div class="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-50 rounded-xl flex items-center justify-center mx-auto mb-4">
@@ -233,9 +225,9 @@ function formatReviews(n) {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <div class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Step 3</div>
-                        <h3 class="font-bold text-gray-900 mb-1.5">Enjoy</h3>
-                        <p class="text-sm text-gray-500 leading-relaxed">Get quality service from verified professionals.</p>
+                        <div class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">{{ $t('Step 3') }}</div>
+                        <h3 class="font-bold text-gray-900 mb-1.5">{{ $t('Enjoy') }}</h3>
+                        <p class="text-sm text-gray-500 leading-relaxed">{{ $t('Get quality service from verified professionals.') }}</p>
                     </div>
                 </div>
             </div>
@@ -246,15 +238,13 @@ function formatReviews(n) {
             <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
                 <div class="text-center md:text-left relative">
-                    <h2 class="text-xl font-bold text-white mb-2">Are you a service professional?</h2>
-                    <p class="text-blue-200">Join our network and grow your business with new customers.</p>
+                    <h2 class="text-xl font-bold text-white mb-2">{{ $t('Are you a service professional?') }}</h2>
+                    <p class="text-blue-200">{{ $t('Join our network and grow your business with new customers.') }}</p>
                 </div>
                 <Link
                     :href="route('vendor.onboarding.index')"
                     class="bg-white text-gray-900 font-bold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors shrink-0 text-sm relative"
-                >
-                    Become a Provider
-                </Link>
+                >{{ $t('Become a Provider') }}</Link>
             </div>
         </section>
 
@@ -263,19 +253,19 @@ function formatReviews(n) {
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
                     <div class="text-2xl font-bold text-gray-900 mb-0.5">2,500+</div>
-                    <div class="text-xs text-gray-400 font-medium">Verified Providers</div>
+                    <div class="text-xs text-gray-400 font-medium">{{ $t('Verified Providers') }}</div>
                 </div>
                 <div>
                     <div class="text-2xl font-bold text-gray-900 mb-0.5">50,000+</div>
-                    <div class="text-xs text-gray-400 font-medium">Services Completed</div>
+                    <div class="text-xs text-gray-400 font-medium">{{ $t('Services Completed') }}</div>
                 </div>
                 <div>
                     <div class="text-2xl font-bold text-gray-900 mb-0.5">4.8★</div>
-                    <div class="text-xs text-gray-400 font-medium">Average Rating</div>
+                    <div class="text-xs text-gray-400 font-medium">{{ $t('Average Rating') }}</div>
                 </div>
                 <div>
                     <div class="text-2xl font-bold text-gray-900 mb-0.5">24/7</div>
-                    <div class="text-xs text-gray-400 font-medium">Customer Support</div>
+                    <div class="text-xs text-gray-400 font-medium">{{ $t('Customer Support') }}</div>
                 </div>
             </div>
         </section>

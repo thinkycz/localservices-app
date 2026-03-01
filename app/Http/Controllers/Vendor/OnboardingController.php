@@ -154,6 +154,6 @@ class OnboardingController extends Controller
         session()->forget('onboarding');
 
         return redirect()->route('vendor.dashboard')
-            ->with('success', 'Welcome! Your service has been created successfully. You can now start receiving bookings.');
+            ->with('success', __('Welcome! Your service has been created successfully. You can now start receiving bookings.'));
     }
 }

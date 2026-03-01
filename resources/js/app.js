@@ -16,10 +16,21 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
-        return createApp({ render: () => h(App, props) })
+        const vueApp = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
-            .mount(el);
+
+        // Basic i18n translation helper
+        vueApp.config.globalProperties.$t = function (key, replacements = {}) {
+            let translation = this.$page?.props?.translations?.[key] || key;
+            for (let r in replacements) {
+                translation = translation.replace(`:${r}`, replacements[r]);
+            }
+            return translation;
+        };
+
+        vueApp.mount(el);
+        return vueApp;
     },
     progress: {
         color: '#4B5563',

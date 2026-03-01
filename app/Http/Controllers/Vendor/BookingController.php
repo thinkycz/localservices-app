@@ -130,7 +130,7 @@ class BookingController extends Controller
         // Send status update email to customer
         Mail::to($booking->customer->email)->send(new BookingStatusUpdated($booking, $oldStatus, 'confirmed'));
 
-        return back()->with('success', 'Booking confirmed successfully.');
+        return back()->with('success', __('Booking confirmed successfully.'));
     }
 
     /**
@@ -157,7 +157,7 @@ class BookingController extends Controller
         // Send status update email to customer
         Mail::to($booking->customer->email)->send(new BookingStatusUpdated($booking, $oldStatus, 'completed'));
 
-        return back()->with('success', 'Booking marked as completed.');
+        return back()->with('success', __('Booking marked as completed.'));
     }
 
     /**
@@ -193,7 +193,7 @@ class BookingController extends Controller
         // Send status update email to customer
         Mail::to($booking->customer->email)->send(new BookingStatusUpdated($booking, $oldStatus, 'cancelled'));
 
-        return back()->with('success', 'Booking cancelled successfully.');
+        return back()->with('success', __('Booking cancelled successfully.'));
     }
 
     /**
@@ -216,7 +216,7 @@ class BookingController extends Controller
 
         $booking->update(['notes' => $newNotes]);
 
-        return back()->with('success', 'Notes added successfully.');
+        return back()->with('success', __('Notes added successfully.'));
     }
 
     /**

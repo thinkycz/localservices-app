@@ -227,7 +227,7 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
 </script>
 
 <template>
-    <Head title="Calendar" />
+    <Head :title="$t('Calendar')" />
 
     <VendorLayout activePage="calendar">
         <div class="flex flex-col h-full gap-4">
@@ -255,22 +255,22 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                         class="px-4 py-2 text-sm font-semibold transition-colors"
                         :class="currentView === 'today' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
                         @click="changeView('today')"
-                    >TODAY</button>
+                    >{{ $t('TODAY') }}</button>
                     <button
                         class="px-4 py-2 text-sm font-semibold border-l border-gray-200 transition-colors"
                         :class="currentView === 'day' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
                         @click="changeView('day')"
-                    >Day</button>
+                    >{{ $t('Day') }}</button>
                     <button
                         class="px-4 py-2 text-sm font-semibold border-l border-gray-200 transition-colors"
                         :class="currentView === 'week' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
                         @click="changeView('week')"
-                    >Week</button>
+                    >{{ $t('Week') }}</button>
                     <button
                         class="px-4 py-2 text-sm font-semibold border-l border-gray-200 transition-colors"
                         :class="currentView === 'month' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
                         @click="changeView('month')"
-                    >Month</button>
+                    >{{ $t('Month') }}</button>
                 </div>
             </div>
 

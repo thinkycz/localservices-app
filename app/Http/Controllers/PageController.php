@@ -84,7 +84,7 @@ class PageController extends Controller
             Mail::to($to)->send(new ContactSubmissionReceived($submission));
         }
 
-        return back()->with('success', 'Thank you for your message! We will get back to you within 24 hours.');
+        return back()->with('success', __('Thank you for your message! We will get back to you within 24 hours.'));
     }
 
     /**

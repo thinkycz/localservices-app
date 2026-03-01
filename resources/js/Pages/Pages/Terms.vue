@@ -1,6 +1,6 @@
 <template>
   <AppLayout>
-    <Head :title="title" />
+    <Head ::title="$t('title')" />
     
     <!-- Gradient Header -->
     <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900">
@@ -28,9 +28,7 @@
           </div>
 
           <div class="mt-12 pt-8 border-t border-gray-100 text-center">
-            <p class="text-sm font-medium text-gray-500 bg-gray-50 inline-block px-4 py-2 rounded-full">
-              By using Local Services, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
-            </p>
+            <p class="text-sm font-medium text-gray-500 bg-gray-50 inline-block px-4 py-2 rounded-full">{{ $t('By using Local Services, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.') }}</p>
           </div>
         </div>
       </div>

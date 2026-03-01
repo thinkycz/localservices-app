@@ -101,7 +101,7 @@ class BookingController extends Controller
         if (! $providerId) {
             $provider = \App\Models\User::where('is_service_provider', true)->first();
             if (! $provider) {
-                return back()->with('error', 'No service provider available for this service.');
+                return back()->with('error', __('No service provider available for this service.'));
             }
             $providerId = $provider->id;
         }
@@ -170,7 +170,7 @@ class BookingController extends Controller
         Mail::to($booking->provider->email)->send(new NewBookingNotification($booking));
 
         return redirect()->route('bookings.confirmation', $booking->id)
-            ->with('success', 'Booking created successfully!');
+            ->with('success', __('Booking created successfully!'));
     }
 
     /**
@@ -226,7 +226,7 @@ class BookingController extends Controller
 
         // Only allow cancellation of pending or confirmed bookings
         if (! in_array($booking->status, ['pending', 'confirmed'])) {
-            return back()->with('error', 'This booking cannot be cancelled.');
+            return back()->with('error', __('This booking cannot be cancelled.'));
         }
 
         $oldStatus = $booking->status;
@@ -239,6 +239,6 @@ class BookingController extends Controller
         // Notify vendor of cancellation
         Mail::to($booking->provider->email)->send(new \App\Mail\BookingStatusUpdated($booking, $oldStatus, 'cancelled'));
 
-        return back()->with('success', 'Booking cancelled successfully.');
+        return back()->with('success', __('Booking cancelled successfully.'));
     }
 }

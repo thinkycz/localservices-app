@@ -88,16 +88,14 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 
 <template>
     <AppLayout>
-        <Head title="Write a Review" />
+        <Head :title="$t('Write a Review')" />
 
         <!-- Gradient Header -->
         <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <Link :href="route('bookings.index')" class="inline-flex items-center gap-1.5 text-blue-200 hover:text-white text-sm font-medium mb-4 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                    Back to My Bookings
-                </Link>
-                <h1 class="text-2xl font-bold text-white">Write a Review</h1>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>{{ $t('Back to My Bookings') }}</Link>
+                <h1 class="text-2xl font-bold text-white">{{ $t('Write a Review') }}</h1>
                 <p class="text-sm text-blue-200 mt-1">Share your experience with {{ booking.service.name }}</p>
             </div>
         </div>
@@ -131,8 +129,7 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
                     <div class="p-6 space-y-6">
                         <!-- Rating -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 mb-3">
-                                How would you rate your experience? <span class="text-red-400">*</span>
+                            <label class="block text-xs font-semibold text-gray-500 mb-3">{{ $t('How would you rate your experience?') }}<span class="text-red-400">*</span>
                             </label>
                             <div class="flex items-center gap-1.5">
                                 <button
@@ -155,22 +152,21 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
                                     </svg>
                                 </button>
                                 <span v-if="form.rating > 0" class="ml-2 text-sm font-semibold text-gray-700">{{ ratingLabels[form.rating] }}</span>
-                                <span v-else class="ml-2 text-xs text-gray-400">Select a rating</span>
+                                <span v-else class="ml-2 text-xs text-gray-400">{{ $t('Select a rating') }}</span>
                             </div>
                             <p v-if="form.errors.rating" class="text-red-500 text-xs mt-1.5">{{ form.errors.rating }}</p>
                         </div>
 
                         <!-- Review Text -->
                         <div>
-                            <label for="comment" class="block text-xs font-semibold text-gray-500 mb-1.5">
-                                Tell us about your experience <span class="text-red-400">*</span>
+                            <label for="comment" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Tell us about your experience') }}<span class="text-red-400">*</span>
                             </label>
                             <textarea
                                 id="comment"
                                 v-model="form.comment"
                                 rows="4"
                                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition resize-none"
-                                placeholder="What did you like? How was the service quality? Would you recommend it?"
+                                :placeholder="$t('What did you like? How was the service quality? Would you recommend it?')"
                                 required
                                 minlength="10"
                             ></textarea>
@@ -182,8 +178,7 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 
                         <!-- Tags -->
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 mb-2">
-                                Tags <span class="text-gray-300 font-normal">(optional)</span>
+                            <label class="block text-xs font-semibold text-gray-500 mb-2">{{ $t('Tags') }}<span class="text-gray-300 font-normal">{{ $t('(optional)') }}</span>
                             </label>
                             <div class="flex flex-wrap gap-2">
                                 <button
@@ -206,14 +201,12 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 
                     <!-- Submit Footer -->
                     <div class="px-6 py-4 border-t border-gray-50 flex items-center justify-between bg-gray-50/50">
-                        <p class="text-[11px] text-gray-400 hidden sm:block">Your review will be public.</p>
+                        <p class="text-[11px] text-gray-400 hidden sm:block">{{ $t('Your review will be public.') }}</p>
                         <div class="flex gap-2.5 ml-auto">
                             <Link
                                 :href="route('bookings.index')"
                                 class="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                                Cancel
-                            </Link>
+                            >{{ $t('Cancel') }}</Link>
                             <button
                                 type="submit"
                                 :disabled="isSubmitting || form.rating === 0 || form.comment.length < 10"

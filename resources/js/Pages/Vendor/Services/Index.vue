@@ -66,7 +66,7 @@ function getBadgeClasses(color) {
 </script>
 
 <template>
-    <Head title="My Services" />
+    <Head :title="$t('My Services')" />
 
     <VendorLayout activePage="services">
         <div class="flex flex-col gap-6">
@@ -79,7 +79,7 @@ function getBadgeClasses(color) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                         </svg>
                     </div>
-                    <div class="text-xs text-gray-500 mb-0.5">Total Services</div>
+                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Services') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ stats.total_services }}</div>
                 </div>
 
@@ -89,7 +89,7 @@ function getBadgeClasses(color) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                     </div>
-                    <div class="text-xs text-gray-500 mb-0.5">Total Offerings</div>
+                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Offerings') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ stats.total_offerings }}</div>
                 </div>
 
@@ -99,7 +99,7 @@ function getBadgeClasses(color) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <div class="text-xs text-gray-500 mb-0.5">Active Services</div>
+                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Active Services') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ stats.available_services }}</div>
                 </div>
 
@@ -109,7 +109,7 @@ function getBadgeClasses(color) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <div class="text-xs text-gray-500 mb-0.5">Potential Revenue</div>
+                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Potential Revenue') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ formatPrice(stats.potential_revenue) }}</div>
                 </div>
             </div>
@@ -124,7 +124,7 @@ function getBadgeClasses(color) {
                         <input
                             v-model="searchQuery"
                             type="text"
-                            placeholder="Search services by name..."
+                            :placeholder="$t('Search services by name...')"
                             class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             @keyup.enter="handleSearch"
                         />
@@ -134,15 +134,15 @@ function getBadgeClasses(color) {
                         <button
                             @click="setStatus('all')"
                             :class="['px-4 py-2 text-sm font-medium rounded-xl transition-colors', activeStatus === 'all' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700']"
-                        >All</button>
+                        >{{ $t('All') }}</button>
                         <button
                             @click="setStatus('available')"
                             :class="['px-4 py-2 text-sm font-medium rounded-xl transition-colors', activeStatus === 'available' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700']"
-                        >Active</button>
+                        >{{ $t('Active') }}</button>
                         <button
                             @click="setStatus('unavailable')"
                             :class="['px-4 py-2 text-sm font-medium rounded-xl transition-colors', activeStatus === 'unavailable' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700']"
-                        >Inactive</button>
+                        >{{ $t('Inactive') }}</button>
                     </div>
 
                     <Link
@@ -151,9 +151,7 @@ function getBadgeClasses(color) {
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Service
-                    </Link>
+                        </svg>{{ $t('Add Service') }}</Link>
                 </div>
             </div>
 
@@ -162,12 +160,12 @@ function getBadgeClasses(color) {
                 <table class="w-full">
                     <thead>
                         <tr class="bg-gray-50/80">
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Offerings</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Starting Price</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Service') }}</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Category') }}</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Offerings') }}</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Starting Price') }}</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Status') }}</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Created') }}</th>
                             <th class="px-6 py-3"></th>
                         </tr>
                     </thead>
@@ -225,7 +223,7 @@ function getBadgeClasses(color) {
                                         :href="route('vendor.services.show', service.id)"
                                         class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                         @click.stop
-                                        title="Manage"
+                                        :title="$t('Manage')"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -234,7 +232,7 @@ function getBadgeClasses(color) {
                                     <button
                                         @click.stop="deleteService(service.id)"
                                         class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Delete"
+                                        :title="$t('Delete')"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -254,30 +252,27 @@ function getBadgeClasses(color) {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                     </svg>
                 </div>
-                <h3 class="text-base font-semibold text-gray-900 mb-1">No services yet</h3>
-                <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">Start by adding your first service to attract customers.</p>
+                <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No services yet') }}</h3>
+                <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">{{ $t('Start by adding your first service to attract customers.') }}</p>
                 <Link
                     :href="route('vendor.services.create')"
                     class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium text-sm rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md transform hover:-translate-y-0.5"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Your First Service
-                </Link>
+                    </svg>{{ $t('Add Your First Service') }}</Link>
             </div>
 
             <!-- Pagination -->
             <div v-if="services.last_page > 1" class="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-4 flex items-center justify-between">
-                <div class="text-sm text-gray-500">
-                    Showing <span class="font-medium text-gray-700">{{ services.from }}</span> to <span class="font-medium text-gray-700">{{ services.to }}</span> of <span class="font-medium text-gray-700">{{ services.total }}</span>
+                <div class="text-sm text-gray-500">{{ $t('Showing') }}<span class="font-medium text-gray-700">{{ services.from }}</span>{{ $t('to') }}<span class="font-medium text-gray-700">{{ services.to }}</span>{{ $t('of') }}<span class="font-medium text-gray-700">{{ services.total }}</span>
                 </div>
                 <div class="flex items-center gap-1">
                     <Link
                         v-if="services.prev_page_url"
                         :href="services.prev_page_url"
                         class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >Previous</Link>
+                    >{{ $t('Previous') }}</Link>
                     
                     <template v-for="page in services.last_page" :key="page">
                         <Link

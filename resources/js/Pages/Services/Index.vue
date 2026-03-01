@@ -52,7 +52,7 @@ const searchTitle = computed(() => {
 
                         <!-- Sort -->
                         <div class="flex items-center gap-2 shrink-0">
-                            <span class="text-xs font-semibold text-blue-300 mr-0.5 hidden sm:block">Sort:</span>
+                            <span class="text-xs font-semibold text-blue-300 mr-0.5 hidden sm:block">{{ $t('Sort:') }}</span>
                             <button
                                 v-for="opt in sortOptions"
                                 :key="opt.value"
@@ -89,8 +89,8 @@ const searchTitle = computed(() => {
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">No services found</h3>
-                    <p class="text-gray-500 text-sm max-w-sm mx-auto">Try adjusting your filters or search terms.</p>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $t('No services found') }}</h3>
+                    <p class="text-gray-500 text-sm max-w-sm mx-auto">{{ $t('Try adjusting your filters or search terms.') }}</p>
                 </div>
 
                 <!-- Pagination -->
@@ -99,9 +99,7 @@ const searchTitle = computed(() => {
                         <Link
                             :href="services.next_page_url"
                             class="px-8 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
-                        >
-                            Load More
-                        </Link>
+                        >{{ $t('Load More') }}</Link>
                     </div>
 
                     <AppPagination

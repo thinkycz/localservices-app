@@ -76,7 +76,7 @@ const deleteAccount = () => {
 </script>
 
 <template>
-    <Head title="My Profile" />
+    <Head :title="$t('My Profile')" />
 
     <AppLayout>
         <!-- Gradient Header -->
@@ -105,14 +105,14 @@ const deleteAccount = () => {
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-gray-900">Profile Information</h3>
-                            <p class="text-[11px] text-gray-400">Update your name and email address</p>
+                            <h3 class="text-sm font-bold text-gray-900">{{ $t('Profile Information') }}</h3>
+                            <p class="text-[11px] text-gray-400">{{ $t('Update your name and email address') }}</p>
                         </div>
                     </div>
 
                     <form @submit.prevent="profileForm.patch(route('profile.update'))" class="p-6 space-y-4">
                         <div>
-                            <label for="name" class="block text-xs font-semibold text-gray-500 mb-1.5">Full Name</label>
+                            <label for="name" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Full Name') }}</label>
                             <input
                                 id="name"
                                 v-model="profileForm.name"
@@ -121,7 +121,7 @@ const deleteAccount = () => {
                                 autofocus
                                 autocomplete="name"
                                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
-                                placeholder="Your full name"
+                                :placeholder="$t('Your full name')"
                             />
                             <p v-if="profileForm.errors.name" class="mt-1 text-xs text-red-500">
                                 {{ profileForm.errors.name }}
@@ -129,7 +129,7 @@ const deleteAccount = () => {
                         </div>
 
                         <div>
-                            <label for="email" class="block text-xs font-semibold text-gray-500 mb-1.5">Email Address</label>
+                            <label for="email" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Email Address') }}</label>
                             <input
                                 id="email"
                                 v-model="profileForm.email"
@@ -137,7 +137,7 @@ const deleteAccount = () => {
                                 required
                                 autocomplete="username"
                                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
-                                placeholder="your@email.com"
+                                :placeholder="$t('your@email.com')"
                             />
                             <p v-if="profileForm.errors.email" class="mt-1 text-xs text-red-500">
                                 {{ profileForm.errors.email }}
@@ -150,13 +150,9 @@ const deleteAccount = () => {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
                             <div>
-                                <p class="text-xs text-amber-700">
-                                    Your email is unverified.
-                                    <Link :href="route('verification.send')" method="post" as="button" class="font-bold underline hover:text-amber-900">Resend verification.</Link>
+                                <p class="text-xs text-amber-700">{{ $t('Your email is unverified.') }}<Link :href="route('verification.send')" method="post" as="button" class="font-bold underline hover:text-amber-900">{{ $t('Resend verification.') }}</Link>
                                 </p>
-                                <p v-if="status === 'verification-link-sent'" class="mt-1 text-xs font-medium text-green-600">
-                                    Verification link sent!
-                                </p>
+                                <p v-if="status === 'verification-link-sent'" class="mt-1 text-xs font-medium text-green-600">{{ $t('Verification link sent!') }}</p>
                             </div>
                         </div>
 
@@ -165,9 +161,7 @@ const deleteAccount = () => {
                                 type="submit"
                                 :disabled="profileForm.processing"
                                 class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-all shadow-sm"
-                            >
-                                Save Changes
-                            </button>
+                            >{{ $t('Save Changes') }}</button>
                             <Transition
                                 enter-active-class="transition ease-out duration-200"
                                 enter-from-class="opacity-0 translate-y-1"
@@ -177,9 +171,7 @@ const deleteAccount = () => {
                                 <span v-if="profileForm.recentlySuccessful" class="text-xs font-semibold text-green-600 flex items-center gap-1">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                    Saved
-                                </span>
+                                    </svg>{{ $t('Saved') }}</span>
                             </Transition>
                         </div>
                     </form>
@@ -194,14 +186,14 @@ const deleteAccount = () => {
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-gray-900">Update Password</h3>
-                            <p class="text-[11px] text-gray-400">Use a strong password to stay secure</p>
+                            <h3 class="text-sm font-bold text-gray-900">{{ $t('Update Password') }}</h3>
+                            <p class="text-[11px] text-gray-400">{{ $t('Use a strong password to stay secure') }}</p>
                         </div>
                     </div>
 
                     <form @submit.prevent="updatePassword" class="p-6 space-y-4">
                         <div>
-                            <label for="current_password" class="block text-xs font-semibold text-gray-500 mb-1.5">Current Password</label>
+                            <label for="current_password" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Current Password') }}</label>
                             <input
                                 id="current_password"
                                 ref="currentPasswordInput"
@@ -209,7 +201,7 @@ const deleteAccount = () => {
                                 type="password"
                                 autocomplete="current-password"
                                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
-                                placeholder="Enter current password"
+                                :placeholder="$t('Enter current password')"
                             />
                             <p v-if="passwordForm.errors.current_password" class="mt-1 text-xs text-red-500">
                                 {{ passwordForm.errors.current_password }}
@@ -217,7 +209,7 @@ const deleteAccount = () => {
                         </div>
 
                         <div>
-                            <label for="password" class="block text-xs font-semibold text-gray-500 mb-1.5">New Password</label>
+                            <label for="password" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('New Password') }}</label>
                             <input
                                 id="password"
                                 ref="passwordInput"
@@ -225,7 +217,7 @@ const deleteAccount = () => {
                                 type="password"
                                 autocomplete="new-password"
                                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
-                                placeholder="Enter new password"
+                                :placeholder="$t('Enter new password')"
                             />
                             <p v-if="passwordForm.errors.password" class="mt-1 text-xs text-red-500">
                                 {{ passwordForm.errors.password }}
@@ -233,14 +225,14 @@ const deleteAccount = () => {
                         </div>
 
                         <div>
-                            <label for="password_confirmation" class="block text-xs font-semibold text-gray-500 mb-1.5">Confirm Password</label>
+                            <label for="password_confirmation" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Confirm Password') }}</label>
                             <input
                                 id="password_confirmation"
                                 v-model="passwordForm.password_confirmation"
                                 type="password"
                                 autocomplete="new-password"
                                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
-                                placeholder="Confirm new password"
+                                :placeholder="$t('Confirm new password')"
                             />
                             <p v-if="passwordForm.errors.password_confirmation" class="mt-1 text-xs text-red-500">
                                 {{ passwordForm.errors.password_confirmation }}
@@ -252,9 +244,7 @@ const deleteAccount = () => {
                                 type="submit"
                                 :disabled="passwordForm.processing"
                                 class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-all shadow-sm"
-                            >
-                                Update Password
-                            </button>
+                            >{{ $t('Update Password') }}</button>
                             <Transition
                                 enter-active-class="transition ease-out duration-200"
                                 enter-from-class="opacity-0 translate-y-1"
@@ -264,9 +254,7 @@ const deleteAccount = () => {
                                 <span v-if="passwordForm.recentlySuccessful" class="text-xs font-semibold text-green-600 flex items-center gap-1">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                    Updated
-                                </span>
+                                    </svg>{{ $t('Updated') }}</span>
                             </Transition>
                         </div>
                     </form>
@@ -282,8 +270,8 @@ const deleteAccount = () => {
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-gray-900">Delete Account</h3>
-                        <p class="text-[11px] text-gray-400">Permanently remove your account and all data</p>
+                        <h3 class="text-sm font-bold text-gray-900">{{ $t('Delete Account') }}</h3>
+                        <p class="text-[11px] text-gray-400">{{ $t('Permanently remove your account and all data') }}</p>
                     </div>
                 </div>
 
@@ -292,34 +280,30 @@ const deleteAccount = () => {
                         <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
-                        <p class="text-xs text-red-600 leading-relaxed">
-                            Once deleted, all data will be permanently removed. Please download any data you wish to retain before proceeding.
-                        </p>
+                        <p class="text-xs text-red-600 leading-relaxed">{{ $t('Once deleted, all data will be permanently removed. Please download any data you wish to retain before proceeding.') }}</p>
                     </div>
 
                     <div v-if="!confirmingDeletion">
                         <button
                             @click="confirmDeletion"
                             class="bg-red-500 hover:bg-red-600 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-sm"
-                        >
-                            Delete My Account
-                        </button>
+                        >{{ $t('Delete My Account') }}</button>
                     </div>
 
                     <div v-else class="space-y-4">
                         <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                            <p class="text-sm font-semibold text-gray-800 mb-0.5">Confirm account deletion</p>
-                            <p class="text-xs text-gray-500">Enter your password to permanently delete your account.</p>
+                            <p class="text-sm font-semibold text-gray-800 mb-0.5">{{ $t('Confirm account deletion') }}</p>
+                            <p class="text-xs text-gray-500">{{ $t('Enter your password to permanently delete your account.') }}</p>
                         </div>
 
                         <div>
-                            <label for="delete_password" class="block text-xs font-semibold text-gray-500 mb-1.5">Your Password</label>
+                            <label for="delete_password" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Your Password') }}</label>
                             <input
                                 id="delete_password"
                                 ref="deletePasswordInput"
                                 v-model="deleteForm.password"
                                 type="password"
-                                placeholder="Enter your password"
+                                :placeholder="$t('Enter your password')"
                                 @keyup.enter="deleteAccount"
                                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent focus:bg-white transition"
                             />
@@ -333,15 +317,11 @@ const deleteAccount = () => {
                                 @click="deleteAccount"
                                 :disabled="deleteForm.processing"
                                 class="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-sm"
-                            >
-                                Confirm Delete
-                            </button>
+                            >{{ $t('Confirm Delete') }}</button>
                             <button
                                 @click="confirmingDeletion = false; deleteForm.reset()"
                                 class="border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors"
-                            >
-                                Cancel
-                            </button>
+                            >{{ $t('Cancel') }}</button>
                         </div>
                     </div>
                 </div>

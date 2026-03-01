@@ -1,14 +1,12 @@
 <template>
   <AppLayout>
-    <Head :title="title" />
+    <Head ::title="$t('title')" />
     
     <!-- Gradient Header -->
     <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 text-center">
         <h1 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-3">{{ title }}</h1>
-        <p class="text-lg text-blue-200 max-w-2xl mx-auto">
-          Have a question or need help? We're here to assist you with anything you need.
-        </p>
+        <p class="text-lg text-blue-200 max-w-2xl mx-auto">{{ $t('Have a question or need help? We\'re here to assist you with anything you need.') }}</p>
       </div>
     </div>
 
@@ -22,7 +20,7 @@
             <!-- Decorative circle -->
             <div class="absolute -top-32 -right-32 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl text-sm"></div>
             
-            <h2 class="text-2xl font-bold text-gray-900 mb-8 relative z-10">Send us a message</h2>
+            <h2 class="text-2xl font-bold text-gray-900 mb-8 relative z-10">{{ $t('Send us a message') }}</h2>
             
             <!-- Success Message -->
             <div v-if="$page.props.flash?.success" class="mb-8 p-5 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-100 rounded-2xl flex items-start gap-4 transition-all relative z-10">
@@ -37,7 +35,7 @@
                 <!-- Name & Email Row -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label for="name" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Your Name</label>
+                    <label for="name" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Your Name') }}</label>
                     <input
                       id="name"
                       v-model="form.name"
@@ -49,7 +47,7 @@
                   </div>
 
                   <div>
-                    <label for="email" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Email Address</label>
+                    <label for="email" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Email Address') }}</label>
                     <input
                       id="email"
                       v-model="form.email"
@@ -63,7 +61,7 @@
 
                 <!-- Type -->
                 <div>
-                  <label for="type" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Inquiry Type</label>
+                  <label for="type" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Inquiry Type') }}</label>
                   <div class="relative">
                     <select
                       id="type"
@@ -71,10 +69,10 @@
                       class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200"
                       required
                     >
-                      <option value="general">General Inquiry</option>
-                      <option value="support">Customer Support</option>
-                      <option value="partnership">Business Partnership</option>
-                      <option value="feedback">Feedback</option>
+                      <option value="general">{{ $t('General Inquiry') }}</option>
+                      <option value="support">{{ $t('Customer Support') }}</option>
+                      <option value="partnership">{{ $t('Business Partnership') }}</option>
+                      <option value="feedback">{{ $t('Feedback') }}</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -85,7 +83,7 @@
 
                 <!-- Subject -->
                 <div>
-                  <label for="subject" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Subject</label>
+                  <label for="subject" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Subject') }}</label>
                   <input
                     id="subject"
                     v-model="form.subject"
@@ -98,7 +96,7 @@
 
                 <!-- Message -->
                 <div>
-                  <label for="message" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Message</label>
+                  <label for="message" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Message') }}</label>
                   <textarea
                     id="message"
                     v-model="form.message"
@@ -130,7 +128,7 @@
             
             <!-- Contact Info -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow">
-              <h2 class="text-xl font-bold text-gray-900 mb-8">Contact Information</h2>
+              <h2 class="text-xl font-bold text-gray-900 mb-8">{{ $t('Contact Information') }}</h2>
               
               <div class="space-y-6">
                 <!-- Email -->
@@ -141,8 +139,8 @@
                     </svg>
                   </div>
                   <div class="ml-4 pt-1">
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Email</p>
-                    <a href="mailto:support@localservices.com" class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">support@localservices.com</a>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{{ $t('Email') }}</p>
+                    <a href="mailto:support@localservices.com" class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{{ $t('support@localservices.com') }}</a>
                   </div>
                 </div>
 
@@ -154,8 +152,8 @@
                     </svg>
                   </div>
                   <div class="ml-4 pt-1">
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Phone</p>
-                    <a href="tel:1-800-LOCAL-SRV" class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">1-800-LOCAL-SRV</a>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{{ $t('Phone') }}</p>
+                    <a href="tel:1-800-LOCAL-SRV" class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{{ $t('1-800-LOCAL-SRV') }}</a>
                   </div>
                 </div>
 
@@ -168,8 +166,8 @@
                     </svg>
                   </div>
                   <div class="ml-4 pt-1">
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Office</p>
-                    <p class="text-sm font-medium text-gray-900 leading-relaxed">123 Business Street<br>San Francisco, CA 94102</p>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{{ $t('Office') }}</p>
+                    <p class="text-sm font-medium text-gray-900 leading-relaxed">{{ $t('123 Business Street') }}<br>{{ $t('San Francisco, CA 94102') }}</p>
                   </div>
                 </div>
               </div>
@@ -182,36 +180,30 @@
               <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 rounded-full border border-white/5"></div>
               
               <div class="relative z-10">
-                <h2 class="text-lg font-bold text-white mb-6">Business Hours</h2>
+                <h2 class="text-lg font-bold text-white mb-6">{{ $t('Business Hours') }}</h2>
                 <div class="space-y-3 mb-8">
                   <div class="flex justify-between items-center text-sm border-b border-white/10 pb-3">
-                    <span class="text-blue-200">Monday - Friday</span>
-                    <span class="font-bold">9:00 AM - 6:00 PM</span>
+                    <span class="text-blue-200">{{ $t('Monday - Friday') }}</span>
+                    <span class="font-bold">{{ $t('9:00 AM - 6:00 PM') }}</span>
                   </div>
                   <div class="flex justify-between items-center text-sm border-b border-white/10 pb-3">
-                    <span class="text-blue-200">Saturday</span>
-                    <span class="font-bold">10:00 AM - 4:00 PM</span>
+                    <span class="text-blue-200">{{ $t('Saturday') }}</span>
+                    <span class="font-bold">{{ $t('10:00 AM - 4:00 PM') }}</span>
                   </div>
                   <div class="flex justify-between items-center text-sm pb-1">
-                    <span class="text-blue-200">Sunday</span>
-                    <span class="font-bold text-yellow-400">Closed</span>
+                    <span class="text-blue-200">{{ $t('Sunday') }}</span>
+                    <span class="font-bold text-yellow-400">{{ $t('Closed') }}</span>
                   </div>
                 </div>
 
                 <div class="bg-white/10 rounded-2xl p-5 backdrop-blur-sm border border-white/10">
                   <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    Need quick answers?
-                  </h3>
-                  <p class="text-sm text-blue-200 mb-4 leading-relaxed">
-                    Check our Frequently Asked Questions page for immediate answers to common issues.
-                  </p>
+                    <svg class="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>{{ $t('Need quick answers?') }}</h3>
+                  <p class="text-sm text-blue-200 mb-4 leading-relaxed">{{ $t('Check our Frequently Asked Questions page for immediate answers to common issues.') }}</p>
                   <Link
                     href="/faq"
                     class="inline-flex items-center text-sm font-bold text-blue-300 hover:text-white transition-colors"
-                  >
-                    View FAQ
-                    <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  >{{ $t('View FAQ') }}<svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>

@@ -27,12 +27,12 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Log in" />
+        <Head :title="$t('Log in')" />
 
         <!-- Heading -->
         <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-900">Welcome back</h2>
-            <p class="text-sm text-gray-500 mt-1">Sign in to your Bookable account</p>
+            <h2 class="text-2xl font-bold text-gray-900">{{ $t('Welcome back') }}</h2>
+            <p class="text-sm text-gray-500 mt-1">{{ $t('Sign in to your Bookable account') }}</p>
         </div>
 
         <!-- Status message -->
@@ -46,7 +46,7 @@ const submit = () => {
         <form @submit.prevent="submit" class="space-y-5">
             <!-- Email -->
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('Email address') }}</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,7 +60,7 @@ const submit = () => {
                         required
                         autofocus
                         autocomplete="username"
-                        placeholder="you@example.com"
+                        :placeholder="$t('you@example.com')"
                         class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         :class="{ 'border-red-400 focus:ring-red-400': form.errors.email }"
                     />
@@ -71,14 +71,12 @@ const submit = () => {
             <!-- Password -->
             <div>
                 <div class="flex items-center justify-between mb-1.5">
-                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <label for="password" class="block text-sm font-medium text-gray-700">{{ $t('Password') }}</label>
                     <Link
                         v-if="canResetPassword"
                         :href="route('password.request')"
                         class="text-xs font-medium text-blue-600 hover:text-blue-700 transition"
-                    >
-                        Forgot password?
-                    </Link>
+                    >{{ $t('Forgot password?') }}</Link>
                 </div>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -108,7 +106,7 @@ const submit = () => {
                     v-model="form.remember"
                     class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                 />
-                <label for="remember" class="text-sm text-gray-600 cursor-pointer select-none">Remember me for 30 days</label>
+                <label for="remember" class="text-sm text-gray-600 cursor-pointer select-none">{{ $t('Remember me for 30 days') }}</label>
             </div>
 
             <!-- Submit -->
@@ -127,11 +125,7 @@ const submit = () => {
 
         <!-- Divider + Register link -->
         <div class="mt-6 text-center">
-            <p class="text-sm text-gray-500">
-                Don't have an account?
-                <Link :href="route('register')" class="font-semibold text-blue-600 hover:text-blue-700 transition">
-                    Create one for free
-                </Link>
+            <p class="text-sm text-gray-500">{{ $t('Don\'t have an account?') }}<Link :href="route('register')" class="font-semibold text-blue-600 hover:text-blue-700 transition">{{ $t('Create one for free') }}</Link>
             </p>
         </div>
     </GuestLayout>

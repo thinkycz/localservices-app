@@ -7,7 +7,17 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
+
+// Language Switcher
+Route::get('/language/{locale}', function ($locale) {
+    if (in_array($locale, ['en', 'cs'])) {
+        Session::put('locale', $locale);
+    }
+    return redirect()->back();
+})->name('language.switch');
+
 
 // Home page
 Route::get('/', function () {

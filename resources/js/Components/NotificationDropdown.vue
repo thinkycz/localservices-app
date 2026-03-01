@@ -20,20 +20,16 @@
       class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
     >
       <div class="p-4 border-b border-gray-200 flex items-center justify-between">
-        <h3 class="font-semibold text-gray-900">Notifications</h3>
+        <h3 class="font-semibold text-gray-900">{{ $t('Notifications') }}</h3>
         <button
           v-if="unreadCount > 0"
           @click="markAllAsRead"
           class="text-sm text-blue-600 hover:text-blue-800"
-        >
-          Mark all read
-        </button>
+        >{{ $t('Mark all read') }}</button>
       </div>
 
       <div class="max-h-96 overflow-y-auto">
-        <div v-if="notifications.length === 0" class="p-4 text-center text-gray-500">
-          No notifications yet
-        </div>
+        <div v-if="notifications.length === 0" class="p-4 text-center text-gray-500">{{ $t('No notifications yet') }}</div>
 
         <div
           v-for="notification in notifications"

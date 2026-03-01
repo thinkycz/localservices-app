@@ -55,7 +55,7 @@ function formatDate(dateString) {
 </script>
 
 <template>
-    <Head title="Customers" />
+    <Head :title="$t('Customers')" />
 
     <VendorLayout activePage="customers">
         <div class="flex flex-col gap-6">
@@ -70,7 +70,7 @@ function formatDate(dateString) {
                             </svg>
                         </div>
                     </div>
-                    <div class="text-sm text-gray-500 mb-1">Total Customers</div>
+                    <div class="text-sm text-gray-500 mb-1">{{ $t('Total Customers') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ stats.total_customers }}</div>
                 </div>
 
@@ -82,7 +82,7 @@ function formatDate(dateString) {
                             </svg>
                         </div>
                     </div>
-                    <div class="text-sm text-gray-500 mb-1">New Customers</div>
+                    <div class="text-sm text-gray-500 mb-1">{{ $t('New Customers') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ stats.new_customers }}</div>
                 </div>
 
@@ -94,7 +94,7 @@ function formatDate(dateString) {
                             </svg>
                         </div>
                     </div>
-                    <div class="text-sm text-gray-500 mb-1">Returning</div>
+                    <div class="text-sm text-gray-500 mb-1">{{ $t('Returning') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ stats.returning_customers }}</div>
                 </div>
 
@@ -106,7 +106,7 @@ function formatDate(dateString) {
                             </svg>
                         </div>
                     </div>
-                    <div class="text-sm text-gray-500 mb-1">Total Revenue</div>
+                    <div class="text-sm text-gray-500 mb-1">{{ $t('Total Revenue') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ formatPrice(stats.total_revenue) }}</div>
                 </div>
             </div>
@@ -121,7 +121,7 @@ function formatDate(dateString) {
                         <input
                             v-model="searchQuery"
                             type="text"
-                            placeholder="Search customers by name or email..."
+                            :placeholder="$t('Search customers by name or email...')"
                             class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             @keyup.enter="handleSearch"
                         />
@@ -136,9 +136,7 @@ function formatDate(dateString) {
                                     ? 'bg-gray-900 text-white'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                             ]"
-                        >
-                            All
-                        </button>
+                        >{{ $t('All') }}</button>
                         <button
                             @click="setFilter('new')"
                             :class="[
@@ -147,9 +145,7 @@ function formatDate(dateString) {
                                     ? 'bg-gray-900 text-white'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                             ]"
-                        >
-                            New
-                        </button>
+                        >{{ $t('New') }}</button>
                         <button
                             @click="setFilter('returning')"
                             :class="[
@@ -158,9 +154,7 @@ function formatDate(dateString) {
                                     ? 'bg-gray-900 text-white'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                             ]"
-                        >
-                            Returning
-                        </button>
+                        >{{ $t('Returning') }}</button>
                     </div>
                 </div>
             </div>
@@ -170,12 +164,12 @@ function formatDate(dateString) {
                 <table class="w-full">
                     <thead>
                         <tr class="bg-gray-50/50">
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Bookings</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Spent</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Booking</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Services</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Customer') }}</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Contact') }}</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Bookings') }}</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Total Spent') }}</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Last Booking') }}</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Services') }}</th>
                             <th class="px-6 py-3.5"></th>
                         </tr>
                     </thead>
@@ -260,8 +254,8 @@ function formatDate(dateString) {
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                                     </svg>
                                 </div>
-                                <h3 class="text-base font-semibold text-gray-900 mb-1">No customers found</h3>
-                                <p class="text-sm text-gray-500">Customers will appear here once they book your services.</p>
+                                <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No customers found') }}</h3>
+                                <p class="text-sm text-gray-500">{{ $t('Customers will appear here once they book your services.') }}</p>
                             </td>
                         </tr>
                     </tbody>
@@ -269,8 +263,7 @@ function formatDate(dateString) {
 
                 <!-- Pagination -->
                 <div v-if="meta.total > meta.per_page" class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30">
-                    <div class="text-sm text-gray-500">
-                        Showing <span class="font-medium text-gray-700">{{ meta.from }}</span> to <span class="font-medium text-gray-700">{{ meta.to }}</span> of <span class="font-medium text-gray-700">{{ meta.total }}</span>
+                    <div class="text-sm text-gray-500">{{ $t('Showing') }}<span class="font-medium text-gray-700">{{ meta.from }}</span>{{ $t('to') }}<span class="font-medium text-gray-700">{{ meta.to }}</span>{{ $t('of') }}<span class="font-medium text-gray-700">{{ meta.total }}</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <button

@@ -7,6 +7,6 @@
                 <path d="M12 2h5.5A2.5 2.5 0 0120 4.5v15a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 19.5V11l5-2.5L12 11V2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </svg>
         </div>
-        <span class="text-base text-gray-900" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">Bookable</span>
+        <span class="text-base text-gray-900" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">{{ $t('Bookable') }}</span>
     </div>
 </template>

@@ -56,7 +56,7 @@ class ReviewController extends Controller
         // Check if already reviewed
         $existingReview = Review::where('booking_id', $validated['booking_id'])->first();
         if ($existingReview) {
-            return back()->with('error', 'You have already reviewed this booking.');
+            return back()->with('error', __('You have already reviewed this booking.'));
         }
 
         $review = Review::create([
@@ -75,7 +75,7 @@ class ReviewController extends Controller
         $service->updateRatingStats();
 
         return redirect()->route('bookings.index')
-            ->with('success', 'Thank you for your review!');
+            ->with('success', __('Thank you for your review!'));
     }
 
     /**

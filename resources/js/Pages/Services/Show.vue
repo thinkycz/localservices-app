@@ -213,7 +213,7 @@ const mockReviews = [
             <img
                 v-if="service.image"
                 :src="service.image"
-                :alt="service.name"
+                ::alt="$t('service.name')"
                 class="w-full h-full object-cover opacity-60"
             />
             <div v-else class="w-full h-full bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900" />
@@ -267,8 +267,8 @@ const mockReviews = [
                         <!-- Header + filter tabs -->
                         <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
                             <div>
-                                <h2 class="text-lg font-bold text-gray-900">Services & Pricing</h2>
-                                <p class="text-sm text-gray-500 mt-0.5">Select a service to book an appointment</p>
+                                <h2 class="text-lg font-bold text-gray-900">{{ $t('Services & Pricing') }}</h2>
+                                <p class="text-sm text-gray-500 mt-0.5">{{ $t('Select a service to book an appointment') }}</p>
                             </div>
                             <div v-if="categoryTags.length > 0" class="flex gap-1.5 flex-wrap">
                                 <button
@@ -279,7 +279,7 @@ const mockReviews = [
                                             ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     ]"
-                                >All</button>
+                                >{{ $t('All') }}</button>
                                 <button
                                     v-for="tag in categoryTags"
                                     :key="tag"
@@ -313,7 +313,7 @@ const mockReviews = [
                                                 class="font-bold text-sm"
                                                 :class="selectedOffering?.id === offering.id ? 'text-blue-700' : 'text-gray-900'"
                                             >{{ offering.name }}</h3>
-                                            <span v-if="offering.is_popular" class="text-[10px] text-amber-600 font-bold uppercase tracking-wider bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">★ Popular</span>
+                                            <span v-if="offering.is_popular" class="text-[10px] text-amber-600 font-bold uppercase tracking-wider bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">{{ $t('★ Popular') }}</span>
                                         </div>
                                         <p v-if="offering.description" class="text-sm text-gray-500 mb-2.5 leading-relaxed">{{ offering.description }}</p>
                                         <div class="flex items-center gap-3 text-xs text-gray-400">
@@ -361,9 +361,7 @@ const mockReviews = [
                                 </div>
                             </div>
 
-                            <p v-if="filteredOfferings.length === 0" class="text-center py-10 text-sm text-gray-400">
-                                No services found for this category.
-                            </p>
+                            <p v-if="filteredOfferings.length === 0" class="text-center py-10 text-sm text-gray-400">{{ $t('No services found for this category.') }}</p>
                         </div>
                     </div>
 
@@ -371,13 +369,11 @@ const mockReviews = [
                     <div>
                         <div class="flex items-center justify-between mb-6">
                             <div>
-                                <h2 class="text-lg font-bold text-gray-900">What people are saying</h2>
+                                <h2 class="text-lg font-bold text-gray-900">{{ $t('What people are saying') }}</h2>
                                 <p class="text-sm text-gray-500 mt-0.5">{{ formattedReviews }} reviews from verified customers</p>
                             </div>
                             <button @click="showReviewModal = true" class="flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                Write a review
-                            </button>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>{{ $t('Write a review') }}</button>
                         </div>
 
                         <div class="space-y-4">
@@ -396,9 +392,7 @@ const mockReviews = [
                                             <div class="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
                                                 <span>{{ review.date }}</span>
                                                 <span v-if="review.verified" class="inline-flex items-center gap-1 text-green-600 font-medium">
-                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                                                    Verified
-                                                </span>
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>{{ $t('Verified') }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -413,7 +407,7 @@ const mockReviews = [
                     <div>
                         <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                             <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
-                                <h2 class="text-lg font-bold text-gray-900">About</h2>
+                                <h2 class="text-lg font-bold text-gray-900">{{ $t('About') }}</h2>
                             </div>
                             <div class="p-6">
                                 <p class="text-gray-600 leading-relaxed text-sm mb-6">{{ service.description }}</p>
@@ -430,7 +424,7 @@ const mockReviews = [
                                             </svg>
                                         </div>
                                         <div class="min-w-0">
-                                            <div class="font-semibold text-gray-900 text-sm mb-0.5">Location</div>
+                                            <div class="font-semibold text-gray-900 text-sm mb-0.5">{{ $t('Location') }}</div>
                                             <div class="text-gray-500 text-sm">
                                                 {{ service.address ?? (service.city + ', ' + service.state) }}
                                             </div>
@@ -444,8 +438,8 @@ const mockReviews = [
                                             </svg>
                                         </div>
                                         <div class="min-w-0">
-                                            <div class="font-semibold text-gray-900 text-sm mb-0.5">Online Service</div>
-                                            <div class="text-gray-500 text-sm">This service is provided remotely</div>
+                                            <div class="font-semibold text-gray-900 text-sm mb-0.5">{{ $t('Online Service') }}</div>
+                                            <div class="text-gray-500 text-sm">{{ $t('This service is provided remotely') }}</div>
                                         </div>
                                     </div>
 
@@ -458,7 +452,7 @@ const mockReviews = [
                                             </svg>
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <div class="font-semibold text-gray-900 text-sm mb-1.5">Business Hours</div>
+                                            <div class="font-semibold text-gray-900 text-sm mb-1.5">{{ $t('Business Hours') }}</div>
                                             <div class="space-y-0.5">
                                                 <div v-for="bh in businessHours" :key="bh.day_of_week" class="flex items-center justify-between text-sm">
                                                     <span class="text-gray-500 w-10">{{ DAY_NAMES_SHORT[bh.day_of_week] }}</span>
@@ -488,8 +482,8 @@ const mockReviews = [
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-white text-base">Book Appointment</h3>
-                                    <p class="text-xs text-blue-100">Pick a service, date & time</p>
+                                    <h3 class="font-bold text-white text-base">{{ $t('Book Appointment') }}</h3>
+                                    <p class="text-xs text-blue-100">{{ $t('Pick a service, date & time') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -527,13 +521,13 @@ const mockReviews = [
                                             d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
                                     </svg>
                                 </div>
-                                <span>Select a service from the list</span>
+                                <span>{{ $t('Select a service from the list') }}</span>
                             </div>
 
                             <!-- Select Date -->
                             <div>
                                 <div class="flex items-center justify-between mb-3">
-                                    <span class="text-sm font-bold text-gray-900">Select Date</span>
+                                    <span class="text-sm font-bold text-gray-900">{{ $t('Select Date') }}</span>
                                     <span class="text-sm font-semibold text-blue-600">
                                         {{ MONTH_NAMES[calMonth] }} {{ calYear }}
                                     </span>
@@ -583,19 +577,15 @@ const mockReviews = [
 
                             <!-- Available Times -->
                             <div>
-                                <div class="text-sm font-bold text-gray-900 mb-3">Available Times</div>
+                                <div class="text-sm font-bold text-gray-900 mb-3">{{ $t('Available Times') }}</div>
 
-                                <div v-if="!selectedOffering" class="text-sm text-gray-500 italic py-2">
-                                    Please select a service first.
-                                </div>
-                                <div v-else-if="!selectedDay" class="text-sm text-gray-500 italic py-2">
-                                    Please select an available date.
-                                </div>
+                                <div v-if="!selectedOffering" class="text-sm text-gray-500 italic py-2">{{ $t('Please select a service first.') }}</div>
+                                <div v-else-if="!selectedDay" class="text-sm text-gray-500 italic py-2">{{ $t('Please select an available date.') }}</div>
                                 <div v-else-if="availableTimeSlots.length === 0" class="text-sm text-gray-500 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-start gap-2">
                                     <svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <span>No slots available for this date.</span>
+                                    <span>{{ $t('No slots available for this date.') }}</span>
                                 </div>
                                 <div v-else class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                                     <button
@@ -614,7 +604,7 @@ const mockReviews = [
 
                             <!-- Total Price -->
                             <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                                <span class="text-sm font-medium text-gray-500">Total</span>
+                                <span class="text-sm font-medium text-gray-500">{{ $t('Total') }}</span>
                                 <span class="text-2xl font-bold text-gray-900">
                                     {{ selectedOffering ? formatPrice(selectedOffering.price) : '—' }}
                                 </span>
@@ -631,18 +621,16 @@ const mockReviews = [
                                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                 ]"
                             >
-                                <span v-if="selectedOffering && selectedTime && selectedDay">Book Now</span>
-                                <span v-else-if="!selectedOffering">Select a Service</span>
-                                <span v-else-if="!selectedDay">Select a Date</span>
-                                <span v-else>Select a Time Slot</span>
+                                <span v-if="selectedOffering && selectedTime && selectedDay">{{ $t('Book Now') }}</span>
+                                <span v-else-if="!selectedOffering">{{ $t('Select a Service') }}</span>
+                                <span v-else-if="!selectedDay">{{ $t('Select a Date') }}</span>
+                                <span v-else>{{ $t('Select a Time Slot') }}</span>
                                 <svg v-if="selectedOffering && selectedTime && selectedDay" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>
                             </button>
 
-                            <p class="text-xs text-gray-400 text-center leading-relaxed">
-                                Free cancellation up to 24 hours before your appointment
-                            </p>
+                            <p class="text-xs text-gray-400 text-center leading-relaxed">{{ $t('Free cancellation up to 24 hours before your appointment') }}</p>
                         </div>
                     </div>
                 </div><!-- /sidebar -->
@@ -664,7 +652,7 @@ const mockReviews = [
                                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-bold text-white">Write a Review</h3>
+                                    <h3 class="text-lg font-bold text-white">{{ $t('Write a Review') }}</h3>
                                     <p class="text-xs text-blue-100">Share your experience with {{ service.name }}</p>
                                 </div>
                             </div>
@@ -674,7 +662,7 @@ const mockReviews = [
                         </div>
                         <form @submit.prevent="submitReview" class="p-6 space-y-5">
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Rating</label>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">{{ $t('Rating') }}</label>
                                 <div class="flex gap-1.5">
                                     <button
                                         v-for="star in 5"
@@ -690,12 +678,12 @@ const mockReviews = [
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Your Review</label>
-                                <textarea v-model="reviewForm.text" rows="4" placeholder="Tell others about your experience..." class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none focus:bg-white transition-colors" required></textarea>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Your Review') }}</label>
+                                <textarea v-model="reviewForm.text" rows="4" :placeholder="$t('Tell others about your experience...')" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none focus:bg-white transition-colors" required></textarea>
                             </div>
                             <div class="flex gap-3">
-                                <button type="button" @click="showReviewModal = false" class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-2.5 rounded-xl transition-colors text-sm">Cancel</button>
-                                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 rounded-xl transition-all shadow-md text-sm">Submit Review</button>
+                                <button type="button" @click="showReviewModal = false" class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-2.5 rounded-xl transition-colors text-sm">{{ $t('Cancel') }}</button>
+                                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 rounded-xl transition-all shadow-md text-sm">{{ $t('Submit Review') }}</button>
                             </div>
                         </form>
                     </div>

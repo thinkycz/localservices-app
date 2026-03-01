@@ -51,7 +51,7 @@ function handleSubmit() {
 </script>
 
 <template>
-    <Head title="Add Service" />
+    <Head :title="$t('Add Service')" />
 
     <VendorLayout activePage="services">
         <div class="flex flex-col gap-6">
@@ -59,9 +59,7 @@ function handleSubmit() {
             <!-- Back link -->
             <div>
                 <Link :href="route('vendor.services.index')" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                    Back to Services
-                </Link>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>{{ $t('Back to Services') }}</Link>
             </div>
 
             <!-- Header Card -->
@@ -73,8 +71,8 @@ function handleSubmit() {
                         </svg>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h1 class="text-xl font-bold text-gray-900">Add New Service</h1>
-                        <p class="text-sm text-gray-400 mt-0.5">Create a new service to offer to customers</p>
+                        <h1 class="text-xl font-bold text-gray-900">{{ $t('Add New Service') }}</h1>
+                        <p class="text-sm text-gray-400 mt-0.5">{{ $t('Create a new service to offer to customers') }}</p>
                     </div>
                 </div>
             </div>
@@ -84,26 +82,26 @@ function handleSubmit() {
                 <!-- Basic Information -->
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Basic Information</h2>
+                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Basic Information') }}</h2>
                     </div>
                     <div class="p-6 space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
-                            <input v-model="form.name" type="text" placeholder="e.g., Precision Plumbing & Drain" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" :class="{ 'border-red-300 focus:ring-red-500': errors.name }" />
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Service Name *') }}</label>
+                            <input v-model="form.name" type="text" :placeholder="$t('e.g., Precision Plumbing & Drain')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" :class="{ 'border-red-300 focus:ring-red-500': errors.name }" />
                             <p v-if="errors.name" class="mt-1 text-xs text-red-500">{{ errors.name }}</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Category *') }}</label>
                                 <select v-model="form.category_id" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" :class="{ 'border-red-300': errors.category_id }">
-                                    <option value="" disabled>Select a category</option>
+                                    <option value="" disabled>{{ $t('Select a category') }}</option>
                                     <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
                                 </select>
                                 <p v-if="errors.category_id" class="mt-1 text-xs text-red-500">{{ errors.category_id }}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Price Range') }}</label>
                                 <select v-model="form.price_range" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     <option v-for="opt in priceRangeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                                 </select>
@@ -111,8 +109,8 @@ function handleSubmit() {
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                            <textarea v-model="form.description" rows="3" placeholder="Describe your service..." class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Description') }}</label>
+                            <textarea v-model="form.description" rows="3" :placeholder="$t('Describe your service...')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
                         </div>
                     </div>
                 </div>
@@ -120,13 +118,13 @@ function handleSubmit() {
                 <!-- Location -->
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Location</h2>
+                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Location') }}</h2>
                     </div>
                     <div class="p-6 space-y-4">
                         <div class="flex items-center justify-between">
                             <div>
-                                <div class="text-sm font-medium text-gray-700">Online Only</div>
-                                <div class="text-xs text-gray-500 mt-0.5">This service is provided remotely / online</div>
+                                <div class="text-sm font-medium text-gray-700">{{ $t('Online Only') }}</div>
+                                <div class="text-xs text-gray-500 mt-0.5">{{ $t('This service is provided remotely / online') }}</div>
                             </div>
                             <button
                                 type="button"
@@ -138,17 +136,17 @@ function handleSubmit() {
                         </div>
                         <template v-if="!form.is_online_only">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                                <input v-model="form.address" type="text" placeholder="e.g., 45 Water St, Suite 101" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Address') }}</label>
+                                <input v-model="form.address" type="text" :placeholder="$t('e.g., 45 Water St, Suite 101')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                    <input v-model="form.city" type="text" placeholder="e.g., New York" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('City') }}</label>
+                                    <input v-model="form.city" type="text" :placeholder="$t('e.g., New York')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                                    <input v-model="form.state" type="text" placeholder="e.g., NY" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('State') }}</label>
+                                    <input v-model="form.state" type="text" :placeholder="$t('e.g., NY')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                             </div>
                         </template>

@@ -69,16 +69,14 @@ function isPast(dateStr) {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-2xl font-bold text-white">My Bookings</h1>
-                        <p class="text-sm text-blue-200 mt-1">View and manage your appointments</p>
+                        <h1 class="text-2xl font-bold text-white">{{ $t('My Bookings') }}</h1>
+                        <p class="text-sm text-blue-200 mt-1">{{ $t('View and manage your appointments') }}</p>
                     </div>
                     <Link
                         href="/services"
                         class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur border border-white/20 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
                     >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                        Book a Service
-                    </Link>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>{{ $t('Book a Service') }}</Link>
                 </div>
             </div>
         </div>
@@ -115,9 +113,7 @@ function isPast(dateStr) {
                                             <span :class="[getStatus(booking.status).dot, 'w-1.5 h-1.5 rounded-full']"></span>
                                             {{ getStatus(booking.status).label }}
                                         </span>
-                                        <span v-if="isPast(booking.booking_date) && booking.status !== 'cancelled' && booking.status !== 'completed'" class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded">
-                                            Past
-                                        </span>
+                                        <span v-if="isPast(booking.booking_date) && booking.status !== 'cancelled' && booking.status !== 'completed'" class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded">{{ $t('Past') }}</span>
                                     </div>
 
                                     <h3 class="font-bold text-gray-900 text-base mb-1">
@@ -153,32 +149,24 @@ function isPast(dateStr) {
                                             v-if="booking.status === 'pending' || booking.status === 'confirmed'"
                                             :href="route('services.show', booking.service?.slug)"
                                             class="text-xs font-semibold text-gray-600 hover:text-gray-900 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all"
-                                        >
-                                            Details
-                                        </Link>
+                                        >{{ $t('Details') }}</Link>
                                         <button
                                             v-if="booking.status === 'pending' || booking.status === 'confirmed'"
                                             @click="$inertia.post(route('bookings.cancel', booking.id))"
                                             class="text-xs font-semibold text-red-600 hover:text-red-700 px-3 py-2 rounded-xl border border-red-200 hover:bg-red-50 hover:border-red-300 transition-all"
-                                        >
-                                            Cancel
-                                        </button>
+                                        >{{ $t('Cancel') }}</button>
                                         <Link
                                             v-if="booking.status === 'completed' && !booking.has_review"
                                             :href="route('reviews.create', booking.id)"
                                             class="text-xs font-semibold text-amber-600 hover:text-amber-700 px-3 py-2 rounded-xl border border-amber-200 hover:bg-amber-50 hover:border-amber-300 transition-all flex items-center gap-1"
                                         >
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                            Review
-                                        </Link>
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>{{ $t('Review') }}</Link>
                                         <Link
                                             v-if="booking.status === 'completed'"
                                             :href="route('services.show', booking.service?.slug)"
                                             class="text-xs font-semibold text-blue-600 hover:text-blue-700 px-3 py-2 rounded-xl border border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center gap-1"
                                         >
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                            Rebook
-                                        </Link>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>{{ $t('Rebook') }}</Link>
 
                                     </div>
 
@@ -206,14 +194,12 @@ function isPast(dateStr) {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-2">No bookings yet</h3>
-                <p class="text-gray-500 mb-6 max-w-sm mx-auto text-sm">Browse our services and book your first appointment today.</p>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">{{ $t('No bookings yet') }}</h3>
+                <p class="text-gray-500 mb-6 max-w-sm mx-auto text-sm">{{ $t('Browse our services and book your first appointment today.') }}</p>
                 <Link
                     href="/services"
                     class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-sm text-sm"
-                >
-                    Browse Services
-                </Link>
+                >{{ $t('Browse Services') }}</Link>
             </div>
 
             <!-- Pagination -->

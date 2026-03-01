@@ -19,17 +19,13 @@ import { Link } from '@inertiajs/vue3';
                         <path d="M12 2h5.5A2.5 2.5 0 0120 4.5v15a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 19.5V11l5-2.5L12 11V2z" stroke="currentColor" stroke-width="1.5" fill="none"/>
                     </svg>
                 </div>
-                <span class="text-2xl text-white" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">Bookable</span>
+                <span class="text-2xl text-white" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">{{ $t('Bookable') }}</span>
             </Link>
 
             <!-- Center content -->
             <div class="relative z-10">
-                <h1 class="text-4xl font-bold text-white leading-tight mb-4">
-                    Book Services You Trust
-                </h1>
-                <p class="text-blue-100 text-lg mb-10 leading-relaxed">
-                    Connect with top-rated professionals in your area for any home service need.
-                </p>
+                <h1 class="text-4xl font-bold text-white leading-tight mb-4">{{ $t('Book Services You Trust') }}</h1>
+                <p class="text-blue-100 text-lg mb-10 leading-relaxed">{{ $t('Connect with top-rated professionals in your area for any home service need.') }}</p>
 
                 <!-- Feature bullets -->
                 <div class="space-y-5">
@@ -41,8 +37,8 @@ import { Link } from '@inertiajs/vue3';
                             </svg>
                         </div>
                         <div>
-                            <p class="text-white font-semibold text-sm">Verified Professionals</p>
-                            <p class="text-blue-200 text-xs mt-0.5">All service providers are background-checked and reviewed</p>
+                            <p class="text-white font-semibold text-sm">{{ $t('Verified Professionals') }}</p>
+                            <p class="text-blue-200 text-xs mt-0.5">{{ $t('All service providers are background-checked and reviewed') }}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-4">
@@ -53,8 +49,8 @@ import { Link } from '@inertiajs/vue3';
                             </svg>
                         </div>
                         <div>
-                            <p class="text-white font-semibold text-sm">Easy Scheduling</p>
-                            <p class="text-blue-200 text-xs mt-0.5">Book appointments at a time that works for you</p>
+                            <p class="text-white font-semibold text-sm">{{ $t('Easy Scheduling') }}</p>
+                            <p class="text-blue-200 text-xs mt-0.5">{{ $t('Book appointments at a time that works for you') }}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-4">
@@ -65,8 +61,8 @@ import { Link } from '@inertiajs/vue3';
                             </svg>
                         </div>
                         <div>
-                            <p class="text-white font-semibold text-sm">4.8★ Average Rating</p>
-                            <p class="text-blue-200 text-xs mt-0.5">Trusted by 50,000+ happy customers nationwide</p>
+                            <p class="text-white font-semibold text-sm">{{ $t('4.8★ Average Rating') }}</p>
+                            <p class="text-blue-200 text-xs mt-0.5">{{ $t('Trusted by 50,000+ happy customers nationwide') }}</p>
                         </div>
                     </div>
                 </div>
@@ -75,18 +71,18 @@ import { Link } from '@inertiajs/vue3';
             <!-- Bottom stats -->
             <div class="flex items-center gap-8 relative z-10">
                 <div>
-                    <div class="text-2xl font-bold text-white">10k+</div>
-                    <div class="text-blue-200 text-xs mt-0.5">Professionals</div>
+                    <div class="text-2xl font-bold text-white">{{ $t('10k+') }}</div>
+                    <div class="text-blue-200 text-xs mt-0.5">{{ $t('Professionals') }}</div>
                 </div>
                 <div class="w-px h-8 bg-white/20"></div>
                 <div>
-                    <div class="text-2xl font-bold text-white">50k+</div>
-                    <div class="text-blue-200 text-xs mt-0.5">Customers</div>
+                    <div class="text-2xl font-bold text-white">{{ $t('50k+') }}</div>
+                    <div class="text-blue-200 text-xs mt-0.5">{{ $t('Customers') }}</div>
                 </div>
                 <div class="w-px h-8 bg-white/20"></div>
                 <div>
                     <div class="text-2xl font-bold text-white">100+</div>
-                    <div class="text-blue-200 text-xs mt-0.5">Cities</div>
+                    <div class="text-blue-200 text-xs mt-0.5">{{ $t('Cities') }}</div>
                 </div>
             </div>
         </div>
@@ -102,7 +98,7 @@ import { Link } from '@inertiajs/vue3';
                             <path d="M12 2h5.5A2.5 2.5 0 0120 4.5v15a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 19.5V11l5-2.5L12 11V2z" stroke="currentColor" stroke-width="1.5" fill="none"/>
                         </svg>
                     </div>
-                    <span class="text-xl text-gray-900" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">Bookable</span>
+                    <span class="text-xl text-gray-900" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">{{ $t('Bookable') }}</span>
                 </Link>
             </div>
 

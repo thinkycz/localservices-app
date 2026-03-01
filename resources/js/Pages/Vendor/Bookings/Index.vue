@@ -77,7 +77,7 @@ function formatTime(time) {
 </script>
 
 <template>
-    <Head title="Bookings" />
+    <Head :title="$t('Bookings')" />
 
     <VendorLayout activePage="bookings">
         <div class="flex flex-col gap-6">
@@ -92,7 +92,7 @@ function formatTime(time) {
                             </svg>
                         </div>
                     </div>
-                    <div class="text-sm text-gray-500 mb-1">Total</div>
+                    <div class="text-sm text-gray-500 mb-1">{{ $t('Total') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ stats.total }}</div>
                 </div>
 
@@ -104,7 +104,7 @@ function formatTime(time) {
                             </svg>
                         </div>
                     </div>
-                    <div class="text-sm text-gray-500 mb-1">Pending</div>
+                    <div class="text-sm text-gray-500 mb-1">{{ $t('Pending') }}</div>
                     <div class="text-2xl font-bold text-yellow-600">{{ stats.pending }}</div>
                 </div>
 
@@ -116,7 +116,7 @@ function formatTime(time) {
                             </svg>
                         </div>
                     </div>
-                    <div class="text-sm text-gray-500 mb-1">Confirmed</div>
+                    <div class="text-sm text-gray-500 mb-1">{{ $t('Confirmed') }}</div>
                     <div class="text-2xl font-bold text-blue-600">{{ stats.confirmed }}</div>
                 </div>
 
@@ -128,7 +128,7 @@ function formatTime(time) {
                             </svg>
                         </div>
                     </div>
-                    <div class="text-sm text-gray-500 mb-1">Completed</div>
+                    <div class="text-sm text-gray-500 mb-1">{{ $t('Completed') }}</div>
                     <div class="text-2xl font-bold text-green-600">{{ stats.completed }}</div>
                 </div>
 
@@ -140,7 +140,7 @@ function formatTime(time) {
                             </svg>
                         </div>
                     </div>
-                    <div class="text-sm text-gray-500 mb-1">Revenue</div>
+                    <div class="text-sm text-gray-500 mb-1">{{ $t('Revenue') }}</div>
                     <div class="text-2xl font-bold text-gray-900">${{ Number(stats.total_revenue).toFixed(2) }}</div>
                 </div>
             </div>
@@ -156,7 +156,7 @@ function formatTime(time) {
                         <input
                             v-model="search"
                             type="text"
-                            placeholder="Search by customer name..."
+                            :placeholder="$t('Search by customer name...')"
                             class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             @keyup.enter="applyFilters"
                         />
@@ -172,9 +172,7 @@ function formatTime(time) {
                                     ? 'bg-gray-900 text-white'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                             ]"
-                        >
-                            All
-                        </button>
+                        >{{ $t('All') }}</button>
                         <button
                             @click="statusFilter = 'pending'; applyFilters()"
                             :class="[
@@ -183,9 +181,7 @@ function formatTime(time) {
                                     ? 'bg-gray-900 text-white'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                             ]"
-                        >
-                            Pending
-                        </button>
+                        >{{ $t('Pending') }}</button>
                         <button
                             @click="statusFilter = 'confirmed'; applyFilters()"
                             :class="[
@@ -194,9 +190,7 @@ function formatTime(time) {
                                     ? 'bg-gray-900 text-white'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                             ]"
-                        >
-                            Confirmed
-                        </button>
+                        >{{ $t('Confirmed') }}</button>
                         <button
                             @click="statusFilter = 'completed'; applyFilters()"
                             :class="[
@@ -205,9 +199,7 @@ function formatTime(time) {
                                     ? 'bg-gray-900 text-white'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                             ]"
-                        >
-                            Completed
-                        </button>
+                        >{{ $t('Completed') }}</button>
                         <button
                             @click="statusFilter = 'cancelled'; applyFilters()"
                             :class="[
@@ -216,9 +208,7 @@ function formatTime(time) {
                                     ? 'bg-gray-900 text-white'
                                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                             ]"
-                        >
-                            Cancelled
-                        </button>
+                        >{{ $t('Cancelled') }}</button>
                     </div>
                 </div>
             </div>
@@ -228,11 +218,11 @@ function formatTime(time) {
                 <table class="w-full">
                     <thead>
                         <tr class="bg-gray-50/50">
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date & Time</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Customer') }}</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Service') }}</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Date & Time') }}</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Price') }}</th>
+                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Status') }}</th>
                             <th class="px-6 py-3.5"></th>
                         </tr>
                     </thead>
@@ -291,8 +281,8 @@ function formatTime(time) {
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                                     </svg>
                                 </div>
-                                <h3 class="text-base font-semibold text-gray-900 mb-1">No bookings found</h3>
-                                <p class="text-sm text-gray-500">Bookings will appear here once customers make reservations.</p>
+                                <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No bookings found') }}</h3>
+                                <p class="text-sm text-gray-500">{{ $t('Bookings will appear here once customers make reservations.') }}</p>
                             </td>
                         </tr>
                     </tbody>
@@ -300,8 +290,7 @@ function formatTime(time) {
 
                 <!-- Pagination -->
                 <div v-if="bookings.total > bookings.per_page" class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30">
-                    <div class="text-sm text-gray-500">
-                        Showing <span class="font-medium text-gray-700">{{ bookings.from }}</span> to <span class="font-medium text-gray-700">{{ bookings.to }}</span> of <span class="font-medium text-gray-700">{{ bookings.total }}</span>
+                    <div class="text-sm text-gray-500">{{ $t('Showing') }}<span class="font-medium text-gray-700">{{ bookings.from }}</span>{{ $t('to') }}<span class="font-medium text-gray-700">{{ bookings.to }}</span>{{ $t('of') }}<span class="font-medium text-gray-700">{{ bookings.total }}</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <button

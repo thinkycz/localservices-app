@@ -74,7 +74,7 @@ function getBadgeClasses(color) {
 </script>
 
 <template>
-    <Head title="Edit Service" />
+    <Head :title="$t('Edit Service')" />
 
     <VendorLayout activePage="services">
         <div class="flex flex-col gap-6">
@@ -100,7 +100,7 @@ function getBadgeClasses(color) {
                             <h1 class="text-xl font-bold text-gray-900 truncate">Edit {{ service.name }}</h1>
                             <span v-if="service.badge" :class="[getBadgeClasses(service.badge_color), 'text-xs font-medium px-2.5 py-1 rounded-full ring-1 ring-inset']">{{ service.badge }}</span>
                         </div>
-                        <p class="text-sm text-gray-400 mt-0.5">Update service details and settings</p>
+                        <p class="text-sm text-gray-400 mt-0.5">{{ $t('Update service details and settings') }}</p>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <button
@@ -116,29 +116,29 @@ function getBadgeClasses(color) {
                 <!-- Basic Information -->
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Basic Information</h2>
+                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Basic Information') }}</h2>
                     </div>
                     <div class="p-6 space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Service Name *') }}</label>
                             <input v-model="serviceForm.name" type="text" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Category *') }}</label>
                                 <select v-model="serviceForm.category_id" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Price Range') }}</label>
                                 <select v-model="serviceForm.price_range" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     <option v-for="opt in priceRangeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                                 </select>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Description') }}</label>
                             <textarea v-model="serviceForm.description" rows="3" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
                         </div>
                     </div>
@@ -147,13 +147,13 @@ function getBadgeClasses(color) {
                 <!-- Location -->
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Location</h2>
+                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Location') }}</h2>
                     </div>
                     <div class="p-6 space-y-4">
                         <div class="flex items-center justify-between">
                             <div>
-                                <div class="text-sm font-medium text-gray-700">Online Only</div>
-                                <div class="text-xs text-gray-500 mt-0.5">This service is provided remotely / online</div>
+                                <div class="text-sm font-medium text-gray-700">{{ $t('Online Only') }}</div>
+                                <div class="text-xs text-gray-500 mt-0.5">{{ $t('This service is provided remotely / online') }}</div>
                             </div>
                             <button
                                 type="button"
@@ -165,16 +165,16 @@ function getBadgeClasses(color) {
                         </div>
                         <template v-if="!serviceForm.is_online_only">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Address') }}</label>
                                 <input v-model="serviceForm.address" type="text" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('City') }}</label>
                                     <input v-model="serviceForm.city" type="text" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('State') }}</label>
                                     <input v-model="serviceForm.state" type="text" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                             </div>

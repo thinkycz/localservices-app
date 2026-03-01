@@ -102,7 +102,7 @@ function formatDate(dateStr) {
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head :title="$t('Dashboard')" />
 
     <VendorLayout activePage="dashboard">
         <!-- ── Stats Row ──────────────────────────────────────────────── -->

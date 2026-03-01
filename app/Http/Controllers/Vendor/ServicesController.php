@@ -134,7 +134,7 @@ class ServicesController extends Controller
         }
 
         return redirect()->route('vendor.services.show', $service->id)
-            ->with('success', 'Service created successfully. Now add your service offerings.');
+            ->with('success', __('Service created successfully. Now add your service offerings.'));
     }
 
     /**
@@ -239,7 +239,7 @@ class ServicesController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Service updated successfully.');
+        return back()->with('success', __('Service updated successfully.'));
     }
 
     /**
@@ -256,7 +256,7 @@ class ServicesController extends Controller
         $service->delete();
 
         return redirect()->route('vendor.services.index')
-            ->with('success', 'Service deleted successfully.');
+            ->with('success', __('Service deleted successfully.'));
     }
 
     /**
@@ -282,7 +282,7 @@ class ServicesController extends Controller
 
         ServiceOffering::create($validated);
 
-        return back()->with('success', 'Service offering added successfully.');
+        return back()->with('success', __('Service offering added successfully.'));
     }
 
     /**
@@ -308,7 +308,7 @@ class ServicesController extends Controller
 
         $offering->update($validated);
 
-        return back()->with('success', 'Service offering updated successfully.');
+        return back()->with('success', __('Service offering updated successfully.'));
     }
 
     /**
@@ -324,7 +324,7 @@ class ServicesController extends Controller
 
         $offering->delete();
 
-        return back()->with('success', 'Service offering deleted successfully.');
+        return back()->with('success', __('Service offering deleted successfully.'));
     }
 
     /**
@@ -340,7 +340,7 @@ class ServicesController extends Controller
 
         $status = $service->is_available ? 'available' : 'unavailable';
 
-        return back()->with('success', "Service is now {$status}.");
+        return back()->with('success', $status === 'active' ? __('Service is now active.') : __('Service is now inactive.'));
     }
 
     /**
@@ -370,6 +370,6 @@ class ServicesController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Business hours updated successfully.');
+        return back()->with('success', __('Business hours updated successfully.'));
     }
 }

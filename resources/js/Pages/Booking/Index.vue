@@ -185,7 +185,7 @@ function formatDate(dateStr) {
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Selected Package</span>
+                                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('Selected Package') }}</span>
                             </div>
                             <h3 class="font-bold text-gray-900 text-sm mb-3">{{ offering.name }}</h3>
                             <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
@@ -207,7 +207,7 @@ function formatDate(dateStr) {
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                 </div>
-                                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Appointment</span>
+                                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('Appointment') }}</span>
                             </div>
                             <div class="space-y-2">
                                 <div v-if="date" class="flex items-center gap-2.5 text-sm p-3 bg-gray-50 rounded-xl">
@@ -231,8 +231,7 @@ function formatDate(dateStr) {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <div class="text-xs text-gray-600 leading-relaxed">
-                                <span class="font-semibold text-gray-700">Free cancellation</span> up to 24 hours before your appointment. No-show fees may apply.
-                            </div>
+                                <span class="font-semibold text-gray-700">{{ $t('Free cancellation') }}</span>{{ $t('up to 24 hours before your appointment. No-show fees may apply.') }}</div>
                         </div>
                     </div>
 
@@ -249,8 +248,8 @@ function formatDate(dateStr) {
                                         </svg>
                                     </div>
                                     <div>
-                                        <h2 class="text-base font-bold text-gray-900">Your Information</h2>
-                                        <p class="text-xs text-gray-500">Fill in your details to complete the booking</p>
+                                        <h2 class="text-base font-bold text-gray-900">{{ $t('Your Information') }}</h2>
+                                        <p class="text-xs text-gray-500">{{ $t('Fill in your details to complete the booking') }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -275,13 +274,13 @@ function formatDate(dateStr) {
                                 <form @submit.prevent="submitBooking" class="space-y-5">
                                     <!-- Full Name -->
                                     <div>
-                                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Full Name <span class="text-red-400">*</span></label>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Full Name') }}<span class="text-red-400">*</span></label>
                                         <input
                                             v-model="form.full_name"
                                             type="text"
                                             class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors"
                                             :class="{ 'border-red-300 focus:ring-red-500': errors.full_name }"
-                                            placeholder="Enter your full name"
+                                            :placeholder="$t('Enter your full name')"
                                         />
                                         <p v-if="errors.full_name" class="mt-1.5 text-xs text-red-500">{{ errors.full_name }}</p>
                                     </div>
@@ -289,18 +288,18 @@ function formatDate(dateStr) {
                                     <!-- Email & Phone -->
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email <span class="text-red-400">*</span></label>
+                                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Email') }}<span class="text-red-400">*</span></label>
                                             <input
                                                 v-model="form.email"
                                                 type="email"
                                                 class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors"
                                                 :class="{ 'border-red-300 focus:ring-red-500': errors.email }"
-                                                placeholder="you@example.com"
+                                                :placeholder="$t('you@example.com')"
                                             />
                                             <p v-if="errors.email" class="mt-1.5 text-xs text-red-500">{{ errors.email }}</p>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Phone <span class="text-red-400">*</span></label>
+                                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Phone') }}<span class="text-red-400">*</span></label>
                                             <input
                                                 v-model="form.phone"
                                                 type="tel"
@@ -314,12 +313,12 @@ function formatDate(dateStr) {
 
                                     <!-- Notes -->
                                     <div>
-                                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Special Requests <span class="text-gray-400 font-normal">(optional)</span></label>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Special Requests') }}<span class="text-gray-400 font-normal">{{ $t('(optional)') }}</span></label>
                                         <textarea
                                             v-model="form.customer_notes"
                                             rows="3"
                                             class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none focus:bg-white transition-colors"
-                                            placeholder="Any special requests or notes for the provider..."
+                                            :placeholder="$t('Any special requests or notes for the provider...')"
                                         ></textarea>
                                     </div>
 

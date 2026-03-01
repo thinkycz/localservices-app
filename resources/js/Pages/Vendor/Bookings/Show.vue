@@ -96,7 +96,7 @@ const statusConfig = getStatusConfig(props.booking.status);
 </script>
 
 <template>
-    <Head :title="`Booking #${booking.id}`" />
+    <Head ::title="$t('`Booking #${booking.id}`')" />
 
     <VendorLayout activePage="bookings">
         <div class="flex flex-col gap-6">
@@ -109,9 +109,7 @@ const statusConfig = getStatusConfig(props.booking.status);
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    Back to Bookings
-                </Link>
+                    </svg>{{ $t('Back to Bookings') }}</Link>
             </div>
 
             <!-- Booking Header Card -->
@@ -136,15 +134,11 @@ const statusConfig = getStatusConfig(props.booking.status);
                             <button
                                 @click="confirmBooking"
                                 class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white font-semibold text-sm rounded-xl transition-all duration-200"
-                            >
-                                Confirm
-                            </button>
+                            >{{ $t('Confirm') }}</button>
                             <button
                                 @click="showCancelModal = true"
                                 class="px-5 py-2.5 border border-red-200 hover:bg-red-50 text-red-600 font-semibold text-sm rounded-xl transition-colors"
-                            >
-                                Decline
-                            </button>
+                            >{{ $t('Decline') }}</button>
                         </template>
                         <template v-else-if="booking.status === 'confirmed'">
                             <button

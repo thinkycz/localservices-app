@@ -20,35 +20,33 @@ import { Link } from '@inertiajs/vue3';
                                     <path d="M12 2h5.5A2.5 2.5 0 0120 4.5v15a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 19.5V11l5-2.5L12 11V2z" stroke="currentColor" stroke-width="1.5" fill="none"/>
                                 </svg>
                             </div>
-                            <span class="text-gray-900" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">Bookable</span>
+                            <span class="text-gray-900" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">{{ $t('Bookable') }}</span>
                         </div>
-                        <p class="text-sm text-gray-500 leading-relaxed">
-                            Connecting you with trusted local service providers since 2020. Quality, reliability, and community at every booking.
-                        </p>
+                        <p class="text-sm text-gray-500 leading-relaxed">{{ $t('Connecting you with trusted local service providers since 2020. Quality, reliability, and community at every booking.') }}</p>
                     </div>
                     <div>
-                        <h4 class="text-sm font-bold text-gray-900 mb-3">Quick Links</h4>
+                        <h4 class="text-sm font-bold text-gray-900 mb-3">{{ $t('Quick Links') }}</h4>
                         <ul class="space-y-2">
-                            <li><Link :href="route('services.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">Browse Services</Link></li>
-                            <li><Link :href="route('bookings.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">My Bookings</Link></li>
-                            <li><Link :href="route('vendor.onboarding.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">List Your Service</Link></li>
-                            <li><Link :href="route('pages.faq')" class="text-sm text-gray-500 hover:text-blue-600 transition">Help &amp; Support</Link></li>
+                            <li><Link :href="route('services.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('Browse Services') }}</Link></li>
+                            <li><Link :href="route('bookings.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('My Bookings') }}</Link></li>
+                            <li><Link :href="route('vendor.onboarding.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('List Your Service') }}</Link></li>
+                            <li><Link :href="route('pages.faq')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('Help &amp; Support') }}</Link></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 class="text-sm font-bold text-gray-900 mb-3">Contact</h4>
+                        <h4 class="text-sm font-bold text-gray-900 mb-3">{{ $t('Contact') }}</h4>
                         <ul class="space-y-2">
-                            <li><Link :href="route('pages.contact')" class="text-sm text-gray-500 hover:text-blue-600 transition">Contact Support</Link></li>
+                            <li><Link :href="route('pages.contact')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('Contact Support') }}</Link></li>
                             <li class="text-sm text-gray-500">(555) 123-4567</li>
-                            <li class="text-sm text-gray-500">hello@bookable.com</li>
+                            <li class="text-sm text-gray-500">{{ $t('hello@bookable.com') }}</li>
                         </ul>
                     </div>
                 </div>
                 <div class="border-t border-gray-100 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
                     <p class="text-xs text-gray-400">© {{ new Date().getFullYear() }} Bookable. All rights reserved.</p>
                     <div class="flex gap-4">
-                        <Link :href="route('pages.privacy')" class="text-xs text-gray-400 hover:text-gray-600">Privacy Policy</Link>
-                        <Link :href="route('pages.terms')" class="text-xs text-gray-400 hover:text-gray-600">Terms of Service</Link>
+                        <Link :href="route('pages.privacy')" class="text-xs text-gray-400 hover:text-gray-600">{{ $t('Privacy Policy') }}</Link>
+                        <Link :href="route('pages.terms')" class="text-xs text-gray-400 hover:text-gray-600">{{ $t('Terms of Service') }}</Link>
                     </div>
                 </div>
             </div>

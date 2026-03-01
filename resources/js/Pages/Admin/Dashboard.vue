@@ -5,8 +5,8 @@
       <!-- Dark Gradient Header -->
       <div class="bg-gradient-to-b from-gray-900 via-blue-900 to-indigo-900 pt-16 pb-32">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 class="text-4xl font-extrabold text-white tracking-tight">Admin Dashboard</h1>
-          <p class="mt-3 text-lg text-blue-200 max-w-2xl font-medium">Platform overview, metrics, and real-time analytics.</p>
+          <h1 class="text-4xl font-extrabold text-white tracking-tight">{{ $t('Admin Dashboard') }}</h1>
+          <p class="mt-3 text-lg text-blue-200 max-w-2xl font-medium">{{ $t('Platform overview, metrics, and real-time analytics.') }}</p>
         </div>
       </div>
 
@@ -23,7 +23,7 @@
                 </svg>
               </div>
               <div class="ml-5">
-                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Total Users</p>
+                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Total Users') }}</p>
                 <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ metrics.total_users }}</p>
               </div>
             </div>
@@ -38,7 +38,7 @@
                 </svg>
               </div>
               <div class="ml-5">
-                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Services</p>
+                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Services') }}</p>
                 <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ metrics.total_services }}</p>
               </div>
             </div>
@@ -53,7 +53,7 @@
                 </svg>
               </div>
               <div class="ml-5">
-                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Bookings</p>
+                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Bookings') }}</p>
                 <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ metrics.total_bookings }}</p>
               </div>
             </div>
@@ -68,7 +68,7 @@
                 </svg>
               </div>
               <div class="ml-5">
-                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Revenue</p>
+                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Revenue') }}</p>
                 <p class="text-3xl font-extrabold text-gray-900 mt-1">${{ formatNumber(metrics.total_revenue) }}</p>
               </div>
             </div>
@@ -79,7 +79,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
           <!-- Revenue Chart -->
           <div class="bg-white rounded-2xl shadow-xl ring-1 ring-gray-900/5 p-8">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Revenue (Last 30 Days)</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-6">{{ $t('Revenue (Last 30 Days)') }}</h3>
             <div class="h-72 flex items-end space-x-3">
               <div
                 v-for="(value, index) in revenueData.data"
@@ -100,7 +100,7 @@
 
           <!-- User Growth Chart -->
           <div class="bg-white rounded-2xl shadow-xl ring-1 ring-gray-900/5 p-8">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">User Growth</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-6">{{ $t('User Growth') }}</h3>
             <div class="h-72 flex items-end space-x-3">
               <div
                 v-for="(value, index) in userGrowthData.data"
@@ -123,23 +123,23 @@
         <!-- Platform Health -->
         <div class="bg-white rounded-2xl shadow-xl ring-1 ring-gray-900/5 p-8 mb-10 overflow-hidden relative">
           <div class="absolute top-0 right-0 -mt-16 -mr-16 w-64 h-64 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full opacity-50 blur-3xl pointer-events-none"></div>
-          <h3 class="text-xl font-bold text-gray-900 mb-8 relative z-10">Platform Health</h3>
+          <h3 class="text-xl font-bold text-gray-900 mb-8 relative z-10">{{ $t('Platform Health') }}</h3>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-8 relative z-10">
             <div class="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl ring-1 ring-gray-900/5 transition-transform hover:-translate-y-1">
               <p class="text-4xl font-extrabold text-emerald-600">{{ platformHealth.completion_rate }}%</p>
-              <p class="text-sm font-medium text-gray-500 mt-2">Completion Rate</p>
+              <p class="text-sm font-medium text-gray-500 mt-2">{{ $t('Completion Rate') }}</p>
             </div>
             <div class="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl ring-1 ring-gray-900/5 transition-transform hover:-translate-y-1">
               <p class="text-4xl font-extrabold text-blue-600">{{ platformHealth.satisfaction_rate }}%</p>
-              <p class="text-sm font-medium text-gray-500 mt-2">Satisfaction</p>
+              <p class="text-sm font-medium text-gray-500 mt-2">{{ $t('Satisfaction') }}</p>
             </div>
             <div class="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl ring-1 ring-gray-900/5 transition-transform hover:-translate-y-1">
               <p class="text-4xl font-extrabold text-indigo-600">{{ platformHealth.avg_response_time }}</p>
-              <p class="text-sm font-medium text-gray-500 mt-2">Avg Response</p>
+              <p class="text-sm font-medium text-gray-500 mt-2">{{ $t('Avg Response') }}</p>
             </div>
             <div class="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl ring-1 ring-gray-900/5 transition-transform hover:-translate-y-1">
               <p class="text-4xl font-extrabold text-rose-600">{{ platformHealth.dispute_rate }}%</p>
-              <p class="text-sm font-medium text-gray-500 mt-2">Dispute Rate</p>
+              <p class="text-sm font-medium text-gray-500 mt-2">{{ $t('Dispute Rate') }}</p>
             </div>
           </div>
         </div>
@@ -148,7 +148,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <!-- Recent Bookings -->
           <div class="bg-white rounded-2xl shadow-xl ring-1 ring-gray-900/5 p-8">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Recent Bookings</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-6">{{ $t('Recent Bookings') }}</h3>
             <div class="space-y-4">
               <div
                 v-for="booking in recentBookings"
@@ -171,7 +171,7 @@
 
           <!-- Recent Reviews -->
           <div class="bg-white rounded-2xl shadow-xl ring-1 ring-gray-900/5 p-8">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Recent Reviews</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-6">{{ $t('Recent Reviews') }}</h3>
             <div class="space-y-4">
               <div
                 v-for="review in recentReviews"
