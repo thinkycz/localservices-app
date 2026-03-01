@@ -19,13 +19,15 @@ class SearchController extends Controller
         $query = $request->get('q', '');
         $filters = $request->only(['categories', 'price_range', 'min_rating', 'city', 'sort']);
 
-        // Use Scout for full-text search if query exists
+        // Use Eloquent for search if query exists
         if ($query) {
-            $searchResults = Service::search($query)
-                ->query(function ($builder) use ($filters) {
+            $searchResults = Service::query()
+                ->where('name', 'like', "%{$query}%")
+                ->orWhere('description', 'like', "%{$query}%")
+                ->where(function ($builder) use ($filters) {
                     $this->applyFilters($builder, $filters);
-                    $builder->with('category');
                 })
+                ->with('category')
                 ->paginate(20)
                 ->withQueryString();
         } else {
@@ -51,7 +53,7 @@ class SearchController extends Controller
         }
 
         $categories = Category::withCount('services')->get();
-        
+
         // Get unique cities for filter
         $cities = Service::distinct()->whereNotNull('city')->pluck('city');
 
@@ -70,16 +72,18 @@ class SearchController extends Controller
     public function suggestions(Request $request): \Illuminate\Http\JsonResponse
     {
         $query = $request->get('q', '');
-        
+
         if (strlen($query) < 2) {
             return response()->json([]);
         }
 
         // Search in services
-        $services = Service::search($query)
+        $services = Service::query()
+            ->where('name', 'like', "%{$query}%")
+            ->orWhere('description', 'like', "%{$query}%")
             ->take(5)
             ->get()
-            ->map(fn ($service) => [
+            ->map(fn($service) => [
                 'type' => 'service',
                 'id' => $service->id,
                 'title' => $service->name,
@@ -92,7 +96,7 @@ class SearchController extends Controller
             ->where('name', 'like', "%{$query}%")
             ->take(3)
             ->get()
-            ->map(fn ($category) => [
+            ->map(fn($category) => [
                 'type' => 'category',
                 'id' => $category->id,
                 'title' => $category->name,
@@ -115,10 +119,12 @@ class SearchController extends Controller
      */
     private function getSuggestions(string $query): array
     {
-        return Service::search($query)
+        return Service::query()
+            ->where('name', 'like', "%{$query}%")
+            ->orWhere('description', 'like', "%{$query}%")
             ->take(5)
             ->get()
-            ->map(fn ($service) => [
+            ->map(fn($service) => [
                 'id' => $service->id,
                 'name' => $service->name,
                 'category' => $service->category?->name,
@@ -144,9 +150,9 @@ class SearchController extends Controller
         ];
 
         return collect($popularTerms)
-            ->filter(fn ($term) => str_contains(strtolower($term), strtolower($query)))
+            ->filter(fn($term) => str_contains(strtolower($term), strtolower($query)))
             ->take(3)
-            ->map(fn ($term) => [
+            ->map(fn($term) => [
                 'type' => 'popular',
                 'title' => $term,
                 'url' => route('search.index', ['q' => $term]),

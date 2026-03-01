@@ -25,8 +25,6 @@ class User extends Authenticatable
         'phone',
         'is_service_provider',
         'is_admin',
-        'social_provider',
-        'social_id',
         'has_local_password',
         'last_login_at',
     ];

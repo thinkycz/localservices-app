@@ -32,98 +32,43 @@ class PaymentController extends Controller
         }
 
         return Inertia::render('Payment/Show', [
-            'booking' => $booking->load(['service', 'offering', 'provider']),
-            'stripeKey' => config('services.stripe.key'),
+            'booking' => $booking->load(['service', 'offering', 'provider'])
         ]);
     }
 
     /**
-     * Process payment intent for Stripe.
+     * Confirm mock payment and update booking.
      */
-    public function createPaymentIntent(Booking $booking): JsonResponse
+    public function confirmPayment(Request $request, Booking $booking)
     {
         // Ensure user owns this booking
         if ($booking->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        // Check if already paid
-        if ($booking->payment_status === 'paid') {
-            return response()->json(['error' => 'Booking already paid'], 400);
-        }
-
-        try {
-            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-
-            $paymentIntent = \Stripe\PaymentIntent::create([
-                'amount' => (int) ($booking->total_price * 100), // Convert to cents
-                'currency' => 'usd',
-                'automatic_payment_methods' => [
-                    'enabled' => true,
-                ],
-                'metadata' => [
-                    'booking_id' => $booking->id,
-                    'user_id' => $booking->user_id,
-                    'service' => $booking->service->name,
-                ],
-            ]);
-
-            return response()->json([
-                'clientSecret' => $paymentIntent->client_secret,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Confirm payment and update booking.
-     */
-    public function confirmPayment(Request $request, Booking $booking): JsonResponse
-    {
-        // Ensure user owns this booking
-        if ($booking->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return back()->with('error', 'Unauthorized');
         }
 
         $validated = $request->validate([
-            'payment_intent_id' => 'required|string',
             'payment_method' => 'required|string',
         ]);
 
         try {
-            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+            $booking->update([
+                'payment_status' => 'paid',
+                'payment_method' => $validated['payment_method'],
+                'paid_at' => now(),
+                'payment_notes' => 'Mock Payment Completed',
+            ]);
 
-            $paymentIntent = \Stripe\PaymentIntent::retrieve($validated['payment_intent_id']);
+            Mail::to($booking->customer->email)->send(new PaymentConfirmation($booking));
+            NotificationService::paymentReceived($booking);
 
-            if ($paymentIntent->status === 'succeeded') {
-                $booking->update([
-                    'payment_status' => 'paid',
-                    'payment_method' => $validated['payment_method'],
-                    'paid_at' => now(),
-                    'payment_notes' => 'Stripe PaymentIntent: ' . $validated['payment_intent_id'],
-                ]);
-
-                Mail::to($booking->customer->email)->send(new PaymentConfirmation($booking));
-                NotificationService::paymentReceived($booking);
-
-                return response()->json([
-                    'success' => true,
-                    'redirect' => route('bookings.confirmation', $booking->id),
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'error' => 'Payment not completed. Status: ' . $paymentIntent->status,
-            ], 400);
+            return redirect()->route('bookings.confirmation', $booking->id);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return back()->with('error', $e->getMessage());
         }
     }
 
     /**
-     * Process refund for a booking.
+     * Process mock refund for a booking.
      */
     public function refund(Booking $booking): RedirectResponse
     {
@@ -137,22 +82,10 @@ class PaymentController extends Controller
             return back()->with('error', 'No payment to refund.');
         }
 
-        if (!preg_match('/Stripe PaymentIntent:\s*([^\s|]+)/', (string) $booking->payment_notes, $matches)) {
-            return back()->with('error', 'Unable to locate Stripe payment reference for this booking.');
-        }
-
-        $paymentIntentId = $matches[1];
-
         try {
-            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-
-            $refund = \Stripe\Refund::create([
-                'payment_intent' => $paymentIntentId,
-            ]);
-
             $booking->update([
                 'payment_status' => 'refunded',
-                'payment_notes' => trim((string) $booking->payment_notes . ' | Refund: ' . $refund->id . ' ' . now()),
+                'payment_notes' => trim((string) $booking->payment_notes . ' | Refund manually triggered ' . now()),
             ]);
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());

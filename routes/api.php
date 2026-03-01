@@ -3,14 +3,10 @@
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
-
-Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 Route::middleware(['web', 'auth'])->group(function () {
     Route::prefix('payments')->group(function () {
-        Route::post('/{booking}/intent', [PaymentController::class, 'createPaymentIntent'])->name('payments.intent');
         Route::post('/{booking}/confirm', [PaymentController::class, 'confirmPayment'])->name('payments.confirm');
     });
 

@@ -5,12 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Laravel\Scout\Searchable;
 
 class Service extends Model
 {
-    use Searchable;
-
     protected $fillable = [
         'category_id',
         'user_id',
@@ -39,25 +36,6 @@ class Service extends Model
         'rating' => 'float',
         'price_range' => 'integer',
     ];
-
-    /**
-     * Get the indexable data array for the model.
-     */
-    public function toSearchableArray(): array
-    {
-        return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'description' => $this->description,
-            'slug' => $this->slug,
-            'city' => $this->city,
-            'state' => $this->state,
-            'category' => $this->category?->name,
-            'price_range' => $this->price_range,
-            'rating' => $this->rating,
-            'is_available' => $this->is_available,
-        ];
-    }
 
     public function category(): BelongsTo
     {

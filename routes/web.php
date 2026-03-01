@@ -192,23 +192,4 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
 });
 
-// Social Authentication
-Route::get('/auth/{provider}', [\App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])
-    ->name('social.redirect')
-    ->where('provider', 'google|facebook');
-
-Route::get('/auth/{provider}/callback', [\App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])
-    ->name('social.callback')
-    ->where('provider', 'google|facebook');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/auth/{provider}/link', [\App\Http\Controllers\Auth\SocialAuthController::class, 'link'])
-        ->name('social.link')
-        ->where('provider', 'google|facebook');
-
-    Route::post('/auth/{provider}/unlink', [\App\Http\Controllers\Auth\SocialAuthController::class, 'unlink'])
-        ->name('social.unlink')
-        ->where('provider', 'google|facebook');
-});
-
 require __DIR__ . '/auth.php';
