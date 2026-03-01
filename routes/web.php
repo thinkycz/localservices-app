@@ -1,13 +1,9 @@
 <?php
 
-use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\BookingController;
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PageController;
-use App\Http\Controllers\PdfController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -73,17 +69,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/bookings/confirmation/{id}', [BookingController::class, 'confirmation'])->name('bookings.confirmation');
     Route::get('/bookings', [BookingController::class, 'userBookings'])->name('bookings.index');
     Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
-
-    // PDF Downloads
-    Route::get('/bookings/{id}/pdf', [PdfController::class, 'bookingConfirmation'])->name('bookings.pdf');
-    Route::get('/bookings/{id}/invoice', [PdfController::class, 'invoice'])->name('bookings.invoice');
-});
-
-// Payments (auth required)
-Route::middleware('auth')->group(function () {
-    Route::get('/payment/{booking}', [\App\Http\Controllers\PaymentController::class, 'show'])->name('payment.show');
-    Route::get('/payment-history', [\App\Http\Controllers\PaymentController::class, 'history'])->name('payment.history');
-    Route::post('/payment/{booking}/refund', [\App\Http\Controllers\PaymentController::class, 'refund'])->name('payment.refund');
 });
 
 // Reviews (public viewing, auth required for creating)
@@ -94,29 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-reviews', [ReviewController::class, 'userReviews'])->name('reviews.user');
 });
 
-// Messages pages (auth required)
-Route::middleware('auth')->group(function () {
-    Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
-    Route::get('/messages/{conversation}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show')->whereNumber('conversation');
-    Route::post('/services/{service}/message', [\App\Http\Controllers\MessageController::class, 'start'])->name('messages.start');
-    Route::post('/bookings/{booking}/message', [\App\Http\Controllers\MessageController::class, 'startFromBooking'])->name('messages.startFromBooking');
-});
 
-// Bookmarks (auth required)
-Route::middleware('auth')->group(function () {
-    Route::get('/bookmarks', [BookmarkController::class, 'index'])->name('bookmarks.index');
-    Route::post('/bookmarks/{serviceId}', [BookmarkController::class, 'store'])->name('bookmarks.store');
-    Route::delete('/bookmarks/{serviceId}', [BookmarkController::class, 'destroy'])->name('bookmarks.destroy');
-    Route::post('/bookmarks/{serviceId}/toggle', [BookmarkController::class, 'toggle'])->name('bookmarks.toggle');
-    Route::get('/bookmarks/{serviceId}/check', [BookmarkController::class, 'check'])->name('bookmarks.check');
-});
-
-// Categories (public)
-Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
-
-// Search
-Route::get('/search', [SearchController::class, 'index'])->name('search.index');
-Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
 
 // Static Pages
 Route::get('/about', [PageController::class, 'about'])->name('pages.about');

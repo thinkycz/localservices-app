@@ -89,10 +89,6 @@ function formatReviews(n) {
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div class="flex items-center justify-between mb-5">
                 <h2 class="text-lg font-bold text-gray-900">Browse by Category</h2>
-                <Link :href="route('categories.index')" class="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                    All categories
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </Link>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
                 <button

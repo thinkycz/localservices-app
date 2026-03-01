@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import BookmarkButton from '@/Components/BookmarkButton.vue';
 import StarRating from '@/Components/StarRating.vue';
 
 const props = defineProps({
@@ -57,12 +56,6 @@ const formattedReviews = computed(() => {
                         >{{ service.badge }}</span>
                         <span class="text-[11px] text-gray-400 font-medium">{{ service.category?.name }}</span>
                     </div>
-                    <BookmarkButton
-                        :service-id="service.id"
-                        :initial-bookmarked="service.is_bookmarked"
-                        size="sm"
-                        @click.stop
-                    />
                 </div>
 
                 <!-- Name -->

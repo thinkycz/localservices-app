@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import BookmarkButton from '@/Components/BookmarkButton.vue';
 import StarRating from '@/Components/StarRating.vue';
 
 const props = defineProps({
@@ -282,16 +281,11 @@ const mockReviews = [
                                     Link copied!
                                 </div>
                             </transition>
-                        </div>
-                        <BookmarkButton
-                            :service-id="service.id"
-                            :initial-bookmarked="service.is_bookmarked"
-                            size="md"
-                        />
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
         <!-- ── Page body ────────────────────────────────────────────────────── -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
