@@ -45,7 +45,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
 function navClass(name) {
     return props.activePage === name
-        ? 'flex items-center gap-3 px-3 py-2.5 rounded-xl bg-blue-600 text-white font-medium text-sm'
+        ? 'flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium text-sm shadow-md'
         : 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-700 font-medium text-sm transition-colors';
 }
 </script>
@@ -147,7 +147,7 @@ function navClass(name) {
                     <div id="vendor-user-menu-wrapper" class="relative flex items-center gap-3">
                         <button
                             @click.stop="showUserMenu = !showUserMenu"
-                            class="flex items-center gap-3 focus:outline-none"
+                            class="group flex items-center gap-3 focus:outline-none"
                         >
                             <div class="text-right">
                                 <div class="text-sm font-semibold text-gray-900 leading-tight">
@@ -156,7 +156,7 @@ function navClass(name) {
                                 <div class="text-xs text-gray-400 mt-0.5">Owner</div>
                             </div>
                             <div
-                                class="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
+                                class="w-9 h-9 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 shadow-md transform group-hover:-translate-y-0.5 transition-all duration-200"
                             >
                                 {{ userInitials }}
                             </div>

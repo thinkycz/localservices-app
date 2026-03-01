@@ -73,7 +73,7 @@ function getPageUrl(page) {
                     :href="getPageUrl(page) ?? '#'"
                     class="px-3 py-2 text-sm rounded-lg transition font-medium"
                     :class="page === meta.current_page
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                         : 'text-gray-600 hover:bg-gray-100'"
                 >
                     {{ page }}

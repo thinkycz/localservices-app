@@ -79,7 +79,7 @@ function formatDate(date) {
                             <!-- Book Button -->
                             <Link
                                 :href="route('services.book', service.slug)"
-                                class="block w-full mt-6 bg-blue-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                                class="block w-full mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-3 rounded-xl font-semibold shadow-md transform hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
                             >
                                 Book This Service
                             </Link>
@@ -168,7 +168,7 @@ function formatDate(date) {
                                         :class="[
                                             'px-4 py-2 rounded-lg text-sm font-medium',
                                             link.active
-                                                ? 'bg-blue-600 text-white'
+                                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                                                 : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
                                             !link.url && 'opacity-50 cursor-not-allowed'
                                         ]"

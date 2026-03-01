@@ -135,7 +135,7 @@ const statusConfig = getStatusConfig(props.booking.status);
                         <template v-if="booking.status === 'pending'">
                             <button
                                 @click="confirmBooking"
-                                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-colors shadow-sm"
+                                class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white font-semibold text-sm rounded-xl transition-all duration-200"
                             >
                                 Confirm
                             </button>
@@ -431,7 +431,7 @@ const statusConfig = getStatusConfig(props.booking.status);
                             </button>
                             <button
                                 @click="addNote"
-                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition-colors shadow-sm"
+                                class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white font-semibold py-2.5 rounded-xl transition-all duration-200"
                             >
                                 Add Note
                             </button>

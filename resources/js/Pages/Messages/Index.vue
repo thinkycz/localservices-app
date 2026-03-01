@@ -65,7 +65,7 @@
             <p class="text-gray-500">Start messaging by booking a service or contacting a provider.</p>
             <Link
               :href="route('services.index')"
-              class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              class="mt-4 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-md transform hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
             >
               Browse Services
             </Link>

@@ -314,7 +314,7 @@ const mockReviews = [
                                     :class="[
                                         'px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all',
                                         activeTag === null
-                                            ? 'bg-blue-600 text-white shadow-sm'
+                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     ]"
                                 >All</button>
@@ -325,7 +325,7 @@ const mockReviews = [
                                     :class="[
                                         'px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all',
                                         activeTag === tag
-                                            ? 'bg-blue-600 text-white shadow-sm'
+                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     ]"
                                 >{{ tag }}</button>
@@ -384,7 +384,7 @@ const mockReviews = [
                                             :class="[
                                                 'w-8 h-8 rounded-full flex items-center justify-center transition-all',
                                                 selectedOffering?.id === offering.id
-                                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md transform hover:-translate-y-0.5 transition-all hover:from-blue-700 hover:to-indigo-700'
                                                     : 'border-2 border-gray-200 text-gray-400 group-hover:border-blue-300 group-hover:text-blue-400'
                                             ]"
                                         >
@@ -611,7 +611,7 @@ const mockReviews = [
                                                 !isDayAvailable(day)
                                                     ? 'text-gray-300 cursor-not-allowed'
                                                     : selectedDay === day
-                                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                                                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transform hover:-translate-y-0.5 transition-all hover:from-blue-700 hover:to-indigo-700'
                                                         : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
                                             ]"
                                         >{{ day }}</button>

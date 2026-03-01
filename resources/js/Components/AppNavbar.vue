@@ -10,6 +10,15 @@ const auth = page.props.auth;
 const searchQuery = ref('');
 const showUserMenu = ref(false);
 
+const userInitials = computed(() => {
+    if (!auth?.user?.name) return 'U';
+    const names = auth.user.name.split(' ');
+    if (names.length >= 2) {
+        return `${names[0][0]}${names[1][0]}`.toUpperCase();
+    }
+    return names[0].substring(0, 2).toUpperCase();
+});
+
 // Check if current route is homepage
 const isOnHomePage = computed(() => {
     return route().current() === 'home';
@@ -88,11 +97,9 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         <div id="user-menu-wrapper" class="relative">
                             <button
                                 @click.stop="showUserMenu = !showUserMenu"
-                                class="w-9 h-9 bg-gray-300 rounded-full flex items-center justify-center hover:bg-gray-400 transition focus:outline-none"
+                                class="w-9 h-9 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center hover:opacity-90 transition focus:outline-none text-white font-semibold text-sm flex-shrink-0 shadow-md transform hover:-translate-y-0.5 duration-200"
                             >
-                                <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-                                </svg>
+                                {{ userInitials }}
                             </button>
 
                             <!-- Dropdown -->

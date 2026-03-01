@@ -92,7 +92,7 @@
               <button
                 type="submit"
                 :disabled="!newMessage.trim() || sending"
-                class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-md transform hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center space-x-2 transition-all duration-200"
               >
                 <span v-if="sending">Sending...</span>
                 <span v-else>Send</span>

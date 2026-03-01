@@ -96,7 +96,7 @@ function statusClasses(status) {
           <p class="text-gray-600 mb-6">You’ll see completed payments and refunds here.</p>
           <Link
             :href="route('services.index')"
-            class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            class="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-medium shadow-md transform hover:-translate-y-0.5 transition-all duration-200 hover:from-blue-700 hover:to-indigo-700"
           >
             Browse Services
           </Link>

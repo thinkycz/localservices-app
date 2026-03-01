@@ -147,7 +147,7 @@ function getBadgeClasses(color) {
 
                     <Link
                         :href="route('vendor.services.create')"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 transition-colors shadow-sm flex-shrink-0"
+                        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 transition-all duration-200 flex-shrink-0"
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -258,7 +258,7 @@ function getBadgeClasses(color) {
                 <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">Start by adding your first service to attract customers.</p>
                 <Link
                     :href="route('vendor.services.create')"
-                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-medium text-sm rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium text-sm rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md transform hover:-translate-y-0.5"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -285,7 +285,7 @@ function getBadgeClasses(color) {
                             :href="`?page=${page}`"
                             :class="[
                                 'w-9 h-9 rounded-lg text-sm font-medium transition-colors flex items-center justify-center',
-                                page === services.current_page ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+                                page === services.current_page ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
                             ]"
                         >{{ page }}</Link>
                     </template>

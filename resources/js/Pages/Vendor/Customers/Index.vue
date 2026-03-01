@@ -280,7 +280,7 @@ function formatDate(dateString) {
                             :class="[
                                 'w-9 h-9 rounded-lg text-sm font-medium transition-colors',
                                 page === meta.current_page
-                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
                                     : 'text-gray-600 hover:bg-white hover:shadow-sm'
                             ]"
                         >

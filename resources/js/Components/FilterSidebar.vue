@@ -142,7 +142,7 @@ const ratingLabel = computed(() => {
                             <div
                                 class="w-[18px] h-[18px] rounded flex items-center justify-center transition-all shrink-0"
                                 :class="selectedCategories.includes(cat.slug)
-                                    ? 'bg-blue-600 shadow-sm'
+                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-sm border-transparent'
                                     : 'border-2 border-gray-300'"
                             >
                                 <svg v-if="selectedCategories.includes(cat.slug)" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,7 +187,7 @@ const ratingLabel = computed(() => {
                             @click="togglePriceRange(idx + 1)"
                             class="flex-1 py-2.5 text-sm font-bold rounded-lg border-2 transition-all"
                             :class="selectedPriceRanges.includes(idx + 1)
-                                ? 'bg-blue-600 border-blue-600 text-white'
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-transparent text-white shadow-md'
                                 : 'border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-600'"
                         >
                             {{ label }}

@@ -525,7 +525,7 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                             <div class="px-5 py-4 space-y-2 border-b border-gray-100">
                                 <Link
                                     :href="route('vendor.bookings.show', selectedBooking.id)"
-                                    class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                    class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white font-semibold text-sm py-2.5 rounded-xl transition-all duration-200"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -578,7 +578,7 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                             :href="route('vendor.bookings.confirm', selectedBooking.id)" 
                                             method="post"
                                             as="button"
-                                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                            class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white font-semibold text-sm py-2.5 rounded-xl transition-all duration-200"
                                         >
                                             Approve
                                         </Link>
