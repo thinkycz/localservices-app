@@ -148,15 +148,6 @@ class DashboardController extends Controller
                 'iconBg' => 'bg-green-100',
                 'iconColor' => 'text-green-600',
             ],
-            [
-                'label' => 'Revenue',
-                'value' => $revenueString,
-                'change' => $this->calculateRevenueChange($bookings),
-                'positive' => true,
-                'icon' => 'cash',
-                'iconBg' => 'bg-purple-100',
-                'iconColor' => 'text-purple-600',
-            ],
         ];
 
         return Inertia::render('Vendor/Dashboard', [

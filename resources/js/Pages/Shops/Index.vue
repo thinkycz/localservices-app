@@ -77,7 +77,7 @@ const searchTitle = computed(() => {
                     <ShopCard
                         v-for="shop in shops.data"
                         :key="shop.id"
-                        :service="service"
+                        :shop="shop"
                     />
                 </div>
 
