@@ -16,20 +16,9 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Admin user
+        // Service Provider
         User::firstOrCreate(
-            ['email' => 'admin@localservices.com'],
-            [
-                'name' => 'Admin User',
-                'password' => Hash::make('password'),
-                'is_service_provider' => false,
-                'phone' => '+1 (555) 000-0000',
-            ]
-        );
-
-        // Service Provider 1 - Barber
-        User::firstOrCreate(
-            ['email' => 'mike@precisionplumbing.com'],
+            ['email' => 'service@provider.com'],
             [
                 'name' => 'Mike Johnson',
                 'password' => Hash::make('password'),
