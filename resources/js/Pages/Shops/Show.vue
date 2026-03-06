@@ -5,13 +5,13 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import StarRating from '@/Components/StarRating.vue';
 
 const props = defineProps({
-    service: { type: Object, required: true },
+    shop: { type: Object, required: true },
     related:  { type: Array,  default: () => [] },
     bookings: { type: Array,  default: () => [] },
 });
 
 // ── Offerings / filter ────────────────────────────────────────────────────────
-const offerings = computed(() => props.service.offerings ?? []);
+const offerings = computed(() => props.shop.services ?? []);
 
 const categoryTags = computed(() =>
     [...new Set(offerings.value.map(o => o.category_tag).filter(Boolean))]
@@ -37,7 +37,7 @@ function goToBooking() {
     const dateStr = selectedDay.value
         ? `${calYear.value}-${String(calMonth.value + 1).padStart(2, '0')}-${String(selectedDay.value).padStart(2, '0')}`
         : null;
-    router.visit(route('services.book', props.service.slug), {
+    router.visit(route('shops.book', props.shop.slug), {
         data: {
             offering_id: selectedOffering.value.id,
             date: dateStr,
@@ -80,7 +80,7 @@ function nextMonth() {
 }
 
 // ── Business Hours Logic ──────────────────────────────────────────────────────
-const businessHours = computed(() => props.service.business_hours || []);
+const businessHours = computed(() => props.shop.business_hours || []);
 const DAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function isDayAvailable(day) {
@@ -151,7 +151,7 @@ const showReviewModal = ref(false);
 const reviewForm = ref({ rating: 5, text: '' });
 
 function submitReview() {
-    router.post(route('services.reviews.store', props.service.id), reviewForm.value, {
+    router.post(route('shops.reviews.store', props.shop.id), reviewForm.value, {
         onSuccess: () => {
             showReviewModal.value = false;
             reviewForm.value = { rating: 5, text: '' };
@@ -161,7 +161,7 @@ function submitReview() {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const formattedReviews = computed(() => {
-    const n = props.service.reviews_count;
+    const n = props.shop.reviews_count;
     if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
     return n.toLocaleString();
 });
@@ -170,7 +170,7 @@ const badgeClasses = computed(() => ({
     blue:  'bg-blue-100 text-blue-700',
     gray:  'bg-gray-100 text-gray-700',
     green: 'bg-green-100 text-green-700',
-}[props.service.badge_color] ?? 'bg-gray-100 text-gray-700'));
+}[props.shop.badge_color] ?? 'bg-gray-100 text-gray-700'));
 
 
 
@@ -209,9 +209,9 @@ const mockReviews = [
         <!-- ── Hero Banner ──────────────────────────────────────────────────── -->
         <div class="relative h-80 bg-gray-900 overflow-hidden">
             <img
-                v-if="service.image"
-                :src="service.image"
-                ::alt="$t('service.name')"
+                v-if="shop.image"
+                :src="shop.image"
+                ::alt="$t('shop.name')"
                 class="w-full h-full object-cover opacity-60"
             />
             <div v-else class="w-full h-full bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900" />
@@ -232,19 +232,19 @@ const mockReviews = [
                         </div>
                         <div class="pb-0.5">
                             <div class="flex items-center gap-3 mb-1">
-                                <h1 class="text-2xl md:text-3xl font-bold text-white leading-tight">{{ service.name }}</h1>
-                                <span v-if="service.badge" :class="badgeClasses" class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">{{ service.badge }}</span>
+                                <h1 class="text-2xl md:text-3xl font-bold text-white leading-tight">{{ shop.name }}</h1>
+                                <span v-if="shop.badge" :class="badgeClasses" class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">{{ shop.badge }}</span>
                             </div>
                             <div class="flex items-center gap-3 flex-wrap">
                                 <div class="flex items-center gap-1.5">
-                                    <StarRating :rating="service.rating" size="sm" />
-                                    <span class="text-white font-bold text-sm">{{ service.rating }}</span>
+                                    <StarRating :rating="shop.rating" size="sm" />
+                                    <span class="text-white font-bold text-sm">{{ shop.rating }}</span>
                                     <span class="text-gray-300 text-sm">({{ formattedReviews }} reviews)</span>
                                 </div>
                                 <span class="text-gray-500">·</span>
-                                <span class="text-gray-300 text-sm font-medium">{{ service.category?.name }}</span>
-                                <span v-if="service.city" class="text-gray-500">·</span>
-                                <span v-if="service.city" class="text-gray-300 text-sm">{{ service.city }}, {{ service.state }}</span>
+                                <span class="text-gray-300 text-sm font-medium">{{ shop.category?.name }}</span>
+                                <span v-if="shop.city" class="text-gray-500">·</span>
+                                <span v-if="shop.city" class="text-gray-300 text-sm">{{ shop.city }}, {{ shop.state }}</span>
                             </div>
                         </div>
                     </div>
@@ -403,11 +403,11 @@ const mockReviews = [
                                 <h2 class="text-lg font-bold text-gray-900">{{ $t('About') }}</h2>
                             </div>
                             <div class="p-6">
-                                <p class="text-gray-600 leading-relaxed text-sm mb-6">{{ service.description }}</p>
+                                <p class="text-gray-600 leading-relaxed text-sm mb-6">{{ shop.description }}</p>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <!-- Location -->
-                                    <div v-if="service.address || service.city" class="flex gap-3.5 p-4 bg-gray-50 rounded-xl">
+                                    <div v-if="shop.address || shop.city" class="flex gap-3.5 p-4 bg-gray-50 rounded-xl">
                                         <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
                                             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -419,7 +419,7 @@ const mockReviews = [
                                         <div class="min-w-0">
                                             <div class="font-semibold text-gray-900 text-sm mb-0.5">{{ $t('Location') }}</div>
                                             <div class="text-gray-500 text-sm">
-                                                {{ service.address ?? (service.city + ', ' + service.state) }}
+                                                {{ shop.address ?? (shop.city + ', ' + shop.state) }}
                                             </div>
                                         </div>
                                     </div>
@@ -432,7 +432,7 @@ const mockReviews = [
                                         </div>
                                         <div class="min-w-0">
                                             <div class="font-semibold text-gray-900 text-sm mb-0.5">{{ $t('Online Service') }}</div>
-                                            <div class="text-gray-500 text-sm">{{ $t('This service is provided remotely') }}</div>
+                                            <div class="text-gray-500 text-sm">{{ $t('This shop is provided remotely') }}</div>
                                         </div>
                                     </div>
 
@@ -640,7 +640,7 @@ const mockReviews = [
                                 </div>
                                 <div>
                                     <h3 class="text-lg font-bold text-white">{{ $t('Write a Review') }}</h3>
-                                    <p class="text-xs text-blue-100">Share your experience with {{ service.name }}</p>
+                                    <p class="text-xs text-blue-100">Share your experience with {{ shop.name }}</p>
                                 </div>
                             </div>
                             <button @click="showReviewModal = false" class="text-white/70 hover:text-white transition-colors p-1">

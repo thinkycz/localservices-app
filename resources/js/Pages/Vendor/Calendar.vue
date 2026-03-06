@@ -194,27 +194,27 @@ const cardStyles = {
     blue: {
         wrapper: 'bg-blue-50 border-l-4 border-blue-500',
         name: 'text-blue-800 font-semibold',
-        service: 'text-blue-500',
+        shop: 'text-blue-500',
     },
     yellow: {
         wrapper: 'bg-yellow-50 border-l-4 border-yellow-400',
         name: 'text-yellow-800 font-semibold',
-        service: 'text-yellow-600',
+        shop: 'text-yellow-600',
     },
     green: {
         wrapper: 'bg-green-50 border-l-4 border-green-500',
         name: 'text-green-800 font-semibold',
-        service: 'text-green-600',
+        shop: 'text-green-600',
     },
     red: {
         wrapper: 'bg-red-50 border-l-4 border-red-500',
         name: 'text-red-800 font-semibold',
-        service: 'text-red-500',
+        shop: 'text-red-500',
     },
     blocked: {
         wrapper: 'border-l-4 border-gray-300',
         name: 'text-gray-500 font-medium',
-        service: '',
+        shop: '',
     },
 };
 
@@ -373,7 +373,7 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                                         <span v-if="booking.status === 'pending'" class="text-amber-400 text-xs flex-shrink-0">★</span>
                                                     </div>
                                                     <div class="text-xs mt-0.5 leading-tight truncate" :class="getCardStyle(booking.colorType).service">
-                                                        {{ booking.service }}
+                                                        {{ booking.shop }}
                                                     </div>
                                                 </div>
                                             </template>
@@ -475,7 +475,7 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                         <div class="text-sm font-medium text-gray-800 leading-snug">{{ selectedBooking.dateStr }} • {{ selectedBooking.timeStr }}</div>
                                     </div>
                                 </div>
-                                <!-- Service Type -->
+                                <!-- Shop Type -->
                                 <div class="flex items-start gap-3">
                                     <div class="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
                                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -483,8 +483,8 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                         </svg>
                                     </div>
                                     <div>
-                                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">Service Type</div>
-                                        <div class="text-sm font-medium text-gray-800">{{ selectedBooking.serviceDetail }}</div>
+                                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">Shop Type</div>
+                                        <div class="text-sm font-medium text-gray-800">{{ selectedBooking.shopDetail }}</div>
                                     </div>
                                 </div>
                                 <!-- Duration -->

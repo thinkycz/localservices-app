@@ -140,7 +140,7 @@
                   </div>
                   <div class="ml-4 pt-1">
                     <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">{{ $t('Email') }}</p>
-                    <a href="mailto:support@localservices.com" class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{{ $t('support@localservices.com') }}</a>
+                    <a href="mailto:support@localshops.com" class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{{ $t('support@localshops.com') }}</a>
                   </div>
                 </div>
 

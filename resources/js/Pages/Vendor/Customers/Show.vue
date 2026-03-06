@@ -172,7 +172,7 @@ function getStatusConfig(status) {
                                 <span class="text-sm font-medium text-gray-900">{{ formatDate(booking.date) }}</span>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-sm font-medium text-gray-900">{{ booking.service_name }}</div>
+                                <div class="text-sm font-medium text-gray-900">{{ booking.shop_name }}</div>
                                 <div class="text-xs text-gray-400 mt-0.5">{{ booking.offering_name }}</div>
                             </td>
                             <td class="px-6 py-4">
@@ -212,7 +212,7 @@ function getStatusConfig(status) {
                                     </svg>
                                 </div>
                                 <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No bookings yet') }}</h3>
-                                <p class="text-sm text-gray-500">{{ $t('This customer hasn\'t booked any services.') }}</p>
+                                <p class="text-sm text-gray-500">{{ $t('This customer hasn\'t booked any shops.') }}</p>
                             </td>
                         </tr>
                     </tbody>

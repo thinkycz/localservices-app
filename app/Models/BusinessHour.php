@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class BusinessHour extends Model
 {
     protected $fillable = [
-        'service_id',
+        'shop_id',
         'day_of_week',
         'time_from',
         'time_to',
@@ -18,8 +18,8 @@ class BusinessHour extends Model
         'day_of_week' => 'integer',
     ];
 
-    public function service(): BelongsTo
+    public function shop(): BelongsTo
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Shop::class);
     }
 }

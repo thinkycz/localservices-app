@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
     {
         // Service Provider
         User::firstOrCreate(
-            ['email' => 'service@provider.com'],
+            ['email' => 'vendor@email.com'],
             [
                 'name' => 'Mike Johnson',
                 'password' => Hash::make('password'),
@@ -29,7 +29,7 @@ class UserSeeder extends Seeder
 
         // Regular Customer
         User::firstOrCreate(
-            ['email' => 'john.doe@email.com'],
+            ['email' => 'customer@email.com'],
             [
                 'name' => 'John Doe',
                 'password' => Hash::make('password'),

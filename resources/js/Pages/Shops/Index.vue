@@ -3,11 +3,11 @@ import { ref, computed } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import FilterSidebar from '@/Components/FilterSidebar.vue';
-import ServiceCard from '@/Components/ServiceCard.vue';
+import ShopCard from '@/Components/ShopCard.vue';
 import AppPagination from '@/Components/AppPagination.vue';
 
 const props = defineProps({
-    services:   { type: Object, required: true },
+    shops:   { type: Object, required: true },
     categories: { type: Array,  default: () => [] },
     filters:    { type: Object, default: () => ({}) },
 });
@@ -22,7 +22,7 @@ const sortOptions = [
 
 function setSort(value) {
     currentSort.value = value;
-    router.get(route('services.index'), { ...props.filters, sort: value }, { preserveScroll: true });
+    router.get(route('shops.index'), { ...props.filters, sort: value }, { preserveScroll: true });
 }
 
 const searchTitle = computed(() => {
@@ -43,7 +43,7 @@ const searchTitle = computed(() => {
             <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-5">
                     <h1 class="text-2xl font-bold text-white mb-1">{{ searchTitle }}</h1>
-                    <p class="text-sm text-blue-200 mb-5">{{ services.total }} {{ services.total === 1 ? 'service' : 'services' }} available</p>
+                    <p class="text-sm text-blue-200 mb-5">{{ shops.total }} {{ shops.total === 1 ? 'service' : 'services' }} available</p>
 
                     <!-- Filter + Sort row -->
                     <div class="flex items-center justify-between gap-4 flex-wrap">
@@ -73,10 +73,10 @@ const searchTitle = computed(() => {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
                 <!-- Service Cards — 2-column grid -->
-                <div v-if="services.data.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <ServiceCard
-                        v-for="service in services.data"
-                        :key="service.id"
+                <div v-if="shops.data.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <ShopCard
+                        v-for="shop in shops.data"
+                        :key="shop.id"
                         :service="service"
                     />
                 </div>
@@ -94,23 +94,23 @@ const searchTitle = computed(() => {
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="services.data.length > 0">
-                    <div v-if="services.current_page < services.last_page" class="flex justify-center mt-8">
+                <div v-if="shops.data.length > 0">
+                    <div v-if="shops.current_page < shops.last_page" class="flex justify-center mt-8">
                         <Link
-                            :href="services.next_page_url"
+                            :href="shops.next_page_url"
                             class="px-8 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
                         >{{ $t('Load More') }}</Link>
                     </div>
 
                     <AppPagination
                         :meta="{
-                            current_page: services.current_page,
-                            last_page: services.last_page,
-                            from: services.from,
-                            to: services.to,
-                            total: services.total,
+                            current_page: shops.current_page,
+                            last_page: shops.last_page,
+                            from: shops.from,
+                            to: shops.to,
+                            total: shops.total,
                         }"
-                        :links="services.links"
+                        :links="shops.links"
                     />
                 </div>
             </div>

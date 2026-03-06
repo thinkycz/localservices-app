@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Booking;
+use App\Models\Shop;
 use App\Models\Service;
-use App\Models\ServiceOffering;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -13,10 +13,10 @@ class BookingSeeder extends Seeder
 {
     public function run(): void
     {
-        $services = Service::with('offerings')->get();
+        $shops = Shop::with('services')->get();
         $customers = User::where('is_service_provider', false)->get();
 
-        if ($services->isEmpty() || $customers->isEmpty()) {
+        if ($shops->isEmpty() || $customers->isEmpty()) {
             return;
         }
 
@@ -39,12 +39,12 @@ class BookingSeeder extends Seeder
             $dailyBookings = rand(0, 5);
 
             for ($i = 0; $i < $dailyBookings && $bookingCount < $maxBookings; $i++) {
-                $service = $services->random();
+                $shop = $shops->random();
 
-                // Skip if service has no offerings
-                if ($service->offerings->isEmpty()) continue;
+                // Skip if service has no services
+                if ($shop->services->isEmpty()) continue;
 
-                $offering = $service->offerings->random();
+                $service = $shop->services->random();
                 $customer = $customers->random();
 
                 // Determine status based on date
@@ -70,15 +70,15 @@ class BookingSeeder extends Seeder
                 $minute = rand(0, 1) * 30; // 00 or 30
                 $startTime = sprintf('%02d:%02d', $hour, $minute);
                 $endTime = Carbon::createFromFormat('H:i', $startTime)
-                    ->addMinutes($offering->duration_minutes)
+                    ->addMinutes($service->duration_minutes)
                     ->format('H:i');
 
                 // Create the booking
                 Booking::create([
                     'user_id' => $customer->id,
+                    'shop_id' => $shop->id,
                     'service_id' => $service->id,
-                    'service_offering_id' => $offering->id,
-                    'provider_id' => $service->user_id,
+                    'provider_id' => $shop->user_id,
                     'status' => $status,
                     'booking_date' => $date->copy(),
                     'start_time' => $startTime,
@@ -94,26 +94,26 @@ class BookingSeeder extends Seeder
 
         // Ensure we have some bookings for today specifically
         $today = Carbon::today();
-        $todayServices = $services->take(3);
+        $todayServices = $shops->take(3);
 
-        foreach ($todayServices as $index => $service) {
-            if ($service->offerings->isEmpty()) continue;
+        foreach ($todayServices as $index => $shop) {
+            if ($shop->services->isEmpty()) continue;
 
-            $offering = $service->offerings->first();
+            $service = $shop->services->first();
             $customer = $customers[$index % $customers->count()];
 
             $times = ['09:00', '11:00', '14:00', '16:00'];
 
             foreach (array_slice($times, 0, rand(2, 4)) as $time) {
                 $endTime = Carbon::createFromFormat('H:i', $time)
-                    ->addMinutes($offering->duration_minutes)
+                    ->addMinutes($service->duration_minutes)
                     ->format('H:i');
 
                 Booking::create([
                     'user_id' => $customer->id,
+                    'shop_id' => $shop->id,
                     'service_id' => $service->id,
-                    'service_offering_id' => $offering->id,
-                    'provider_id' => $service->user_id,
+                    'provider_id' => $shop->user_id,
                     'status' => $this->weightedRandomChoice(
                         ['pending', 'confirmed', 'completed'],
                         [30, 50, 20]

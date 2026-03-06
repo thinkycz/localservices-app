@@ -2,62 +2,34 @@
 
 namespace Database\Seeders;
 
-use App\Models\Category;
+use App\Models\Shop;
 use App\Models\Service;
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class ServiceSeeder extends Seeder
 {
     public function run(): void
     {
-        $barbershops = Category::where('slug', 'barbershops')->first();
+        $servicesBySlug = [
 
-        // Get service provider users to assign as owners
-        $serviceProviders = User::where('is_service_provider', true)->get();
-        $providerIndex = 0;
-
-        $services = [
-            // ── Barbershops ─────────────────────────────────────────────────────
-            [
-                'category_id' => $barbershops->id,
-                'name' => 'Classic Cuts Barbershop',
-                'description' => 'Traditional barbershop offering classic haircuts, beard trims, and hot towel shaves. Our experienced barbers bring old-school craftsmanship to modern styling.',
-                'price_range' => 2,
-                'badge' => 'BEST VALUE',
-                'badge_color' => 'green',
-                'is_available' => true,
-                'available_at' => 'Available today at 10:00 AM',
-                'rating' => 4.8,
-                'reviews_count' => 342,
-                'city' => 'New York',
-                'state' => 'NY',
-                'address' => '123 Main St, New York, NY 10001',
-                'is_online_only' => false,
-                'latitude' => 40.7484,
-                'longitude' => -73.9857,
+            // ── Barbershops ──────────────────────────────────────────────────────
+            'classic-cuts-barbershop' => [
+                ['name' => 'Classic Haircut', 'description' => 'Traditional haircut with clippers and scissors. Includes hot towel and scalp massage.', 'duration_minutes' => 30, 'is_popular' => true, 'category_tag' => 'Haircut', 'staff_level' => 'Barber'],
+                ['name' => 'Beard Trim & Shape', 'description' => 'Professional beard trimming and shaping with razor line-up.', 'duration_minutes' => 20, 'is_popular' => false, 'category_tag' => 'Grooming', 'staff_level' => 'Barber'],
+                ['name' => 'Hot Towel Shave', 'description' => 'Relaxing hot towel treatment with straight razor shave.', 'duration_minutes' => 45, 'is_popular' => true, 'category_tag' => 'Shave', 'staff_level' => 'Senior Barber'],
+                ['name' => 'Hair & Beard Combo', 'description' => 'Full haircut with beard trim and styling.', 'duration_minutes' => 45, 'is_popular' => false, 'category_tag' => 'Combo', 'staff_level' => 'Barber'],
             ],
+
         ];
 
-        foreach ($services as $data) {
-            $slug = Str::slug($data['name']);
-            $counter = 1;
-            $originalSlug = $slug;
-            while (Service::where('slug', $slug)->exists()) {
-                $slug = $originalSlug . '-' . $counter++;
+        foreach ($servicesBySlug as $slug => $services) {
+            $shop = Shop::where('slug', $slug)->first();
+            if (! $shop) {
+                continue;
             }
-
-            // Assign a service provider as owner (cycle through available providers)
-            $userId = $serviceProviders->isNotEmpty()
-                ? $serviceProviders[$providerIndex % $serviceProviders->count()]->id
-                : null;
-            $providerIndex++;
-
-            Service::create(array_merge($data, [
-                'slug' => $slug,
-                'user_id' => $userId,
-            ]));
+            foreach ($services as $data) {
+                Service::create(array_merge($data, ['shop_id' => $shop->id]));
+            }
         }
     }
 }

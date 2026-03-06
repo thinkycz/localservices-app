@@ -63,7 +63,7 @@ function applyFilters() {
 
     if (minRating.value) params.min_rating = minRating.value;
     if (props.filters.sort) params.sort = props.filters.sort;
-    router.get(route('services.index'), params, { preserveScroll: true });
+    router.get(route('shops.index'), params, { preserveScroll: true });
 }
 
 function clearAll() {
@@ -71,7 +71,7 @@ function clearAll() {
 
     minRating.value = null;
     openDropdown.value = null;
-    router.get(route('services.index'), props.filters.q ? { q: props.filters.q } : {});
+    router.get(route('shops.index'), props.filters.q ? { q: props.filters.q } : {});
 }
 
 

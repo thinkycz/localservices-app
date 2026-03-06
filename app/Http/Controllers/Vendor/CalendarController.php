@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Shop;
 use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -22,8 +23,8 @@ class CalendarController extends Controller
         $view = $request->get('view', 'week');
 
         // Get all services for this vendor
-        $services = Service::where('user_id', $user->id)->get();
-        $serviceIds = $services->pluck('id');
+        $shops = Shop::where('user_id', $user->id)->get();
+        $shopIds = $shops->pluck('id');
 
         $referenceDate = $request->get('start_date')
             ? Carbon::parse($request->get('start_date'))
@@ -45,10 +46,10 @@ class CalendarController extends Controller
         }
 
         // Get all bookings for the date range
-        $bookings = Booking::whereIn('service_id', $serviceIds)
+        $bookings = Booking::whereIn('shop_id', $shopIds)
             ->whereDate('booking_date', '>=', $startDate->toDateString())
             ->whereDate('booking_date', '<=', $endDate->toDateString())
-            ->with(['customer', 'service', 'offering'])
+            ->with(['customer', 'shop', 'service'])
             ->orderBy('booking_date')
             ->orderBy('start_time')
             ->get();
@@ -76,7 +77,7 @@ class CalendarController extends Controller
             return [
                 'id' => $booking->id,
                 'customer' => $booking->customer->name,
-                'service' => $booking->service->name,
+                'shop' => $booking->service->name,
                 'serviceDetail' => $booking->offering->name,
                 'dayIndex' => Carbon::parse($booking->booking_date)->startOfDay()->diffInDays($startDate->copy()->startOfDay()),
                 'fullDate' => Carbon::parse($booking->booking_date)->format('Y-m-d'),

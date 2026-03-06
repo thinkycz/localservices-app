@@ -4,7 +4,7 @@ import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
-    service:  { type: Object, required: true },
+    shop:  { type: Object, required: true },
     offering: { type: Object, default: null },
     date:     { type: String, default: null },
     time:     { type: String, default: null },
@@ -14,9 +14,9 @@ const props = defineProps({
 
 // ── Form state ────────────────────────────────────────────────────────────────
 const form = useForm({
-    service_id: props.service.id,
+    shop_id: props.shop.id,
     service_offering_id: props.offering?.id || null,
-    provider_id: props.service.user_id || props.service.owner?.id || null,
+    provider_id: props.shop.user_id || props.shop.owner?.id || null,
     booking_date: props.date || '',
     start_time: props.time || '',
     end_time: '',
@@ -37,7 +37,7 @@ function validateForm() {
     if (!form.phone?.trim())      e.phone      = 'Phone number is required.';
 
     // Business hours validation
-    const businessHours = props.service.business_hours ?? [];
+    const businessHours = props.shop.business_hours ?? [];
     if (businessHours.length > 0 && form.booking_date) {
         const bookingDate = new Date(form.booking_date + 'T00:00:00');
         const dayOfWeek = bookingDate.getDay();
@@ -109,7 +109,7 @@ function submitBooking() {
 
     form.transform((data) => ({
         ...data,
-        service_id: form.service_id,
+        shop_id: form.shop_id,
         service_offering_id: form.service_offering_id || props.offering?.id,
         provider_id: form.provider_id,
         booking_date: form.booking_date,
@@ -146,9 +146,9 @@ function formatDate(dateStr) {
 
                 <!-- Back link -->
                 <div class="mb-6">
-                    <Link :href="route('services.show', service.slug)" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
+                    <Link :href="route('shops.show', shop.slug)" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                        Back to {{ service.name }}
+                        Back to {{ shop.name }}
                     </Link>
                 </div>
 
@@ -168,8 +168,8 @@ function formatDate(dateStr) {
                                         </svg>
                                     </div>
                                     <div>
-                                        <h2 class="text-white font-bold text-base">{{ service.name }}</h2>
-                                        <p class="text-blue-100 text-xs">{{ service.category?.name }}</p>
+                                        <h2 class="text-white font-bold text-base">{{ shop.name }}</h2>
+                                        <p class="text-blue-100 text-xs">{{ shop.category?.name }}</p>
                                     </div>
                                 </div>
                             </div>

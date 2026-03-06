@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ServiceImage extends Model
+class ShopImage extends Model
 {
     protected $fillable = [
-        'service_id',
+        'shop_id',
         'path',
         'filename',
         'mime_type',
@@ -24,9 +24,9 @@ class ServiceImage extends Model
         'size' => 'integer',
     ];
 
-    public function service(): BelongsTo
+    public function shop(): BelongsTo
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Shop::class);
     }
 
     /**

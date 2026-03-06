@@ -4,7 +4,7 @@ import { router, Link, Head, usePage } from '@inertiajs/vue3';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 
 const props = defineProps({
-    service: { type: Object, required: true },
+    shop: { type: Object, required: true },
     categories: { type: Array, required: true },
     stats: { type: Object, required: true },
 });
@@ -20,7 +20,7 @@ const offeringForm = ref({
 
 
 function toggleAvailability() {
-    router.post(route('vendor.services.toggle', props.service.id));
+    router.post(route('vendor.shops.toggle', props.shop.id));
 }
 
 function openAddOffering() {
@@ -47,15 +47,15 @@ function closeOfferingModal() {
 function saveOffering() {
     const data = { ...offeringForm.value, duration_minutes: parseInt(offeringForm.value.duration_minutes) };
     if (editingOffering.value) {
-        router.put(route('vendor.services.offerings.update', { serviceId: props.service.id, offeringId: editingOffering.value.id }), data, { onSuccess: closeOfferingModal });
+        router.put(route('vendor.shops.offerings.update', { serviceId: props.shop.id, offeringId: editingOffering.value.id }), data, { onSuccess: closeOfferingModal });
     } else {
-        router.post(route('vendor.services.offerings.store', { serviceId: props.service.id }), data, { onSuccess: closeOfferingModal });
+        router.post(route('vendor.shops.offerings.store', { serviceId: props.shop.id }), data, { onSuccess: closeOfferingModal });
     }
 }
 
 function deleteOffering(offeringId) {
     if (!confirm('Are you sure you want to delete this offering?')) return;
-    router.delete(route('vendor.services.offerings.destroy', { serviceId: props.service.id, offeringId }));
+    router.delete(route('vendor.shops.offerings.destroy', { serviceId: props.shop.id, offeringId }));
 }
 
 
@@ -69,13 +69,13 @@ function getBadgeClasses(color) {
 <template>
     <Head :title="$t('Manage Service')" />
 
-    <VendorLayout activePage="services">
+    <VendorLayout activePage="shops">
         <div class="flex flex-col gap-6">
 
             <!-- Back link -->
             <div>
-                <Link :href="route('vendor.services.index')" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>{{ $t('Back to Services') }}</Link>
+                <Link :href="route('vendor.shops.index')" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>{{ $t('Back to Shops') }}</Link>
             </div>
 
             <!-- Header Card -->
@@ -88,18 +88,18 @@ function getBadgeClasses(color) {
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-3">
-                            <h1 class="text-xl font-bold text-gray-900 truncate">{{ service.name }}</h1>
-                            <span v-if="service.badge" :class="[getBadgeClasses(service.badge_color), 'text-xs font-medium px-2.5 py-1 rounded-full ring-1 ring-inset']">{{ service.badge }}</span>
+                            <h1 class="text-xl font-bold text-gray-900 truncate">{{ shop.name }}</h1>
+                            <span v-if="shop.badge" :class="[getBadgeClasses(shop.badge_color), 'text-xs font-medium px-2.5 py-1 rounded-full ring-1 ring-inset']">{{ shop.badge }}</span>
                         </div>
-                        <p class="text-sm text-gray-400 mt-0.5">{{ service.category?.name || 'Uncategorized' }} · {{ service.offerings?.length || 0 }} offerings</p>
+                        <p class="text-sm text-gray-400 mt-0.5">{{ shop.category?.name || 'Uncategorized' }} · {{ shop.services?.length || 0 }} offerings</p>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <button
                             @click="toggleAvailability"
-                            :class="['px-4 py-2.5 text-sm font-medium rounded-xl transition-colors', service.is_available ? 'bg-green-50 text-green-600 hover:bg-green-100 ring-1 ring-inset ring-green-600/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100 ring-1 ring-inset ring-gray-500/10']"
-                        >{{ service.is_available ? '✓ Active' : '○ Inactive' }}</button>
+                            :class="['px-4 py-2.5 text-sm font-medium rounded-xl transition-colors', shop.is_available ? 'bg-green-50 text-green-600 hover:bg-green-100 ring-1 ring-inset ring-green-600/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100 ring-1 ring-inset ring-gray-500/10']"
+                        >{{ shop.is_available ? '✓ Active' : '○ Inactive' }}</button>
                         <Link
-                            :href="route('vendor.services.edit', service.id)"
+                            :href="route('vendor.shops.edit', shop.id)"
                             class="px-4 py-2.5 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
                         >{{ $t('Edit Details') }}</Link>
                     </div>
@@ -135,12 +135,12 @@ function getBadgeClasses(color) {
             <!-- Offerings Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Service Offerings') }}</h2>
+                    <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Services') }}</h2>
                     <button @click="openAddOffering" class="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>{{ $t('Add Offering') }}</button>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>{{ $t('Add Service') }}</button>
                 </div>
 
-                <div v-if="service.offerings?.length">
+                <div v-if="shop.services?.length">
                     <table class="w-full">
                         <thead>
                             <tr class="bg-gray-50/50">
@@ -153,7 +153,7 @@ function getBadgeClasses(color) {
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             <tr
-                                v-for="offering in service.offerings"
+                                v-for="offering in shop.services"
                                 :key="offering.id"
                                 class="group hover:bg-blue-50/30 transition-colors"
                             >
@@ -215,8 +215,8 @@ function getBadgeClasses(color) {
                                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-bold text-white">{{ editingOffering ? 'Edit Offering' : 'New Offering' }}</h3>
-                                    <p class="text-xs text-blue-100">{{ editingOffering ? 'Update the details below' : 'Add a new service offering' }}</p>
+                                    <h3 class="text-lg font-bold text-white">{{ editingOffering ? 'Edit Service' : 'New Offering' }}</h3>
+                                    <p class="text-xs text-blue-100">{{ editingOffering ? 'Update the details below' : 'Add a new service' }}</p>
                                 </div>
                             </div>
                             <button @click="closeOfferingModal" class="text-white/70 hover:text-white transition-colors p-1">
@@ -281,7 +281,7 @@ function getBadgeClasses(color) {
                             <div class="flex gap-3 pt-1">
                                 <button type="button" @click="closeOfferingModal" class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-2.5 rounded-xl transition-colors text-sm">{{ $t('Cancel') }}</button>
                                 <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg text-sm">
-                                    {{ editingOffering ? 'Save Changes' : 'Add Offering' }}
+                                    {{ editingOffering ? 'Save Changes' : 'Add Service' }}
                                 </button>
                             </div>
                         </form>

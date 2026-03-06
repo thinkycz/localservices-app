@@ -54,9 +54,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function services(): HasMany
+    public function shops(): HasMany
     {
-        return $this->hasMany(Service::class);
+        return $this->hasMany(Shop::class);
     }
 
     /**

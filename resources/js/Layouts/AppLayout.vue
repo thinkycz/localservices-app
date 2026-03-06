@@ -22,14 +22,14 @@ import { Link } from '@inertiajs/vue3';
                             </div>
                             <span class="text-gray-900" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">{{ $t('Bookable') }}</span>
                         </div>
-                        <p class="text-sm text-gray-500 leading-relaxed">{{ $t('Connecting you with trusted local service providers since 2020. Quality, reliability, and community at every booking.') }}</p>
+                        <p class="text-sm text-gray-500 leading-relaxed">{{ $t('Connecting you with trusted local shops since 2020. Quality, reliability, and community at every booking.') }}</p>
                     </div>
                     <div>
                         <h4 class="text-sm font-bold text-gray-900 mb-3">{{ $t('Quick Links') }}</h4>
                         <ul class="space-y-2">
-                            <li><Link :href="route('services.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('Browse Services') }}</Link></li>
+                            <li><Link :href="route('shops.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('Browse Shops') }}</Link></li>
                             <li><Link :href="route('bookings.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('My Bookings') }}</Link></li>
-                            <li><Link :href="route('vendor.onboarding.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('List Your Service') }}</Link></li>
+                            <li><Link :href="route('vendor.onboarding.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('List Your Shop') }}</Link></li>
                             <li><Link :href="route('pages.faq')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('Help &amp; Support') }}</Link></li>
                         </ul>
                     </div>

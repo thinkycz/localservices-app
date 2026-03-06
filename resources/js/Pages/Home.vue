@@ -18,12 +18,12 @@ const searchQuery = ref('');
 
 function doSearch() {
     if (searchQuery.value.trim()) {
-        router.get(route('services.index'), { q: searchQuery.value.trim() });
+        router.get(route('shops.index'), { q: searchQuery.value.trim() });
     }
 }
 
 function browseCategory(slug) {
-    router.get(route('services.index'), { categories: [slug] });
+    router.get(route('shops.index'), { categories: [slug] });
 }
 
 function getCategoryIcon(name) {
@@ -68,7 +68,7 @@ function formatReviews(n) {
                             <input
                                 v-model="searchQuery"
                                 type="text"
-                                :placeholder="$t('Search services...')"
+                                :placeholder="$t('Search shops...')"
                                 class="w-full pl-12 pr-4 py-3.5 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-xl text-white placeholder-blue-200/60 focus:outline-none focus:border-white/40 focus:bg-white/15 transition-all text-sm"
                             />
                         </div>
@@ -97,36 +97,36 @@ function formatReviews(n) {
                         {{ getCategoryIcon(category.name) }}
                     </div>
                     <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-600 line-clamp-1 transition-colors">{{ category.name }}</span>
-                    <span class="text-[10px] text-gray-400 font-medium">{{ category.services_count }}</span>
+                    <span class="text-[10px] text-gray-400 font-medium">{{ category.shops_count }}</span>
                 </button>
             </div>
         </section>
 
-        <!-- Featured Services -->
+        <!-- Featured Shops -->
         <section class="bg-gray-50/50 py-10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between mb-5">
                     <div>
-                        <h2 class="text-lg font-bold text-gray-900">{{ $t('Featured Services') }}</h2>
+                        <h2 class="text-lg font-bold text-gray-900">{{ $t('Featured Shops') }}</h2>
                         <p class="text-sm text-gray-500 mt-0.5">{{ $t('Top-rated professionals ready to help') }}</p>
                     </div>
-                    <Link :href="route('services.index')" class="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">{{ $t('View all') }}<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    <Link :href="route('shops.index')" class="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">{{ $t('View all') }}<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </Link>
                 </div>
 
                 <div v-if="featuredServices.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Link
-                        v-for="service in featuredServices"
-                        :key="service.id"
-                        :href="route('services.show', service.slug)"
+                        v-for="shop in featuredServices"
+                        :key="shop.id"
+                        :href="route('shops.show', shop.slug)"
                         class="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-gray-200 transition-all duration-300 group"
                     >
                         <!-- Image -->
                         <div class="h-36 bg-gray-100 overflow-hidden relative">
                             <img
-                                v-if="service.image"
-                                :src="service.image"
-                                ::alt="$t('service.name')"
+                                v-if="shop.image"
+                                :src="shop.image"
+                                ::alt="$t('shop.name')"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                             <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -137,15 +137,15 @@ function formatReviews(n) {
                             </div>
 
                             <!-- Badge -->
-                            <div v-if="service.badge" class="absolute top-2.5 left-2.5">
+                            <div v-if="shop.badge" class="absolute top-2.5 left-2.5">
                                 <span
                                     class="text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide"
                                     :class="{
-                                        'bg-blue-500 text-white': service.badge_color === 'blue',
-                                        'bg-green-500 text-white': service.badge_color === 'green',
-                                        'bg-gray-700 text-white': !service.badge_color || service.badge_color === 'gray'
+                                        'bg-blue-500 text-white': shop.badge_color === 'blue',
+                                        'bg-green-500 text-white': shop.badge_color === 'green',
+                                        'bg-gray-700 text-white': !shop.badge_color || shop.badge_color === 'gray'
                                     }"
-                                >{{ service.badge }}</span>
+                                >{{ shop.badge }}</span>
                             </div>
                         </div>
 
@@ -155,20 +155,20 @@ function formatReviews(n) {
                                 <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                                 </svg>
-                                <span class="text-xs font-bold text-gray-800">{{ service.rating }}</span>
-                                <span class="text-[10px] text-gray-400">({{ formatReviews(service.reviews_count) }})</span>
+                                <span class="text-xs font-bold text-gray-800">{{ shop.rating }}</span>
+                                <span class="text-[10px] text-gray-400">({{ formatReviews(shop.reviews_count) }})</span>
                             </div>
 
-                            <h3 class="text-sm font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors line-clamp-1">{{ service.name }}</h3>
-                            <p class="text-[11px] text-gray-400 font-medium mb-2">{{ service.category?.name }}</p>
-                            <p class="text-xs text-gray-500 line-clamp-2 leading-relaxed">{{ service.description }}</p>
+                            <h3 class="text-sm font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors line-clamp-1">{{ shop.name }}</h3>
+                            <p class="text-[11px] text-gray-400 font-medium mb-2">{{ shop.category?.name }}</p>
+                            <p class="text-xs text-gray-500 line-clamp-2 leading-relaxed">{{ shop.description }}</p>
 
                             <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                                <span v-if="service.available_at" class="text-[11px] font-medium text-green-600 flex items-center gap-1">
+                                <span v-if="shop.available_at" class="text-[11px] font-medium text-green-600 flex items-center gap-1">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                     </svg>
-                                    {{ service.available_at }}
+                                    {{ shop.available_at }}
                                 </span>
                                 <span v-else class="text-[11px] text-gray-400">{{ $t('Check availability') }}</span>
                                 <span class="text-[11px] font-semibold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">{{ $t('View') }}<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
@@ -185,7 +185,7 @@ function formatReviews(n) {
                                 d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
                         </svg>
                     </div>
-                    <p class="text-gray-500 text-sm">{{ $t('No services available yet. Check back soon!') }}</p>
+                    <p class="text-gray-500 text-sm">{{ $t('No shops available yet. Check back soon!') }}</p>
                 </div>
             </div>
         </section>
@@ -230,7 +230,7 @@ function formatReviews(n) {
             </div>
         </section>
 
-        <!-- Service Provider CTA -->
+        <!-- Shop Provider CTA -->
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>

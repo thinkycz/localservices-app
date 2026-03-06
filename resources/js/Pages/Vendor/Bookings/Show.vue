@@ -120,7 +120,7 @@ const statusConfig = getStatusConfig(props.booking.status);
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-3">
-                            <h1 class="text-xl font-bold text-gray-900">{{ booking.service.name }}</h1>
+                            <h1 class="text-xl font-bold text-gray-900">{{ booking.shop.name }}</h1>
                             <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset', statusConfig.bg, statusConfig.text, statusConfig.ring]">
                                 <span :class="['w-1.5 h-1.5 rounded-full', statusConfig.dot]"></span>
                                 {{ statusConfig.label }}
@@ -294,7 +294,7 @@ const statusConfig = getStatusConfig(props.booking.status);
                             @click="router.visit(route('vendor.bookings.show', history.id))"
                         >
                             <td class="px-6 py-3.5">
-                                <span class="text-sm font-medium text-gray-900">{{ history.service.name }}</span>
+                                <span class="text-sm font-medium text-gray-900">{{ history.shop.name }}</span>
                             </td>
                             <td class="px-6 py-3.5">
                                 <span class="text-sm text-gray-600">{{ formatShortDate(history.booking_date) }}</span>

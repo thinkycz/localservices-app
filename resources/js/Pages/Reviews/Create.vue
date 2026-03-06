@@ -9,7 +9,7 @@ const props = defineProps({
 
 const form = useForm({
     booking_id: props.booking.id,
-    service_id: props.booking.service_id,
+    shop_id: props.booking.shop_id,
     rating: 0,
     comment: '',
     tags: [],
@@ -19,7 +19,7 @@ const selectedTags = ref([]);
 const availableTags = [
     'Professional',
     'On-time',
-    'Quality Service',
+    'Quality Shop',
     'Friendly',
     'Clean',
     'Good Value',
@@ -96,20 +96,20 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
                 <Link :href="route('bookings.index')" class="inline-flex items-center gap-1.5 text-blue-200 hover:text-white text-sm font-medium mb-4 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>{{ $t('Back to My Bookings') }}</Link>
                 <h1 class="text-2xl font-bold text-white">{{ $t('Write a Review') }}</h1>
-                <p class="text-sm text-blue-200 mt-1">Share your experience with {{ booking.service.name }}</p>
+                <p class="text-sm text-blue-200 mt-1">Share your experience with {{ booking.shop.name }}</p>
             </div>
         </div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="max-w-2xl">
-                <!-- Service Summary -->
+                <!-- Shop Summary -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-5">
                     <div class="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
                         <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <span class="text-white text-sm font-bold">{{ getInitials(booking.service.name) }}</span>
+                            <span class="text-white text-sm font-bold">{{ getInitials(booking.shop.name) }}</span>
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-gray-900">{{ booking.service.name }}</h3>
+                            <h3 class="text-sm font-bold text-gray-900">{{ booking.shop.name }}</h3>
                             <p class="text-[11px] text-gray-400">{{ booking.offering.name }}</p>
                         </div>
                         <div class="ml-auto text-right">
@@ -166,7 +166,7 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
                                 v-model="form.comment"
                                 rows="4"
                                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition resize-none"
-                                :placeholder="$t('What did you like? How was the service quality? Would you recommend it?')"
+                                :placeholder="$t('What did you like? How was the shop quality? Would you recommend it?')"
                                 required
                                 minlength="10"
                             ></textarea>

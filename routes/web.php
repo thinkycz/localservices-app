@@ -4,7 +4,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -21,7 +21,7 @@ Route::get('/language/{locale}', function ($locale) {
 
 // Home page
 Route::get('/', function () {
-    $featuredServices = \App\Models\Service::with('category')
+    $featuredServices = \App\Models\Shop::with('category')
         ->where('is_available', true)
         ->orderBy('rating', 'desc')
         ->orderBy('reviews_count', 'desc')
@@ -33,8 +33,8 @@ Route::get('/', function () {
         $userId = Auth::id();
         $serviceIds = $featuredServices->pluck('id')->toArray();
         $bookmarkedIds = \App\Models\Bookmark::where('user_id', $userId)
-            ->whereIn('service_id', $serviceIds)
-            ->pluck('service_id')
+            ->whereIn('shop_id', $serviceIds)
+            ->pluck('shop_id')
             ->toArray();
 
         $featuredServices->transform(function ($service) use ($bookmarkedIds) {
@@ -43,13 +43,13 @@ Route::get('/', function () {
         });
     }
 
-    $categories = \App\Models\Category::withCount('services')
-        ->orderBy('services_count', 'desc')
+    $categories = \App\Models\Category::withCount('shops')
+        ->orderBy('shops_count', 'desc')
         ->limit(8)
         ->get();
 
     return Inertia::render('Home', [
-        'featuredServices' => $featuredServices,
+        'featuredShops' => $featuredServices,
         'categories' => $categories,
     ]);
 })->name('home');
@@ -64,10 +64,10 @@ Route::middleware('auth')->get('/dashboard', function () {
     return redirect()->route('home');
 })->name('dashboard');
 
-// Services (public)
-Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
-Route::get('/services/{slug}', [ServiceController::class, 'show'])->name('services.show');
-Route::get('/services/{slug}/book', [BookingController::class, 'show'])->name('services.book');
+// Shops (public)
+Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
+Route::get('/shops/{slug}', [ShopController::class, 'show'])->name('shops.show');
+Route::get('/shops/{slug}/book', [BookingController::class, 'show'])->name('shops.book');
 
 // Booking routes (auth required)
 Route::middleware('auth')->group(function () {
@@ -117,29 +117,29 @@ Route::prefix('vendor')->middleware(['auth', 'verified', 'service.provider'])->g
     Route::post('/bookings/{id}/complete', [\App\Http\Controllers\Vendor\BookingController::class, 'complete'])->name('vendor.bookings.complete');
     Route::post('/bookings/{id}/cancel', [\App\Http\Controllers\Vendor\BookingController::class, 'cancel'])->name('vendor.bookings.cancel');
     Route::post('/bookings/{id}/notes', [\App\Http\Controllers\Vendor\BookingController::class, 'addNotes'])->name('vendor.bookings.notes');
-    Route::get('/services/{serviceId}/available-slots', [\App\Http\Controllers\Vendor\BookingController::class, 'getAvailableSlots'])->name('vendor.bookings.slots');
+    Route::get('/shops/{shopId}/available-slots', [\App\Http\Controllers\Vendor\BookingController::class, 'getAvailableSlots'])->name('vendor.bookings.slots');
 
     // Customers
     Route::get('/customers', [\App\Http\Controllers\Vendor\CustomerController::class, 'index'])->name('vendor.customers.index');
     Route::get('/customers/{customerId}', [\App\Http\Controllers\Vendor\CustomerController::class, 'show'])->name('vendor.customers.show');
 
-    // Services
-    Route::get('/services', [\App\Http\Controllers\Vendor\ServicesController::class, 'index'])->name('vendor.services.index');
-    Route::get('/services/create', [\App\Http\Controllers\Vendor\ServicesController::class, 'create'])->name('vendor.services.create');
-    Route::post('/services', [\App\Http\Controllers\Vendor\ServicesController::class, 'store'])->name('vendor.services.store');
-    Route::get('/services/{id}', [\App\Http\Controllers\Vendor\ServicesController::class, 'show'])->name('vendor.services.show');
-    Route::get('/services/{id}/edit', [\App\Http\Controllers\Vendor\ServicesController::class, 'edit'])->name('vendor.services.edit');
-    Route::put('/services/{id}', [\App\Http\Controllers\Vendor\ServicesController::class, 'update'])->name('vendor.services.update');
-    Route::delete('/services/{id}', [\App\Http\Controllers\Vendor\ServicesController::class, 'destroy'])->name('vendor.services.destroy');
-    Route::post('/services/{id}/toggle-availability', [\App\Http\Controllers\Vendor\ServicesController::class, 'toggleAvailability'])->name('vendor.services.toggle');
+    // Shops
+    Route::get('/shops', [\App\Http\Controllers\Vendor\ShopsController::class, 'index'])->name('vendor.shops.index');
+    Route::get('/shops/create', [\App\Http\Controllers\Vendor\ShopsController::class, 'create'])->name('vendor.shops.create');
+    Route::post('/shops', [\App\Http\Controllers\Vendor\ShopsController::class, 'store'])->name('vendor.shops.store');
+    Route::get('/shops/{id}', [\App\Http\Controllers\Vendor\ShopsController::class, 'show'])->name('vendor.shops.show');
+    Route::get('/shops/{id}/edit', [\App\Http\Controllers\Vendor\ShopsController::class, 'edit'])->name('vendor.shops.edit');
+    Route::put('/shops/{id}', [\App\Http\Controllers\Vendor\ShopsController::class, 'update'])->name('vendor.shops.update');
+    Route::delete('/shops/{id}', [\App\Http\Controllers\Vendor\ShopsController::class, 'destroy'])->name('vendor.shops.destroy');
+    Route::post('/shops/{id}/toggle-availability', [\App\Http\Controllers\Vendor\ShopsController::class, 'toggleAvailability'])->name('vendor.shops.toggle');
 
-    // Service Offerings
-    Route::post('/services/{serviceId}/offerings', [\App\Http\Controllers\Vendor\ServicesController::class, 'storeOffering'])->name('vendor.services.offerings.store');
-    Route::put('/services/{serviceId}/offerings/{offeringId}', [\App\Http\Controllers\Vendor\ServicesController::class, 'updateOffering'])->name('vendor.services.offerings.update');
-    Route::delete('/services/{serviceId}/offerings/{offeringId}', [\App\Http\Controllers\Vendor\ServicesController::class, 'destroyOffering'])->name('vendor.services.offerings.destroy');
+    // Services (formerly Service Offerings)
+    Route::post('/shops/{shopId}/services', [\App\Http\Controllers\Vendor\ShopsController::class, 'storeService'])->name('vendor.shops.services.store');
+    Route::put('/shops/{shopId}/services/{serviceId}', [\App\Http\Controllers\Vendor\ShopsController::class, 'updateService'])->name('vendor.shops.services.update');
+    Route::delete('/shops/{shopId}/services/{serviceId}', [\App\Http\Controllers\Vendor\ShopsController::class, 'destroyService'])->name('vendor.shops.services.destroy');
 
     // Business Hours
-    Route::post('/services/{serviceId}/business-hours', [\App\Http\Controllers\Vendor\ServicesController::class, 'storeBusinessHours'])->name('vendor.services.business-hours.store');
+    Route::post('/shops/{shopId}/business-hours', [\App\Http\Controllers\Vendor\ShopsController::class, 'storeBusinessHours'])->name('vendor.shops.business-hours.store');
 });
 
 // Profile (auth required)

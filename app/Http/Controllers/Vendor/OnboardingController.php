@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Shop;
 use App\Models\Service;
-use App\Models\ServiceOffering;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -97,7 +97,7 @@ class OnboardingController extends Controller
     public function storeStep3(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'offerings' => 'required|array|min:1',
+            'services' => 'required|array|min:1',
             'offerings.*.name' => 'required|string|max:255',
             'offerings.*.description' => 'required|string|max:500',
             'offerings.*.price' => 'required|numeric|min:0',
@@ -120,11 +120,11 @@ class OnboardingController extends Controller
         $slug = \Illuminate\Support\Str::slug($step2['service_name']);
         $counter = 1;
         $originalSlug = $slug;
-        while (Service::where('slug', $slug)->exists()) {
+        while (Shop::where('slug', $slug)->exists()) {
             $slug = $originalSlug . '-' . $counter++;
         }
 
-        $service = Service::create([
+        $shop = Shop::create([
             'user_id' => $user->id,
             'category_id' => $step2['category_id'],
             'name' => $step2['service_name'],
@@ -139,9 +139,9 @@ class OnboardingController extends Controller
         ]);
 
         // Create service offerings
-        foreach ($step3['offerings'] as $offering) {
-            ServiceOffering::create([
-                'service_id' => $service->id,
+        foreach ($step3['services'] as $offering) {
+            Service::create([
+                'shop_id' => $shop->id,
                 'name' => $offering['name'],
                 'description' => $offering['description'],
                 'price' => $offering['price'],

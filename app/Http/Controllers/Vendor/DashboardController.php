@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Shop;
 use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -20,11 +21,11 @@ class DashboardController extends Controller
         $user = $request->user();
 
         // Get all services for this vendor
-        $services = Service::where('user_id', $user->id)->get();
-        $serviceIds = $services->pluck('id');
+        $shops = Shop::where('user_id', $user->id)->get();
+        $shopIds = $shops->pluck('id');
 
         // Get all bookings for vendor's services
-        $bookings = Booking::whereIn('service_id', $serviceIds)->get();
+        $bookings = Booking::whereIn('shop_id', $shopIds)->get();
 
         // Calculate stats
         $totalBookings = $bookings->count();
@@ -46,23 +47,23 @@ class DashboardController extends Controller
 
         // Today's bookings
         $today = Carbon::today();
-        $todayBookings = Booking::whereIn('service_id', $serviceIds)
+        $todayBookings = Booking::whereIn('shop_id', $shopIds)
             ->whereDate('booking_date', $today)
-            ->with(['customer', 'service', 'offering'])
+            ->with(['customer', 'shop', 'service'])
             ->orderBy('start_time')
             ->get();
 
         // This week's bookings
         $weekStart = Carbon::now()->startOfWeek();
         $weekEnd = Carbon::now()->endOfWeek();
-        $weekBookings = Booking::whereIn('service_id', $serviceIds)
+        $weekBookings = Booking::whereIn('shop_id', $shopIds)
             ->whereBetween('booking_date', [$weekStart, $weekEnd])
             ->get();
 
         // Service popularity (based on booking count)
-        $servicePopularity = $bookings->groupBy('service_id')
-            ->map(fn ($b, $serviceId) => [
-                'service' => Service::find($serviceId)?->name ?? 'Unknown',
+        $servicePopularity = $bookings->groupBy('shop_id')
+            ->map(fn ($b, $shopId) => [
+                'shop' => Shop::find($shopId)?->name ?? 'Unknown',
                 'count' => $b->count(),
                 'percentage' => $totalBookings > 0 ? round(($b->count() / $totalBookings) * 100) : 0,
             ])
@@ -74,7 +75,7 @@ class DashboardController extends Controller
         $monthlyRevenue = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
-            $monthBookings = Booking::whereIn('service_id', $serviceIds)
+            $monthBookings = Booking::whereIn('shop_id', $shopIds)
                 ->whereYear('booking_date', $month->year)
                 ->whereMonth('booking_date', $month->month)
                 ->where('status', '!=', 'cancelled')
@@ -88,8 +89,8 @@ class DashboardController extends Controller
         }
 
         // Recent bookings (last 5)
-        $recentBookings = Booking::whereIn('service_id', $serviceIds)
-            ->with(['customer', 'service', 'offering'])
+        $recentBookings = Booking::whereIn('shop_id', $shopIds)
+            ->with(['customer', 'shop', 'service'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -166,8 +167,8 @@ class DashboardController extends Controller
             'monthlyRevenue' => $monthlyRevenue,
             'recentBookings' => $recentBookings,
             'overview' => [
-                'total_services' => $services->count(),
-                'available_services' => $services->where('is_available', true)->count(),
+                'total_services' => $shops->count(),
+                'available_services' => $shops->where('is_available', true)->count(),
                 'total_customers' => $totalCustomers,
                 'pending_bookings' => $pendingBookings,
                 'confirmed_bookings' => $confirmedBookings,

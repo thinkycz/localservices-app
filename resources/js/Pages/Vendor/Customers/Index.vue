@@ -255,7 +255,7 @@ function formatDate(dateString) {
                                     </svg>
                                 </div>
                                 <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No customers found') }}</h3>
-                                <p class="text-sm text-gray-500">{{ $t('Customers will appear here once they book your services.') }}</p>
+                                <p class="text-sm text-gray-500">{{ $t('Customers will appear here once they book your shops.') }}</p>
                             </td>
                         </tr>
                     </tbody>

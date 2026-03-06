@@ -4,7 +4,7 @@ import { router, Link, Head } from '@inertiajs/vue3';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 
 const props = defineProps({
-    services: { type: Object, required: true },
+    shops: { type: Object, required: true },
     filters: { type: Object, default: () => ({}) },
     stats: { type: Object, required: true },
 });
@@ -13,7 +13,7 @@ const searchQuery = ref(props.filters.q || '');
 const activeStatus = ref(props.filters.status || 'all');
 
 function handleSearch() {
-    router.get(route('vendor.services.index'), {
+    router.get(route('vendor.shops.index'), {
         q: searchQuery.value,
         status: activeStatus.value,
         sort: props.filters.sort,
@@ -22,7 +22,7 @@ function handleSearch() {
 
 function setStatus(status) {
     activeStatus.value = status;
-    router.get(route('vendor.services.index'), {
+    router.get(route('vendor.shops.index'), {
         q: searchQuery.value,
         status: status,
         sort: props.filters.sort,
@@ -30,7 +30,7 @@ function setStatus(status) {
 }
 
 function setSort(sort) {
-    router.get(route('vendor.services.index'), {
+    router.get(route('vendor.shops.index'), {
         q: searchQuery.value,
         status: activeStatus.value,
         sort: sort,
@@ -38,12 +38,12 @@ function setSort(sort) {
 }
 
 function toggleAvailability(serviceId) {
-    router.post(route('vendor.services.toggle', serviceId));
+    router.post(route('vendor.shops.toggle', serviceId));
 }
 
 function deleteService(serviceId) {
-    if (!confirm('Are you sure you want to delete this service? This will also delete all associated offerings.')) return;
-    router.delete(route('vendor.services.destroy', serviceId));
+    if (!confirm('Are you sure you want to delete this shop? This will also delete all associated offerings.')) return;
+    router.delete(route('vendor.shops.destroy', serviceId));
 }
 
 
@@ -64,9 +64,9 @@ function getBadgeClasses(color) {
 </script>
 
 <template>
-    <Head :title="$t('My Services')" />
+    <Head :title="$t('My Shops')" />
 
-    <VendorLayout activePage="services">
+    <VendorLayout activePage="shops">
         <div class="flex flex-col gap-6">
 
             <!-- Stats Cards -->
@@ -77,7 +77,7 @@ function getBadgeClasses(color) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                         </svg>
                     </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Services') }}</div>
+                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Shops') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ stats.total_services }}</div>
                 </div>
 
@@ -87,7 +87,7 @@ function getBadgeClasses(color) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                     </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Offerings') }}</div>
+                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Services') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ stats.total_offerings }}</div>
                 </div>
 
@@ -97,7 +97,7 @@ function getBadgeClasses(color) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Active Services') }}</div>
+                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Active Shops') }}</div>
                     <div class="text-2xl font-bold text-gray-900">{{ stats.available_services }}</div>
                 </div>
 
@@ -136,17 +136,17 @@ function getBadgeClasses(color) {
                     </div>
 
                     <Link
-                        :href="route('vendor.services.create')"
+                        :href="route('vendor.shops.create')"
                         class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 transition-all duration-200 flex-shrink-0"
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>{{ $t('Add Service') }}</Link>
+                        </svg>{{ $t('Add Shop') }}</Link>
                 </div>
             </div>
 
             <!-- Services Table -->
-            <div v-if="services.data.length > 0" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div v-if="shops.data.length > 0" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <table class="w-full">
                     <thead>
                         <tr class="bg-gray-50/80">
@@ -160,42 +160,42 @@ function getBadgeClasses(color) {
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr
-                            v-for="service in services.data"
-                            :key="service.id"
+                            v-for="shop in shops.data"
+                            :key="shop.id"
                             class="group hover:bg-blue-50/30 transition-colors cursor-pointer"
-                            @click="router.visit(route('vendor.services.show', service.id))"
+                            @click="router.visit(route('vendor.shops.show', shop.id))"
                         >
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-sm font-bold shadow-sm flex-shrink-0">
-                                        {{ service.name.charAt(0).toUpperCase() }}
+                                        {{ shop.name.charAt(0).toUpperCase() }}
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="font-semibold text-gray-900 text-sm truncate max-w-[200px]">{{ service.name }}</div>
-                                        <div v-if="service.badge" class="mt-0.5">
-                                            <span :class="[getBadgeClasses(service.badge_color), 'text-[10px] font-bold px-1.5 py-0.5 rounded ring-1 ring-inset uppercase tracking-wider']">{{ service.badge }}</span>
+                                        <div class="font-semibold text-gray-900 text-sm truncate max-w-[200px]">{{ shop.name }}</div>
+                                        <div v-if="shop.badge" class="mt-0.5">
+                                            <span :class="[getBadgeClasses(shop.badge_color), 'text-[10px] font-bold px-1.5 py-0.5 rounded ring-1 ring-inset uppercase tracking-wider']">{{ shop.badge }}</span>
                                         </div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="text-sm text-gray-600">{{ service.category?.name || 'Uncategorized' }}</span>
+                                <span class="text-sm text-gray-600">{{ shop.category?.name || 'Uncategorized' }}</span>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="text-sm font-medium text-gray-900">{{ service.offerings?.length || 0 }}</span>
+                                <span class="text-sm font-medium text-gray-900">{{ shop.services?.length || 0 }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 <button
-                                    @click.stop="toggleAvailability(service.id)"
+                                    @click.stop="toggleAvailability(shop.id)"
                                     :class="[
                                         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset transition-colors',
-                                        service.is_available
+                                        shop.is_available
                                             ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 hover:bg-emerald-100'
                                             : 'bg-gray-50 text-gray-500 ring-gray-500/10 hover:bg-gray-100'
                                     ]"
                                 >
-                                    <span :class="['w-1.5 h-1.5 rounded-full', service.is_available ? 'bg-emerald-500' : 'bg-gray-400']"></span>
-                                    {{ service.is_available ? 'Active' : 'Inactive' }}
+                                    <span :class="['w-1.5 h-1.5 rounded-full', shop.is_available ? 'bg-emerald-500' : 'bg-gray-400']"></span>
+                                    {{ shop.is_available ? 'Active' : 'Inactive' }}
                                 </button>
                             </td>
                             <td class="px-6 py-4">
@@ -204,7 +204,7 @@ function getBadgeClasses(color) {
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-1">
                                     <Link
-                                        :href="route('vendor.services.show', service.id)"
+                                        :href="route('vendor.shops.show', shop.id)"
                                         class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                         @click.stop
                                         :title="$t('Manage')"
@@ -214,7 +214,7 @@ function getBadgeClasses(color) {
                                         </svg>
                                     </Link>
                                     <button
-                                        @click.stop="deleteService(service.id)"
+                                        @click.stop="deleteService(shop.id)"
                                         class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                         :title="$t('Delete')"
                                     >
@@ -239,7 +239,7 @@ function getBadgeClasses(color) {
                 <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No services yet') }}</h3>
                 <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">{{ $t('Start by adding your first service to attract customers.') }}</p>
                 <Link
-                    :href="route('vendor.services.create')"
+                    :href="route('vendor.shops.create')"
                     class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium text-sm rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md transform hover:-translate-y-0.5"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -248,30 +248,30 @@ function getBadgeClasses(color) {
             </div>
 
             <!-- Pagination -->
-            <div v-if="services.last_page > 1" class="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-4 flex items-center justify-between">
-                <div class="text-sm text-gray-500">{{ $t('Showing') }}<span class="font-medium text-gray-700">{{ services.from }}</span>{{ $t('to') }}<span class="font-medium text-gray-700">{{ services.to }}</span>{{ $t('of') }}<span class="font-medium text-gray-700">{{ services.total }}</span>
+            <div v-if="shops.last_page > 1" class="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-4 flex items-center justify-between">
+                <div class="text-sm text-gray-500">{{ $t('Showing') }}<span class="font-medium text-gray-700">{{ shops.from }}</span>{{ $t('to') }}<span class="font-medium text-gray-700">{{ shops.to }}</span>{{ $t('of') }}<span class="font-medium text-gray-700">{{ shops.total }}</span>
                 </div>
                 <div class="flex items-center gap-1">
                     <Link
-                        v-if="services.prev_page_url"
-                        :href="services.prev_page_url"
+                        v-if="shops.prev_page_url"
+                        :href="shops.prev_page_url"
                         class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                     >{{ $t('Previous') }}</Link>
                     
-                    <template v-for="page in services.last_page" :key="page">
+                    <template v-for="page in shops.last_page" :key="page">
                         <Link
-                            v-if="page >= services.current_page - 2 && page <= services.current_page + 2"
+                            v-if="page >= shops.current_page - 2 && page <= shops.current_page + 2"
                             :href="`?page=${page}`"
                             :class="[
                                 'w-9 h-9 rounded-lg text-sm font-medium transition-colors flex items-center justify-center',
-                                page === services.current_page ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                                page === shops.current_page ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
                             ]"
                         >{{ page }}</Link>
                     </template>
 
                     <Link
-                        v-if="services.next_page_url"
-                        :href="services.next_page_url"
+                        v-if="shops.next_page_url"
+                        :href="shops.next_page_url"
                         class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                     >Next</Link>
                 </div>

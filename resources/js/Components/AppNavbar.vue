@@ -27,7 +27,7 @@ const isOnHomePage = computed(() => {
 
 function handleSearch() {
     if (searchQuery.value.trim()) {
-        router.get(route('services.index'), { query: searchQuery.value });
+        router.get(route('shops.index'), { query: searchQuery.value });
     }
 }
 
@@ -73,7 +73,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         <input
                             v-model="searchQuery"
                             type="text"
-                            :placeholder="$t('What service do you need?')"
+                            :placeholder="$t('What shop do you need?')"
                             class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                     </div>

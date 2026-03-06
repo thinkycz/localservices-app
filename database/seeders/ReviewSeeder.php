@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Booking;
 use App\Models\Review;
+use App\Models\Shop;
 use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -55,7 +56,7 @@ class ReviewSeeder extends Seeder
             
             Review::create([
                 'user_id' => $booking->user_id,
-                'service_id' => $booking->service_id,
+                'shop_id' => $booking->shop_id,
                 'booking_id' => $booking->id,
                 'rating' => $rating,
                 'comment' => $comments[array_rand($comments)],
@@ -65,8 +66,8 @@ class ReviewSeeder extends Seeder
             ]);
             
             // Update service rating stats
-            $service = Service::find($booking->service_id);
-            $service->updateRatingStats();
+            $shop = Shop::find($booking->shop_id);
+            $shop->updateRatingStats();
         }
     }
     

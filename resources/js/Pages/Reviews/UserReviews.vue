@@ -75,7 +75,7 @@ function formatTime(time) {
                         <div class="flex items-start gap-4">
                             <!-- Service Icon -->
                             <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <span class="text-white text-sm font-bold">{{ getInitials(review.service.name) }}</span>
+                                <span class="text-white text-sm font-bold">{{ getInitials(review.shop.name) }}</span>
                             </div>
 
                             <div class="flex-1 min-w-0">
@@ -83,10 +83,10 @@ function formatTime(time) {
                                 <div class="flex items-start justify-between gap-3 mb-1.5">
                                     <div>
                                         <Link
-                                            :href="route('services.show', review.service.slug)"
+                                            :href="route('shops.show', review.shop.slug)"
                                             class="font-bold text-gray-900 hover:text-blue-600 transition-colors text-sm"
                                         >
-                                            {{ review.service.name }}
+                                            {{ review.shop.name }}
                                         </Link>
                                         <p class="text-[11px] text-gray-400 mt-0.5">
                                             Reviewed on {{ formatDate(review.reviewed_at) }}

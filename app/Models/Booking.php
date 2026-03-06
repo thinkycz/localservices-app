@@ -9,8 +9,8 @@ class Booking extends Model
 {
     protected $fillable = [
         'user_id',
+        'shop_id',
         'service_id',
-        'service_offering_id',
         'provider_id',
         'status',
         'booking_date',
@@ -29,14 +29,14 @@ class Booking extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
+    }
+
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
-    }
-
-    public function offering(): BelongsTo
-    {
-        return $this->belongsTo(ServiceOffering::class, 'service_offering_id');
     }
 
     public function provider(): BelongsTo

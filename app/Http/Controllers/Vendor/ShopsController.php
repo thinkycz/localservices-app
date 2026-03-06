@@ -5,14 +5,15 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessHour;
 use App\Models\Category;
+use App\Models\Shop;
+// use App\Models\Service;
 use App\Models\Service;
-use App\Models\ServiceOffering;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Str;
 
-class ServicesController extends Controller
+class ShopsController extends Controller
 {
     /**
      * Display a list of the vendor's services.
@@ -21,7 +22,7 @@ class ServicesController extends Controller
     {
         $user = $request->user();
 
-        $query = Service::with(['category', 'offerings'])
+        $query = Shop::with(['category', 'services'])
             ->where('user_id', $user->id);
 
         // Search functionality
@@ -50,23 +51,23 @@ class ServicesController extends Controller
             default => $query->latest(),
         };
 
-        $services = $query->paginate(10)->withQueryString();
+        $shops = $query->paginate(10)->withQueryString();
 
         // Calculate stats
-        $allServices = Service::where('user_id', $user->id)->with('offerings')->get();
+        $allServices = Shop::where('user_id', $user->id)->with('services')->get();
         $totalServices = $allServices->count();
-        $totalOfferings = $allServices->sum(fn($s) => $s->offerings->count());
+        $totalServicesCount = $allServices->sum(fn($s) => $s->offerings->count());
         $availableServices = $allServices->where('is_available', true)->count();
 
         // Calculate potential revenue (sum of all offering prices)
         $potentialRevenue = $allServices->flatMap(fn($s) => $s->offerings)->sum('price');
 
-        return Inertia::render('Vendor/Services/Index', [
-            'services' => $services,
+        return Inertia::render('Vendor/Shops/Index', [
+            'services' => $shops,
             'filters' => $request->only(['q', 'status', 'sort']),
             'stats' => [
                 'total_services' => $totalServices,
-                'total_offerings' => $totalOfferings,
+                'total_offerings' => $totalServicesCount,
                 'available_services' => $availableServices,
                 'potential_revenue' => $potentialRevenue,
             ],
@@ -80,7 +81,7 @@ class ServicesController extends Controller
     {
         $categories = Category::all();
 
-        return Inertia::render('Vendor/Services/Create', [
+        return Inertia::render('Vendor/Shops/Create', [
             'categories' => $categories,
         ]);
     }
@@ -117,24 +118,24 @@ class ServicesController extends Controller
         // Ensure unique slug
         $counter = 1;
         $originalSlug = $validated['slug'];
-        while (Service::where('slug', $validated['slug'])->exists()) {
+        while (Shop::where('slug', $validated['slug'])->exists()) {
             $validated['slug'] = $originalSlug . '-' . $counter++;
         }
 
-        $service = Service::create($validated);
+        $shop = Shop::create($validated);
 
         // Save business hours
         foreach ($businessHoursData as $hour) {
             BusinessHour::create([
-                'service_id' => $service->id,
+                'service_id' => $shop->id,
                 'day_of_week' => $hour['day_of_week'],
                 'time_from' => $hour['time_from'],
                 'time_to' => $hour['time_to'],
             ]);
         }
 
-        return redirect()->route('vendor.services.show', $service->id)
-            ->with('success', __('Service created successfully. Now add your service offerings.'));
+        return redirect()->route('vendor.shops.show', $shop->id)
+            ->with('success', __('Shop created successfully. Now add your services.'));
     }
 
     /**
@@ -144,7 +145,7 @@ class ServicesController extends Controller
     {
         $user = $request->user();
 
-        $service = Service::with(['category', 'offerings', 'businessHours'])
+        $shop = Shop::with(['category', 'services', 'businessHours'])
             ->where('user_id', $user->id)
             ->findOrFail($id);
 
@@ -159,8 +160,8 @@ class ServicesController extends Controller
             'total_revenue' => $bookings->where('status', '!=', 'cancelled')->sum('total_price'),
         ];
 
-        return Inertia::render('Vendor/Services/Show', [
-            'service' => $service,
+        return Inertia::render('Vendor/Shops/Show', [
+            'service' => $shop,
             'categories' => $categories,
             'stats' => $stats,
         ]);
@@ -173,14 +174,14 @@ class ServicesController extends Controller
     {
         $user = $request->user();
 
-        $service = Service::with(['category', 'businessHours'])
+        $shop = Shop::with(['category', 'businessHours'])
             ->where('user_id', $user->id)
             ->findOrFail($id);
 
         $categories = Category::all();
 
-        return Inertia::render('Vendor/Services/Edit', [
-            'service' => $service,
+        return Inertia::render('Vendor/Shops/Edit', [
+            'service' => $shop,
             'categories' => $categories,
         ]);
     }
@@ -192,7 +193,7 @@ class ServicesController extends Controller
     {
         $user = $request->user();
 
-        $service = Service::where('user_id', $user->id)->findOrFail($id);
+        $shop = Shop::where('user_id', $user->id)->findOrFail($id);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -217,29 +218,29 @@ class ServicesController extends Controller
         unset($validated['business_hours']);
 
         // Update slug if name changed
-        if ($service->name !== $validated['name']) {
+        if ($shop->name !== $validated['name']) {
             $validated['slug'] = Str::slug($validated['name']);
             $counter = 1;
             $originalSlug = $validated['slug'];
-            while (Service::where('slug', $validated['slug'])->where('id', '!=', $id)->exists()) {
+            while (Shop::where('slug', $validated['slug'])->where('id', '!=', $id)->exists()) {
                 $validated['slug'] = $originalSlug . '-' . $counter++;
             }
         }
 
-        $service->update($validated);
+        $shop->update($validated);
 
         // Sync business hours
-        $service->businessHours()->delete();
+        $shop->businessHours()->delete();
         foreach ($businessHoursData as $hour) {
             BusinessHour::create([
-                'service_id' => $service->id,
+                'service_id' => $shop->id,
                 'day_of_week' => $hour['day_of_week'],
                 'time_from' => $hour['time_from'],
                 'time_to' => $hour['time_to'],
             ]);
         }
 
-        return back()->with('success', __('Service updated successfully.'));
+        return back()->with('success', __('Shop updated successfully.'));
     }
 
     /**
@@ -249,24 +250,24 @@ class ServicesController extends Controller
     {
         $user = $request->user();
 
-        $service = Service::where('user_id', $user->id)->findOrFail($id);
+        $shop = Shop::where('user_id', $user->id)->findOrFail($id);
 
         // Delete associated offerings first
-        $service->offerings()->delete();
-        $service->delete();
+        $shop->services()->delete();
+        $shop->delete();
 
-        return redirect()->route('vendor.services.index')
-            ->with('success', __('Service deleted successfully.'));
+        return redirect()->route('vendor.shops.index')
+            ->with('success', __('Shop deleted successfully.'));
     }
 
     /**
      * Store a new offering for a service.
      */
-    public function storeOffering(Request $request, int $serviceId)
+    public function storeService(Request $request, int $shopId)
     {
         $user = $request->user();
 
-        $service = Service::where('user_id', $user->id)->findOrFail($serviceId);
+        $shop = Shop::where('user_id', $user->id)->findOrFail($shopId);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -278,23 +279,23 @@ class ServicesController extends Controller
             'staff_level' => 'nullable|string|max:100',
         ]);
 
-        $validated['service_id'] = $service->id;
+        $validated['service_id'] = $shop->id;
 
-        ServiceOffering::create($validated);
+        Service::create($validated);
 
-        return back()->with('success', __('Service offering added successfully.'));
+        return back()->with('success', __('Service added successfully.'));
     }
 
     /**
      * Update an offering.
      */
-    public function updateOffering(Request $request, int $serviceId, int $offeringId)
+    public function updateService(Request $request, int $shopId, int $serviceId)
     {
         $user = $request->user();
 
-        $service = Service::where('user_id', $user->id)->findOrFail($serviceId);
+        $shop = Shop::where('user_id', $user->id)->findOrFail($shopId);
 
-        $offering = ServiceOffering::where('service_id', $service->id)->findOrFail($offeringId);
+        $service = Service::where('service_id', $shop->id)->findOrFail($serviceId);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -306,25 +307,25 @@ class ServicesController extends Controller
             'staff_level' => 'nullable|string|max:100',
         ]);
 
-        $offering->update($validated);
+        $service->update($validated);
 
-        return back()->with('success', __('Service offering updated successfully.'));
+        return back()->with('success', __('Service updated successfully.'));
     }
 
     /**
      * Delete an offering.
      */
-    public function destroyOffering(Request $request, int $serviceId, int $offeringId)
+    public function destroyService(Request $request, int $shopId, int $serviceId)
     {
         $user = $request->user();
 
-        $service = Service::where('user_id', $user->id)->findOrFail($serviceId);
+        $shop = Shop::where('user_id', $user->id)->findOrFail($shopId);
 
-        $offering = ServiceOffering::where('service_id', $service->id)->findOrFail($offeringId);
+        $service = Service::where('service_id', $shop->id)->findOrFail($serviceId);
 
-        $offering->delete();
+        $service->delete();
 
-        return back()->with('success', __('Service offering deleted successfully.'));
+        return back()->with('success', __('Service deleted successfully.'));
     }
 
     /**
@@ -334,11 +335,11 @@ class ServicesController extends Controller
     {
         $user = $request->user();
 
-        $service = Service::where('user_id', $user->id)->findOrFail($id);
+        $shop = Shop::where('user_id', $user->id)->findOrFail($id);
 
-        $service->update(['is_available' => !$service->is_available]);
+        $shop->update(['is_available' => !$shop->is_available]);
 
-        $status = $service->is_available ? 'available' : 'unavailable';
+        $status = $shop->is_available ? 'available' : 'unavailable';
 
         return back()->with('success', $status === 'active' ? __('Service is now active.') : __('Service is now inactive.'));
     }
@@ -346,10 +347,10 @@ class ServicesController extends Controller
     /**
      * Store / sync business hours for a service.
      */
-    public function storeBusinessHours(Request $request, int $serviceId)
+    public function storeBusinessHours(Request $request, int $shopId)
     {
         $user = $request->user();
-        $service = Service::where('user_id', $user->id)->findOrFail($serviceId);
+        $shop = Shop::where('user_id', $user->id)->findOrFail($shopId);
 
         $validated = $request->validate([
             'hours' => 'present|array',
@@ -359,11 +360,11 @@ class ServicesController extends Controller
         ]);
 
         // Delete existing and re-create
-        $service->businessHours()->delete();
+        $shop->businessHours()->delete();
 
         foreach ($validated['hours'] as $hour) {
             BusinessHour::create([
-                'service_id' => $service->id,
+                'service_id' => $shop->id,
                 'day_of_week' => $hour['day_of_week'],
                 'time_from' => $hour['time_from'],
                 'time_to' => $hour['time_to'],

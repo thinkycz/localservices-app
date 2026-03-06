@@ -7,7 +7,7 @@ const props = defineProps({
     stats: { type: Array, default: () => [] },
     todayBookings: { type: Array, default: () => [] },
     weekStats: { type: Object, default: () => ({}) },
-    servicePopularity: { type: Array, default: () => [] },
+    shopPopularity: { type: Array, default: () => [] },
     monthlyRevenue: { type: Array, default: () => [] },
     recentBookings: { type: Array, default: () => [] },
     overview: { type: Object, default: () => ({}) },
@@ -23,8 +23,8 @@ const barColors = [
     'bg-rose-500',
 ];
 
-const services = computed(() => props.servicePopularity.map((svc, i) => ({
-    name: svc.service,
+const shops = computed(() => props.shopPopularity.map((svc, i) => ({
+    name: shop.name,
     percent: svc.percentage,
     barColor: barColors[i % barColors.length],
 })));
@@ -261,11 +261,11 @@ function formatDate(dateStr) {
             <div class="col-span-1 flex flex-col gap-4">
 
 
-                <!-- Service Popularity -->
+                <!-- Shop Popularity -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                    <h3 class="font-bold text-gray-900 text-sm mb-4">Service Popularity</h3>
+                    <h3 class="font-bold text-gray-900 text-sm mb-4">Shop Popularity</h3>
                     <div class="space-y-4">
-                        <div v-for="svc in services" :key="svc.name">
+                        <div v-for="shop in services" :key="svc.name">
                             <div class="flex items-center justify-between mb-1.5">
                                 <span class="text-xs font-bold text-gray-500 tracking-wide">
                                     {{ svc.name }}
@@ -282,7 +282,7 @@ function formatDate(dateStr) {
                             </div>
                         </div>
                     </div>
-                    <div v-if="services.length === 0" class="text-center py-4 text-gray-400 text-sm">
+                    <div v-if="shops.length === 0" class="text-center py-4 text-gray-400 text-sm">
                         No booking data available yet
                     </div>
                 </div>
@@ -308,7 +308,7 @@ function formatDate(dateStr) {
                     </svg>
                 </div>
                 <h3 class="text-sm font-semibold text-gray-500 mb-1">No bookings yet</h3>
-                <p class="text-xs text-gray-400">Bookings will appear here once customers start booking your services.</p>
+                <p class="text-xs text-gray-400">Bookings will appear here once customers start booking your shops.</p>
             </div>
 
             <table v-else class="w-full">

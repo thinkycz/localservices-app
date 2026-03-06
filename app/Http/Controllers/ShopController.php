@@ -4,16 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Bookmark;
 use App\Models\Category;
-use App\Models\Service;
+use App\Models\Shop;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class ServiceController extends Controller
+class ShopController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Service::with('category');
+        $query = Shop::with('category');
 
         // Search by keyword
         if ($request->filled('q')) {
@@ -61,27 +61,27 @@ class ServiceController extends Controller
             default => $query->orderBy('rating', 'desc'),
         };
 
-        $services = $query->paginate(20)->withQueryString();
+        $shops = $query->paginate(20)->withQueryString();
 
         // Add is_bookmarked flag for authenticated users
         if ($request->user()) {
             $userId = $request->user()->id;
-            $serviceIds = $services->pluck('id')->toArray();
+            $shopIds = $shops->pluck('id')->toArray();
             $bookmarkedIds = Bookmark::where('user_id', $userId)
-                ->whereIn('service_id', $serviceIds)
-                ->pluck('service_id')
+                ->whereIn('shop_id', $shopIds)
+                ->pluck('shop_id')
                 ->toArray();
 
-            $services->getCollection()->transform(function ($service) use ($bookmarkedIds) {
-                $service->is_bookmarked = in_array($service->id, $bookmarkedIds);
-                return $service;
+            $shops->getCollection()->transform(function ($shop) use ($bookmarkedIds) {
+                $shop->is_bookmarked = in_array($shop->id, $bookmarkedIds);
+                return $shop;
             });
         }
 
-        $categories = Category::withCount('services')->get();
+        $categories = Category::withCount('shops')->get();
 
-        return Inertia::render('Services/Index', [
-            'services' => $services,
+        return Inertia::render('Shops/Index', [
+            'shops' => $shops,
             'categories' => $categories,
             'filters' => $request->only(['q', 'categories', 'price_range', 'min_rating', 'sort', 'city']),
         ]);
@@ -89,20 +89,20 @@ class ServiceController extends Controller
 
     public function show(Request $request, string $slug): Response
     {
-        $service = Service::with(['category', 'offerings', 'businessHours'])
+        $shop = Shop::with(['category', 'services', 'businessHours'])
             ->where('slug', $slug)
             ->firstOrFail();
 
         // Add is_bookmarked flag for authenticated users
         if ($request->user()) {
-            $service->is_bookmarked = Bookmark::where('user_id', $request->user()->id)
-                ->where('service_id', $service->id)
+            $shop->is_bookmarked = Bookmark::where('user_id', $request->user()->id)
+                ->where('shop_id', $shop->id)
                 ->exists();
         }
 
-        $related = Service::with('category')
-            ->where('category_id', $service->category_id)
-            ->where('id', '!=', $service->id)
+        $related = Shop::with('category')
+            ->where('category_id', $shop->category_id)
+            ->where('id', '!=', $shop->id)
             ->orderBy('rating', 'desc')
             ->limit(3)
             ->get();
@@ -112,23 +112,23 @@ class ServiceController extends Controller
             $userId = $request->user()->id;
             $relatedIds = $related->pluck('id')->toArray();
             $bookmarkedIds = Bookmark::where('user_id', $userId)
-                ->whereIn('service_id', $relatedIds)
-                ->pluck('service_id')
+                ->whereIn('shop_id', $relatedIds)
+                ->pluck('shop_id')
                 ->toArray();
 
-            $related->transform(function ($service) use ($bookmarkedIds) {
-                $service->is_bookmarked = in_array($service->id, $bookmarkedIds);
-                return $service;
+            $related->transform(function ($relatedShop) use ($bookmarkedIds) {
+                $relatedShop->is_bookmarked = in_array($relatedShop->id, $bookmarkedIds);
+                return $relatedShop;
             });
         }
 
-        $bookings = \App\Models\Booking::where('provider_id', $service->user_id)
+        $bookings = \App\Models\Booking::where('provider_id', $shop->user_id)
             ->where('booking_date', '>=', now()->toDateString())
             ->whereIn('status', ['pending', 'confirmed'])
             ->get(['booking_date', 'start_time', 'end_time']);
 
-        return Inertia::render('Services/Show', [
-            'service' => $service,
+        return Inertia::render('Shops/Show', [
+            'shop' => $shop,
             'related' => $related,
             'bookings' => $bookings,
         ]);

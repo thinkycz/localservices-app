@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Mail\BookingStatusUpdated;
 use App\Models\Booking;
+use App\Models\Shop;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -22,12 +23,12 @@ class BookingController extends Controller
         $user = $request->user();
 
         // Get all services for this vendor
-        $services = Service::where('user_id', $user->id)->get();
-        $serviceIds = $services->pluck('id');
+        $shops = Shop::where('user_id', $user->id)->get();
+        $shopIds = $shops->pluck('id');
 
         // Build query
-        $query = Booking::whereIn('service_id', $serviceIds)
-            ->with(['customer', 'service', 'offering']);
+        $query = Booking::whereIn('shop_id', $shopIds)
+            ->with(['customer', 'shop', 'service']);
 
         // Filter by status
         if ($request->filled('status')) {
@@ -61,7 +62,7 @@ class BookingController extends Controller
         $bookings = $query->paginate(15)->withQueryString();
 
         // Calculate stats
-        $allBookings = Booking::whereIn('service_id', $serviceIds)->get();
+        $allBookings = Booking::whereIn('shop_id', $shopIds)->get();
         $stats = [
             'total' => $allBookings->count(),
             'pending' => $allBookings->where('status', 'pending')->count(),
@@ -85,17 +86,17 @@ class BookingController extends Controller
     {
         $user = $request->user();
 
-        $services = Service::where('user_id', $user->id)->pluck('id');
+        $shops = Shop::where('user_id', $user->id)->pluck('id');
 
-        $booking = Booking::whereIn('service_id', $services)
-            ->with(['customer', 'service', 'offering', 'provider'])
+        $booking = Booking::whereIn('shop_id', $shops)
+            ->with(['customer', 'shop', 'service', 'provider'])
             ->findOrFail($id);
 
         // Get customer booking history with this vendor
         $customerHistory = Booking::where('provider_id', $user->id)
             ->where('user_id', $booking->user_id)
             ->where('id', '!=', $booking->id)
-            ->with(['service', 'offering'])
+            ->with(['shop', 'service'])
             ->orderBy('booking_date', 'desc')
             ->limit(5)
             ->get();
@@ -113,11 +114,11 @@ class BookingController extends Controller
     {
         $user = $request->user();
 
-        $services = Service::where('user_id', $user->id)->pluck('id');
+        $shops = Shop::where('user_id', $user->id)->pluck('id');
 
-        $booking = Booking::whereIn('service_id', $services)
+        $booking = Booking::whereIn('shop_id', $shops)
             ->where('status', 'pending')
-            ->with(['customer', 'service', 'offering', 'provider'])
+            ->with(['customer', 'shop', 'service', 'provider'])
             ->findOrFail($id);
 
         $oldStatus = $booking->status;
@@ -140,11 +141,11 @@ class BookingController extends Controller
     {
         $user = $request->user();
 
-        $services = Service::where('user_id', $user->id)->pluck('id');
+        $shops = Shop::where('user_id', $user->id)->pluck('id');
 
-        $booking = Booking::whereIn('service_id', $services)
+        $booking = Booking::whereIn('shop_id', $shops)
             ->whereIn('status', ['pending', 'confirmed'])
-            ->with(['customer', 'service', 'offering', 'provider'])
+            ->with(['customer', 'shop', 'service', 'provider'])
             ->findOrFail($id);
 
         $oldStatus = $booking->status;
@@ -167,11 +168,11 @@ class BookingController extends Controller
     {
         $user = $request->user();
 
-        $services = Service::where('user_id', $user->id)->pluck('id');
+        $shops = Shop::where('user_id', $user->id)->pluck('id');
 
-        $booking = Booking::whereIn('service_id', $services)
+        $booking = Booking::whereIn('shop_id', $shops)
             ->whereIn('status', ['pending', 'confirmed'])
-            ->with(['customer', 'service', 'offering', 'provider'])
+            ->with(['customer', 'shop', 'service', 'provider'])
             ->findOrFail($id);
 
         $oldStatus = $booking->status;
@@ -203,9 +204,9 @@ class BookingController extends Controller
     {
         $user = $request->user();
 
-        $services = Service::where('user_id', $user->id)->pluck('id');
+        $shops = Shop::where('user_id', $user->id)->pluck('id');
 
-        $booking = Booking::whereIn('service_id', $services)->findOrFail($id);
+        $booking = Booking::whereIn('shop_id', $shops)->findOrFail($id);
 
         $validated = $request->validate([
             'notes' => 'required|string|max:2000',
@@ -222,11 +223,11 @@ class BookingController extends Controller
     /**
      * Get available time slots for a service on a specific date.
      */
-    public function getAvailableSlots(Request $request, int $serviceId)
+    public function getAvailableSlots(Request $request, int $shopId)
     {
         $user = $request->user();
 
-        $service = Service::where('user_id', $user->id)->findOrFail($serviceId);
+        $shop = Shop::where('user_id', $user->id)->findOrFail($shopId);
 
         $validated = $request->validate([
             'date' => 'required|date',
@@ -236,12 +237,12 @@ class BookingController extends Controller
         $dayOfWeek = (int) \Carbon\Carbon::parse($date)->dayOfWeek;
 
         // Get business hours for this day
-        $businessHour = $service->businessHours()->where('day_of_week', $dayOfWeek)->first();
+        $businessHour = $shop->businessHours()->where('day_of_week', $dayOfWeek)->first();
 
         // If no business hours set for this day, return empty slots
-        if ($service->businessHours()->exists() && !$businessHour) {
+        if ($shop->businessHours()->exists() && !$businessHour) {
             return response()->json([
-                'service_id' => $serviceId,
+                'shop_id' => $shopId,
                 'date' => $date,
                 'slots' => [],
                 'closed' => true,
@@ -249,7 +250,7 @@ class BookingController extends Controller
         }
 
         // Get existing bookings for this service on this date
-        $existingBookings = Booking::where('service_id', $serviceId)
+        $existingBookings = Booking::where('shop_id', $shopId)
             ->whereDate('booking_date', $date)
             ->whereIn('status', ['pending', 'confirmed'])
             ->get(['start_time', 'end_time']);
@@ -286,7 +287,7 @@ class BookingController extends Controller
         }
 
         return response()->json([
-            'service_id' => $serviceId,
+            'shop_id' => $shopId,
             'date' => $date,
             'slots' => $slots,
         ]);

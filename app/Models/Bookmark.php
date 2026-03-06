@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Bookmark extends Model
 {
-    protected $fillable = ['user_id', 'service_id'];
+    protected $fillable = ['user_id', 'shop_id'];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function service(): BelongsTo
+    public function shop(): BelongsTo
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Shop::class);
     }
 }

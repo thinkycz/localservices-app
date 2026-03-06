@@ -9,7 +9,7 @@ class Review extends Model
 {
     protected $fillable = [
         'user_id',
-        'service_id',
+        'shop_id',
         'booking_id',
         'rating',
         'comment',
@@ -30,9 +30,9 @@ class Review extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function service(): BelongsTo
+    public function shop(): BelongsTo
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Shop::class);
     }
 
     public function booking(): BelongsTo

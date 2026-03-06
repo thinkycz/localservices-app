@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Mail\BookingConfirmation;
 use App\Mail\NewBookingNotification;
 use App\Models\Booking;
+use App\Models\Shop;
 use App\Models\Service;
-use App\Models\ServiceOffering;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -20,23 +20,23 @@ class BookingController extends Controller
      */
     public function show(string $slug, Request $request): Response
     {
-        $service = Service::with(['category', 'offerings', 'owner', 'businessHours'])
+        $shop = Shop::with(['category', 'services', 'owner', 'businessHours'])
             ->where('slug', $slug)
             ->firstOrFail();
 
-        $offering = null;
-        if ($request->filled('offering_id')) {
-            $offering = $service->offerings->firstWhere('id', (int) $request->offering_id);
+        $service = null;
+        if ($request->filled('service_id')) {
+            $service = $shop->services->firstWhere('id', (int) $request->service_id);
         }
 
         // Convert service to array and ensure user_id is included
-        $serviceArray = $service->toArray();
-        $serviceArray['user_id'] = $service->user_id;
+        $shopArray = $shop->toArray();
+        $shopArray['user_id'] = $shop->user_id;
 
         // Get existing bookings for the selected date (for conflict checking)
         $existingBookings = [];
         if ($request->filled('date')) {
-            $existingBookings = Booking::where('service_id', $service->id)
+            $existingBookings = Booking::where('shop_id', $shop->id)
                 ->whereDate('booking_date', $request->date)
                 ->whereIn('status', ['pending', 'confirmed'])
                 ->get(['start_time', 'end_time'])
@@ -51,8 +51,8 @@ class BookingController extends Controller
         $authUser = $request->user();
 
         return Inertia::render('Booking/Index', [
-            'service' => $serviceArray,
-            'offering' => $offering,
+            'shop' => $shopArray,
+            'service' => $service,
             'date' => $request->get('date'),
             'time' => $request->get('time'),
             'existingBookings' => $existingBookings,
@@ -70,8 +70,8 @@ class BookingController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'service_id' => 'required|exists:services,id',
-            'service_offering_id' => 'required|exists:service_offerings,id',
+            'shop_id' => 'required|exists:shops,id',
+            'shop_id' => 'required|exists:services,id',
             'provider_id' => 'nullable|exists:users,id',
             'booking_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required',
@@ -82,20 +82,20 @@ class BookingController extends Controller
         ]);
 
         // Get the service to determine provider_id
-        $service = Service::with('businessHours')->findOrFail($validated['service_id']);
+        $shop = Shop::with('businessHours')->findOrFail($validated['shop_id']);
 
         // Validate against business hours
         $bookingDate = \Carbon\Carbon::parse($validated['booking_date']);
         $dayOfWeek = (int) $bookingDate->dayOfWeek; // 0=Sunday, 6=Saturday
 
-        $businessHour = $service->businessHours->firstWhere('day_of_week', $dayOfWeek);
+        $businessHour = $shop->businessHours->firstWhere('day_of_week', $dayOfWeek);
 
-        if ($service->businessHours->isNotEmpty() && !$businessHour) {
+        if ($shop->businessHours->isNotEmpty() && !$businessHour) {
             return back()->withErrors(['booking_date' => 'The service is not available on this day.']);
         }
 
         // If provider_id is not provided, get it from the service's user_id
-        $providerId = $validated['provider_id'] ?? $service->user_id;
+        $providerId = $validated['provider_id'] ?? $shop->user_id;
 
         // If still no provider, get the first service provider user as fallback
         if (! $providerId) {
@@ -107,11 +107,11 @@ class BookingController extends Controller
         }
 
         // Get the offering to calculate total price
-        $offering = ServiceOffering::findOrFail($validated['service_offering_id']);
+        $service = Service::findOrFail($validated['service_id']);
 
         // Calculate end time based on duration
         $startTime = \Carbon\Carbon::parse($validated['start_time']);
-        $endTime = $startTime->copy()->addMinutes($offering->duration_minutes);
+        $endTime = $startTime->copy()->addMinutes($service->duration_minutes);
 
         // Validate start/end time against business hours
         if ($businessHour) {
@@ -124,7 +124,7 @@ class BookingController extends Controller
         }
 
         // Check for overlapping bookings
-        $overlapping = Booking::where('service_id', $validated['service_id'])
+        $overlapping = Booking::where('shop_id', $validated['shop_id'])
             ->whereDate('booking_date', $validated['booking_date'])
             ->whereIn('status', ['pending', 'confirmed'])
             ->where(function ($query) use ($startTime, $endTime) {
@@ -143,8 +143,8 @@ class BookingController extends Controller
         // For now, we'll require authentication for booking
         $booking = Booking::create([
             'user_id' => $request->user()->id,
+            'shop_id' => $validated['shop_id'],
             'service_id' => $validated['service_id'],
-            'service_offering_id' => $validated['service_offering_id'],
             'provider_id' => $providerId,
             'status' => 'pending',
             'booking_date' => $validated['booking_date'],
@@ -177,7 +177,7 @@ class BookingController extends Controller
      */
     public function confirmation(int $id, Request $request): Response
     {
-        $booking = Booking::with(['service', 'offering', 'provider'])
+        $booking = Booking::with(['shop', 'service', 'provider'])
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 
@@ -191,7 +191,7 @@ class BookingController extends Controller
      */
     public function userBookings(Request $request): Response
     {
-        $bookings = Booking::with(['service', 'offering', 'provider'])
+        $bookings = Booking::with(['shop', 'service', 'provider'])
             ->where('user_id', $request->user()->id)
             ->orderBy('booking_date', 'desc')
             ->orderBy('start_time', 'desc')
@@ -220,7 +220,7 @@ class BookingController extends Controller
     public function cancel(Request $request, int $id): RedirectResponse
     {
         $booking = Booking::where('user_id', $request->user()->id)
-            ->with(['customer', 'service', 'offering', 'provider'])
+            ->with(['customer', 'shop', 'service', 'provider'])
             ->findOrFail($id);
 
         // Only allow cancellation of pending or confirmed bookings

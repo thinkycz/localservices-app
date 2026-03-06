@@ -102,7 +102,7 @@ const status = statusConfig[props.booking.status] || statusConfig.pending;
                                 </svg>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-gray-900 text-base">{{ booking.service?.name }}</h3>
+                                <h3 class="font-bold text-gray-900 text-base">{{ booking.shop?.name }}</h3>
                                 <p class="text-sm text-gray-500 mt-0.5">{{ booking.offering?.name }}</p>
                             </div>
                         </div>

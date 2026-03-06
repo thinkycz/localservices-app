@@ -9,8 +9,8 @@ class Category extends Model
 {
     protected $fillable = ['name', 'slug', 'icon'];
 
-    public function services(): HasMany
+    public function shops(): HasMany
     {
-        return $this->hasMany(Service::class);
+        return $this->hasMany(Shop::class);
     }
 }

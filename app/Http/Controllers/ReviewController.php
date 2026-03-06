@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Review;
+use App\Models\Shop;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +18,7 @@ class ReviewController extends Controller
      */
     public function create(Request $request, int $bookingId): Response|RedirectResponse
     {
-        $booking = Booking::with(['service', 'offering', 'provider'])
+        $booking = Booking::with(['shop', 'service', 'provider'])
             ->where('user_id', $request->user()->id)
             ->where('status', 'completed')
             ->findOrFail($bookingId);
@@ -41,7 +42,7 @@ class ReviewController extends Controller
     {
         $validated = $request->validate([
             'booking_id' => 'required|exists:bookings,id',
-            'service_id' => 'required|exists:services,id',
+            'shop_id' => 'required|exists:shops,id',
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'required|string|min:10|max:1000',
             'tags' => 'nullable|array',
@@ -61,7 +62,7 @@ class ReviewController extends Controller
 
         $review = Review::create([
             'user_id' => $request->user()->id,
-            'service_id' => $validated['service_id'],
+            'shop_id' => $validated['shop_id'],
             'booking_id' => $validated['booking_id'],
             'rating' => $validated['rating'],
             'comment' => $validated['comment'],
@@ -71,8 +72,8 @@ class ReviewController extends Controller
         ]);
 
         // Update service rating stats
-        $service = Service::find($validated['service_id']);
-        $service->updateRatingStats();
+        $shop = Shop::find($validated['shop_id']);
+        $shop->updateRatingStats();
 
         return redirect()->route('bookings.index')
             ->with('success', __('Thank you for your review!'));
@@ -83,7 +84,7 @@ class ReviewController extends Controller
      */
     public function userReviews(Request $request): Response
     {
-        $reviews = Review::with(['service', 'booking'])
+        $reviews = Review::with(['shop', 'booking'])
             ->where('user_id', $request->user()->id)
             ->orderBy('reviewed_at', 'desc')
             ->paginate(10);

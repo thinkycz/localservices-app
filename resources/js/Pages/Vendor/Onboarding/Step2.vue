@@ -6,7 +6,7 @@
           <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 px-6 py-8">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 class="text-2xl font-bold text-white">{{ $t('Service Details') }}</h1>
+                <h1 class="text-2xl font-bold text-white">{{ $t('Shop Details') }}</h1>
                 <p class="text-blue-200 mt-1 text-sm">{{ $t('Step 2 of 3: What do you offer?') }}</p>
               </div>
               <div class="flex items-center space-x-2 shrink-0">
@@ -20,7 +20,7 @@
           <form @submit.prevent="submit" class="p-6 md:p-8">
             <div class="space-y-6">
               <div>
-                <label for="category_id" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Service Category') }}</label>
+                <label for="category_id" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Shop Category') }}</label>
                 <div class="relative">
                   <select
                     id="category_id"
@@ -41,20 +41,20 @@
               </div>
 
               <div>
-                <label for="service_name" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Service Name') }}</label>
+                <label for="shop_name" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Shop Name') }}</label>
                 <input
-                  id="service_name"
-                  v-model="form.service_name"
+                  id="shop_name"
+                  v-model="form.shop_name"
                   type="text"
                   required
                   class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200"
                   :placeholder="$t('e.g., Professional Plumbing Repairs')"
                 />
-                <p v-if="form.errors.service_name" class="mt-1.5 text-xs text-red-500">{{ form.errors.service_name }}</p>
+                <p v-if="form.errors.shop_name" class="mt-1.5 text-xs text-red-500">{{ form.errors.shop_name }}</p>
               </div>
 
               <div>
-                <label for="description" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Service Description') }}</label>
+                <label for="description" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Shop Description') }}</label>
                 <textarea
                   id="description"
                   v-model="form.description"
@@ -103,7 +103,7 @@ const props = defineProps({
 
 const form = useForm({
   category_id: '',
-  service_name: '',
+  shop_name: '',
   description: '',
 });
 

@@ -71,7 +71,7 @@ function isPast(dateStr) {
                         <p class="text-sm text-blue-200 mt-1">{{ $t('View and manage your appointments') }}</p>
                     </div>
                     <Link
-                        href="/services"
+                        href="/shops"
                         class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur border border-white/20 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>{{ $t('Book a Service') }}</Link>
@@ -115,7 +115,7 @@ function isPast(dateStr) {
                                     </div>
 
                                     <h3 class="font-bold text-gray-900 text-base mb-1">
-                                        {{ booking.service?.name }}
+                                        {{ booking.shop?.name }}
                                     </h3>
 
                                     <p class="text-sm text-gray-500 mb-3">
@@ -144,7 +144,7 @@ function isPast(dateStr) {
                                     <div class="flex gap-2">
                                         <Link
                                             v-if="booking.status === 'pending' || booking.status === 'confirmed'"
-                                            :href="route('services.show', booking.service?.slug)"
+                                            :href="route('shops.show', booking.shop?.slug)"
                                             class="text-xs font-semibold text-gray-600 hover:text-gray-900 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all"
                                         >{{ $t('Details') }}</Link>
                                         <button
@@ -160,7 +160,7 @@ function isPast(dateStr) {
                                             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>{{ $t('Review') }}</Link>
                                         <Link
                                             v-if="booking.status === 'completed'"
-                                            :href="route('services.show', booking.service?.slug)"
+                                            :href="route('shops.show', booking.shop?.slug)"
                                             class="text-xs font-semibold text-blue-600 hover:text-blue-700 px-3 py-2 rounded-xl border border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center gap-1"
                                         >
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>{{ $t('Rebook') }}</Link>
@@ -194,9 +194,9 @@ function isPast(dateStr) {
                 <h3 class="text-lg font-bold text-gray-900 mb-2">{{ $t('No bookings yet') }}</h3>
                 <p class="text-gray-500 mb-6 max-w-sm mx-auto text-sm">{{ $t('Browse our services and book your first appointment today.') }}</p>
                 <Link
-                    href="/services"
+                    href="/shops"
                     class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-sm text-sm"
-                >{{ $t('Browse Services') }}</Link>
+                >{{ $t('Browse Shops') }}</Link>
             </div>
 
             <!-- Pagination -->

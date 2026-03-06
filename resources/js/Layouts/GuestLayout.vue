@@ -24,8 +24,8 @@ import { Link } from '@inertiajs/vue3';
 
             <!-- Center content -->
             <div class="relative z-10">
-                <h1 class="text-4xl font-bold text-white leading-tight mb-4">{{ $t('Book Services You Trust') }}</h1>
-                <p class="text-blue-100 text-lg mb-10 leading-relaxed">{{ $t('Connect with top-rated professionals in your area for any home service need.') }}</p>
+                <h1 class="text-4xl font-bold text-white leading-tight mb-4">{{ $t('Book Shops You Trust') }}</h1>
+                <p class="text-blue-100 text-lg mb-10 leading-relaxed">{{ $t('Connect with top-rated professionals in your area for any home shop need.') }}</p>
 
                 <!-- Feature bullets -->
                 <div class="space-y-5">

@@ -28,7 +28,7 @@
           </div>
 
           <div class="mt-12 pt-8 border-t border-gray-100 text-center">
-            <p class="text-sm font-medium text-gray-500 bg-gray-50 inline-block px-4 py-2 rounded-full">{{ $t('If you have any questions about this Privacy Policy, please contact us at') }}<a href="mailto:privacy@localservices.com" class="text-blue-600 hover:text-blue-700">{{ $t('privacy@localservices.com') }}</a>
+            <p class="text-sm font-medium text-gray-500 bg-gray-50 inline-block px-4 py-2 rounded-full">{{ $t('If you have any questions about this Privacy Policy, please contact us at') }}<a href="mailto:privacy@localshops.com" class="text-blue-600 hover:text-blue-700">{{ $t('privacy@localshops.com') }}</a>
             </p>
           </div>
         </div>

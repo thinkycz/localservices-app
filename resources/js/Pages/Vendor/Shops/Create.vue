@@ -44,20 +44,20 @@ const isSubmitting = ref(false);
 function handleSubmit() {
     isSubmitting.value = true;
     const hours = businessHours.value.filter(h => h.enabled).map(h => ({ day_of_week: h.day_of_week, time_from: h.time_from, time_to: h.time_to }));
-    router.post(route('vendor.services.store'), { ...form.value, business_hours: hours }, { onFinish: () => { isSubmitting.value = false; } });
+    router.post(route('vendor.shops.store'), { ...form.value, business_hours: hours }, { onFinish: () => { isSubmitting.value = false; } });
 }
 </script>
 
 <template>
-    <Head :title="$t('Add Service')" />
+    <Head :title="$t('Add Shop')" />
 
-    <VendorLayout activePage="services">
+    <VendorLayout activePage="shops">
         <div class="flex flex-col gap-6">
 
             <!-- Back link -->
             <div>
-                <Link :href="route('vendor.services.index')" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>{{ $t('Back to Services') }}</Link>
+                <Link :href="route('vendor.shops.index')" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>{{ $t('Back to Shops') }}</Link>
             </div>
 
             <!-- Header Card -->
@@ -69,7 +69,7 @@ function handleSubmit() {
                         </svg>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h1 class="text-xl font-bold text-gray-900">{{ $t('Add New Service') }}</h1>
+                        <h1 class="text-xl font-bold text-gray-900">{{ $t('Add New Shop') }}</h1>
                         <p class="text-sm text-gray-400 mt-0.5">{{ $t('Create a new service to offer to customers') }}</p>
                     </div>
                 </div>
@@ -84,7 +84,7 @@ function handleSubmit() {
                     </div>
                     <div class="p-6 space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Service Name *') }}</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Shop Name *') }}</label>
                             <input v-model="form.name" type="text" :placeholder="$t('e.g., Precision Plumbing & Drain')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" :class="{ 'border-red-300 focus:ring-red-500': errors.name }" />
                             <p v-if="errors.name" class="mt-1 text-xs text-red-500">{{ errors.name }}</p>
                         </div>
@@ -114,7 +114,7 @@ function handleSubmit() {
                         <div class="flex items-center justify-between">
                             <div>
                                 <div class="text-sm font-medium text-gray-700">{{ $t('Online Only') }}</div>
-                                <div class="text-xs text-gray-500 mt-0.5">{{ $t('This service is provided remotely / online') }}</div>
+                                <div class="text-xs text-gray-500 mt-0.5">{{ $t('This shop is provided remotely / online') }}</div>
                             </div>
                             <button
                                 type="button"
@@ -202,7 +202,7 @@ function handleSubmit() {
                             <div class="flex items-center justify-between">
                                 <div>
                                     <div class="text-sm font-medium text-gray-700">Available</div>
-                                    <div class="text-xs text-gray-500 mt-0.5">Customers can book this service</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Customers can book this shop</div>
                                 </div>
                                 <button
                                     type="button"
@@ -218,7 +218,7 @@ function handleSubmit() {
 
                 <!-- Actions -->
                 <div class="flex items-center gap-3 justify-end">
-                    <Link :href="route('vendor.services.index')" class="px-5 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-sm rounded-xl transition-colors">Cancel</Link>
+                    <Link :href="route('vendor.shops.index')" class="px-5 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-sm rounded-xl transition-colors">Cancel</Link>
                     <button
                         type="submit"
                         :disabled="isSubmitting"
@@ -228,7 +228,7 @@ function handleSubmit() {
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        {{ isSubmitting ? 'Creating...' : 'Create Service' }}
+                        {{ isSubmitting ? 'Creating...' : 'Create Shop' }}
                     </button>
                 </div>
             </form>

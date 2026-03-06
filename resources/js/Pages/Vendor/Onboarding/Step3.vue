@@ -6,7 +6,7 @@
           <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 px-6 py-8">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 class="text-2xl font-bold text-white">{{ $t('Service Offerings') }}</h1>
+                <h1 class="text-2xl font-bold text-white">{{ $t('Services') }}</h1>
                 <p class="text-blue-200 mt-1 text-sm">{{ $t('Step 3 of 3: Define your pricing and duration') }}</p>
               </div>
               <div class="flex items-center space-x-2 shrink-0">
@@ -19,7 +19,7 @@
 
           <form @submit.prevent="submit" class="p-6 md:p-8">
             <div class="mb-8">
-              <p class="text-gray-500 text-sm mb-6">{{ $t('Add at least one service offering. You can always add more later from your dashboard.') }}</p>
+              <p class="text-gray-500 text-sm mb-6">{{ $t('Add at least one service. You can always add more later from your dashboard.') }}</p>
               
               <div class="space-y-6">
                 <div v-for="(offering, index) in form.offerings" :key="index" class="bg-white border border-gray-200 rounded-2xl p-6 relative shadow-sm hover:shadow-md transition-shadow">
@@ -39,7 +39,7 @@
                   
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2">
-                      <label :for="'name-' + index" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Service Name') }}</label>
+                      <label :for="'name-' + index" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Shop Name') }}</label>
                       <input
                         :id="'name-' + index"
                         v-model="offering.name"
@@ -130,7 +130,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { Link, useForm } from '@inertiajs/vue3';
 
 const form = useForm({
-  offerings: [
+  services: [
     {
       name: '',
       description: '',
