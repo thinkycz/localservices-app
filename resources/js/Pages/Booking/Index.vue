@@ -321,8 +321,9 @@ function formatDate(dateStr) {
                                     <!-- Summary bar -->
                                     <div v-if="offering" class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                                         <div class="text-sm text-gray-600">
-                                            <span class="font-semibold text-gray-900">{{ service.name }}</span>
+                                            <span class="font-semibold text-gray-900">{{ offering.name }}</span>
                                             <span class="mx-1.5 text-gray-300">·</span>
+                                            <span class="font-semibold text-gray-900">{{ Number(offering.price).toFixed(2) }} {{ shop.currency || 'CZK' }}</span>
                                         </div>
                                     </div>
 

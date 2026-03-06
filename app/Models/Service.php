@@ -12,6 +12,7 @@ class Service extends Model
         'name',
         'description',
         'duration_minutes',
+        'price',
         'is_popular',
         'category_tag',
         'staff_level',
@@ -19,6 +20,7 @@ class Service extends Model
 
     protected $casts = [
         'duration_minutes' => 'integer',
+        'price' => 'decimal:2',
         'is_popular' => 'boolean',
     ];
 

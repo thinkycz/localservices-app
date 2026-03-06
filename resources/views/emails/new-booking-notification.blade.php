@@ -163,7 +163,7 @@
 
             <div class="detail-row">
                 <span class="label">{{ __('Total Price') }}</span>
-                <span class="value">${{ number_format($booking->total_price, 2) }}</span>
+                <span class="value">{{ number_format($booking->total_price, 2) }} {{ $booking->shop->currency ?? 'CZK' }}</span>
             </div>
 
             <div class="detail-row">

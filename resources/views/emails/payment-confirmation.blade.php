@@ -94,7 +94,7 @@
             </div>
             <div class="row">
                 <span class="label">{{ __('Amount') }}</span>
-                <span class="value">${{ number_format((float) $booking->total_price, 2) }}</span>
+                <span class="value">{{ number_format((float) $booking->total_price, 2) }} {{ $booking->shop->currency ?? 'CZK' }}</span>
             </div>
             <div class="row">
                 <span class="label">{{ __('Paid At') }}</span>

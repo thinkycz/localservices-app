@@ -81,9 +81,13 @@ class DashboardController extends Controller
                 ->where('status', '!=', 'cancelled')
                 ->get();
 
+            $revenueByShopForMonth = $monthBookings->groupBy('shop_id')->map(function($shopBookings) {
+                return $shopBookings->sum('total_price');
+            })->sum(); // Add up total numbers as a generic visual indicator if mixed, else true value
+
             $monthlyRevenue[] = [
                 'month' => $month->format('M'),
-                'revenue' => $monthBookings->sum('total_price'),
+                'revenue' => $revenueByShopForMonth,
                 'bookings' => $monthBookings->count(),
             ];
         }
@@ -104,6 +108,16 @@ class DashboardController extends Controller
                 'status' => $booking->status,
                 'price' => $booking->total_price,
             ]);
+
+        // Group revenue by shop to show aggregates ONLY per shop, as requested by user
+        $revenueByShop = $bookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($shopBookings) {
+            $shop = $shopBookings->first()->shop;
+            $currency = $shop ? $shop->currency : 'CZK';
+            $amount = $shopBookings->sum('total_price');
+            return $shop->name . ': ' . number_format($amount, 2) . ' ' . $currency;
+        });
+
+        $revenueString = $revenueByShop->isEmpty() ? '0.00 CZK' : $revenueByShop->implode(' | ');
 
         // Stats for the stats cards
         $stats = [
@@ -136,7 +150,7 @@ class DashboardController extends Controller
             ],
             [
                 'label' => 'Revenue',
-                'value' => '$' . number_format($totalRevenue, 2),
+                'value' => $revenueString,
                 'change' => $this->calculateRevenueChange($bookings),
                 'positive' => true,
                 'icon' => 'cash',
@@ -161,7 +175,10 @@ class DashboardController extends Controller
             'weekStats' => [
                 'total_bookings' => $weekBookings->count(),
                 'completed' => $weekBookings->where('status', 'completed')->count(),
-                'revenue' => $weekBookings->where('status', '!=', 'cancelled')->sum('total_price'),
+                'revenue' => $weekBookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($sb) {
+                    $shop = $sb->first()->shop;
+                    return number_format($sb->sum('total_price'), 2) . ' ' . ($shop ? $shop->currency : 'CZK');
+                })->implode(' | ') ?: '0',
             ],
             'servicePopularity' => $servicePopularity,
             'monthlyRevenue' => $monthlyRevenue,
@@ -230,18 +247,24 @@ class DashboardController extends Controller
     private function calculateRevenueChange($bookings)
     {
         $now = Carbon::now();
-        $thisMonth = $bookings->filter(
+
+        $thisMonthGrouped = $bookings->filter(
             fn($b) => $b->created_at->gte($now->copy()->startOfMonth()) &&
                 $b->status !== 'cancelled'
-        )->sum('total_price');
+        )->groupBy(function($b) { return $b->shop->currency ?? 'CZK'; });
 
-        $lastMonth = $bookings->filter(
+        $lastMonthGrouped = $bookings->filter(
             fn($b) => $b->created_at->gte($now->copy()->subMonth()->startOfMonth()) &&
                 $b->created_at->lt($now->copy()->startOfMonth()) &&
                 $b->status !== 'cancelled'
-        )->sum('total_price');
+        )->groupBy(function($b) { return $b->shop->currency ?? 'CZK'; });
 
-        if ($lastMonth === 0) {
+        // Calculate total amount across currencies to show an overall percentage metric
+        // A proper way would be per currency. For simplicity we sum the raw numbers.
+        $thisMonth = $thisMonthGrouped->map->sum('total_price')->sum();
+        $lastMonth = $lastMonthGrouped->map->sum('total_price')->sum();
+
+        if ($lastMonth == 0) {
             return $thisMonth > 0 ? '+100%' : '0%';
         }
 

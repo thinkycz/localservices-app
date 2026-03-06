@@ -59,8 +59,20 @@ class ShopsController extends Controller
         $totalServicesCount = $allServices->sum(fn($s) => $s->services->count());
         $availableServices = $allServices->where('is_available', true)->count();
 
-        // Calculate potential revenue (sum of all service prices)
-        $potentialRevenue = $allServices->flatMap(fn($s) => $s->services)->sum('price');
+        // Calculate potential revenue (sum of all service prices) grouped by currency
+        $potentialRevenueByCurrency = $allServices->flatMap(function($shop) {
+            return $shop->services->map(function($service) use ($shop) {
+                return ['currency' => $shop->currency ?? 'CZK', 'price' => $service->price];
+            });
+        })->groupBy('currency')->map(function($items) {
+            return $items->sum('price');
+        });
+
+        $potentialRevenueDisplay = [];
+        foreach ($potentialRevenueByCurrency as $currency => $amount) {
+            $potentialRevenueDisplay[] = number_format($amount, 2) . ' ' . $currency;
+        }
+        $potentialRevenueString = empty($potentialRevenueDisplay) ? '0.00 CZK' : implode(' + ', $potentialRevenueDisplay);
 
         return Inertia::render('Vendor/Shops/Index', [
             'shops' => $shops,
@@ -70,7 +82,7 @@ class ShopsController extends Controller
                 'total_services' => $totalServicesCount,
                 'available_shops' => $availableServices,
                 'inactive_shops' => $totalServices - $availableServices,
-                'potential_revenue' => $potentialRevenue,
+                'potential_revenue' => $potentialRevenueString,
             ],
         ]);
     }
@@ -95,6 +107,7 @@ class ShopsController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
+            'currency' => 'required|string|in:CZK,EUR',
             'description' => 'nullable|string',
             'price_range' => 'nullable|integer|min:1|max:4',
             'address' => 'nullable|string|max:500',
@@ -197,6 +210,7 @@ class ShopsController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
+            'currency' => 'required|string|in:CZK,EUR',
             'description' => 'nullable|string',
             'price_range' => 'nullable|integer|min:1|max:4',
             'address' => 'nullable|string|max:500',
