@@ -15,7 +15,7 @@ const errors = computed(() => page.props.errors || {});
 const showOfferingModal = ref(false);
 const editingOffering = ref(null);
 const offeringForm = ref({
-    name: '', description: '', price: '', duration_minutes: '', is_popular: false, category_tag: '', staff_level: '',
+    name: '', description: '', duration_minutes: '', is_popular: false, category_tag: '', staff_level: '',
 });
 
 
@@ -25,14 +25,14 @@ function toggleAvailability() {
 
 function openAddOffering() {
     editingOffering.value = null;
-    offeringForm.value = { name: '', description: '', price: '', duration_minutes: '', is_popular: false, category_tag: '', staff_level: '' };
+    offeringForm.value = { name: '', description: '', duration_minutes: '', is_popular: false, category_tag: '', staff_level: '' };
     showOfferingModal.value = true;
 }
 
 function openEditOffering(offering) {
     editingOffering.value = offering;
     offeringForm.value = {
-        name: offering.name, description: offering.description || '', price: offering.price,
+        name: offering.name, description: offering.description || '',
         duration_minutes: offering.duration_minutes, is_popular: offering.is_popular,
         category_tag: offering.category_tag || '', staff_level: offering.staff_level || '',
     };
@@ -45,7 +45,7 @@ function closeOfferingModal() {
 }
 
 function saveOffering() {
-    const data = { ...offeringForm.value, price: parseFloat(offeringForm.value.price), duration_minutes: parseInt(offeringForm.value.duration_minutes) };
+    const data = { ...offeringForm.value, duration_minutes: parseInt(offeringForm.value.duration_minutes) };
     if (editingOffering.value) {
         router.put(route('vendor.services.offerings.update', { serviceId: props.service.id, offeringId: editingOffering.value.id }), data, { onSuccess: closeOfferingModal });
     } else {
@@ -58,9 +58,7 @@ function deleteOffering(offeringId) {
     router.delete(route('vendor.services.offerings.destroy', { serviceId: props.service.id, offeringId }));
 }
 
-function formatPrice(price) {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price || 0);
-}
+
 
 function getBadgeClasses(color) {
     const c = { blue: 'bg-blue-50 text-blue-700 ring-blue-700/10', gray: 'bg-gray-50 text-gray-700 ring-gray-700/10', green: 'bg-green-50 text-green-700 ring-green-700/10' };
@@ -131,13 +129,7 @@ function getBadgeClasses(color) {
                     <div class="text-xs text-gray-500 mb-0.5">{{ $t('Cancelled') }}</div>
                     <div class="text-2xl font-bold text-red-600">{{ stats.cancelled_bookings }}</div>
                 </div>
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Revenue') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ formatPrice(stats.total_revenue) }}</div>
-                </div>
+
             </div>
 
             <!-- Offerings Table -->
@@ -156,7 +148,6 @@ function getBadgeClasses(color) {
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Duration') }}</th>
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Category') }}</th>
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Staff Level') }}</th>
-                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Price') }}</th>
                                 <th class="px-6 py-3"></th>
                             </tr>
                         </thead>
@@ -181,9 +172,6 @@ function getBadgeClasses(color) {
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="text-sm text-gray-600">{{ offering.staff_level || '—' }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="text-sm font-semibold text-green-600">{{ formatPrice(offering.price) }}</span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-1">
@@ -248,21 +236,12 @@ function getBadgeClasses(color) {
                                 <textarea v-model="offeringForm.description" rows="2" :placeholder="$t('Describe what\'s included in this offering...')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none focus:bg-white transition-colors"></textarea>
                             </div>
 
-                            <!-- Price & Duration -->
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Price') }}<span class="text-red-400">*</span></label>
-                                    <div class="relative">
-                                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
-                                        <input v-model="offeringForm.price" type="number" step="0.01" min="0" placeholder="0.00" class="w-full pl-8 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Duration') }}<span class="text-red-400">*</span></label>
-                                    <div class="relative">
-                                        <input v-model="offeringForm.duration_minutes" type="number" min="1" placeholder="60" class="w-full pl-4 pr-14 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
-                                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">{{ $t('mins') }}</span>
-                                    </div>
+                            <!-- Duration -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Duration') }}<span class="text-red-400">*</span></label>
+                                <div class="relative">
+                                    <input v-model="offeringForm.duration_minutes" type="number" min="1" placeholder="60" class="w-full pl-4 pr-14 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
+                                    <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">{{ $t('mins') }}</span>
                                 </div>
                             </div>
 

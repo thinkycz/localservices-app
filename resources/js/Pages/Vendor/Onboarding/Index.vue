@@ -8,7 +8,7 @@
             <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>{{ $t('Provider Network') }}</div>
           <h1 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">{{ $t('Grow your business with') }}<span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">{{ $t('Bookable') }}</span>
           </h1>
-          <p class="text-lg text-blue-100 max-w-2xl mx-auto mb-8 leading-relaxed">{{ $t('Join our marketplace to connect with new customers, manage your bookings easily, and get paid securely. Setup takes less than 5 minutes.') }}</p>
+          <p class="text-lg text-blue-100 max-w-2xl mx-auto mb-8 leading-relaxed">{{ $t('Join our marketplace to connect with new customers and manage your bookings easily. Setup takes less than 5 minutes.') }}</p>
           <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               :href="route('vendor.onboarding.step1')"
@@ -21,7 +21,7 @@
 
       <!-- Feature Section -->
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 pb-16">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition-shadow">
             <div class="w-14 h-14 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -38,13 +38,6 @@
             <p class="text-sm text-gray-500 leading-relaxed">{{ $t('Manage your availability, appointments, and customer communications all from one beautiful dashboard.') }}</p>
           </div>
 
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition-shadow">
-            <div class="w-14 h-14 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <h3 class="font-bold text-gray-900 mb-2">{{ $t('Secure Payments') }}</h3>
-            <p class="text-sm text-gray-500 leading-relaxed">{{ $t('Get paid directly and securely for your services. We handle the transactions so you can focus on the work.') }}</p>
-          </div>
         </div>
 
         <!-- Requirements -->
@@ -73,7 +66,7 @@
                 <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
                 <div>
                   <h4 class="text-sm font-bold text-gray-900">{{ $t('Offerings') }}</h4>
-                  <p class="text-xs text-gray-500 mt-1">{{ $t('Packages, duration, and pricing') }}</p>
+                  <p class="text-xs text-gray-500 mt-1">{{ $t('Packages and duration') }}</p>
                 </div>
               </div>
             </div>

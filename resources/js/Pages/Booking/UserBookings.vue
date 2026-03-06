@@ -6,9 +6,7 @@ const props = defineProps({
     bookings: { type: Object, required: true },
 });
 
-function formatPrice(amount) {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
-}
+
 
 function formatDate(dateStr) {
     if (!dateStr) return 'Invalid Date';
@@ -140,9 +138,8 @@ function isPast(dateStr) {
                                     </div>
                                 </div>
 
-                                <!-- Right: Price & Actions -->
+                                <!-- Right: Actions -->
                                 <div class="flex sm:flex-col items-center sm:items-end gap-3 shrink-0">
-                                    <div class="text-xl font-bold text-gray-900">{{ formatPrice(booking.total_price) }}</div>
 
                                     <div class="flex gap-2">
                                         <Link

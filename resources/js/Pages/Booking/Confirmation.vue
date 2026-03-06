@@ -6,9 +6,7 @@ const props = defineProps({
     booking: { type: Object, required: true },
 });
 
-function formatPrice(amount) {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
-}
+
 
 function formatDate(dateStr) {
     if (!dateStr) return 'Invalid Date';
@@ -106,9 +104,6 @@ const status = statusConfig[props.booking.status] || statusConfig.pending;
                             <div class="flex-1 min-w-0">
                                 <h3 class="font-bold text-gray-900 text-base">{{ booking.service?.name }}</h3>
                                 <p class="text-sm text-gray-500 mt-0.5">{{ booking.offering?.name }}</p>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <div class="text-xl font-bold text-gray-900">{{ formatPrice(booking.total_price) }}</div>
                             </div>
                         </div>
 

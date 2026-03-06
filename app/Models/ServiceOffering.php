@@ -11,7 +11,6 @@ class ServiceOffering extends Model
         'service_id',
         'name',
         'description',
-        'price',
         'duration_minutes',
         'is_popular',
         'category_tag',
@@ -19,7 +18,6 @@ class ServiceOffering extends Model
     ];
 
     protected $casts = [
-        'price' => 'float',
         'duration_minutes' => 'integer',
         'is_popular' => 'boolean',
     ];

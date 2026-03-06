@@ -13,11 +13,7 @@ const selectedCategories = ref(
         : []
 );
 
-const selectedPriceRanges = ref(
-    props.filters.price_range
-        ? (Array.isArray(props.filters.price_range) ? props.filters.price_range.map(Number) : props.filters.price_range.split(',').map(Number))
-        : []
-);
+
 
 const minRating = ref(props.filters.min_rating ? Number(props.filters.min_rating) : null);
 
@@ -41,7 +37,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 const activeFilterCount = computed(() => {
     let c = 0;
     if (selectedCategories.value.length) c += selectedCategories.value.length;
-    if (selectedPriceRanges.value.length) c += selectedPriceRanges.value.length;
+
     if (minRating.value) c += 1;
     return c;
 });
@@ -53,12 +49,7 @@ function toggleCategory(slug) {
     applyFilters();
 }
 
-function togglePriceRange(val) {
-    const idx = selectedPriceRanges.value.indexOf(val);
-    if (idx === -1) selectedPriceRanges.value.push(val);
-    else selectedPriceRanges.value.splice(idx, 1);
-    applyFilters();
-}
+
 
 function setMinRating(val) {
     minRating.value = minRating.value === val ? null : val;
@@ -69,7 +60,7 @@ function applyFilters() {
     const params = {};
     if (props.filters.q) params.q = props.filters.q;
     if (selectedCategories.value.length) params.categories = selectedCategories.value;
-    if (selectedPriceRanges.value.length) params.price_range = selectedPriceRanges.value;
+
     if (minRating.value) params.min_rating = minRating.value;
     if (props.filters.sort) params.sort = props.filters.sort;
     router.get(route('services.index'), params, { preserveScroll: true });
@@ -77,13 +68,13 @@ function applyFilters() {
 
 function clearAll() {
     selectedCategories.value = [];
-    selectedPriceRanges.value = [];
+
     minRating.value = null;
     openDropdown.value = null;
     router.get(route('services.index'), props.filters.q ? { q: props.filters.q } : {});
 }
 
-const priceLabels = ['$', '$$', '$$$', '$$$$'];
+
 
 // Labels for the trigger buttons
 const categoryLabel = computed(() => {
@@ -95,10 +86,7 @@ const categoryLabel = computed(() => {
     return `${selectedCategories.value.length} categories`;
 });
 
-const priceLabel = computed(() => {
-    if (!selectedPriceRanges.value.length) return 'Price';
-    return selectedPriceRanges.value.map(v => '$'.repeat(v)).join(', ');
-});
+
 
 const ratingLabel = computed(() => {
     if (!minRating.value) return 'Rating';
@@ -158,44 +146,7 @@ const ratingLabel = computed(() => {
             </transition>
         </div>
 
-        <!-- Price Dropdown -->
-        <div class="relative">
-            <button
-                @click.stop="toggleDropdown('price')"
-                class="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full border-2 transition-all"
-                :class="selectedPriceRanges.length
-                    ? 'bg-white border-white text-gray-900'
-                    : openDropdown === 'price'
-                        ? 'bg-white/10 border-white/50 text-white'
-                        : 'bg-transparent border-white/30 text-blue-100 hover:border-white/50 hover:text-white'"
-            >
-                {{ priceLabel }}
-                <svg class="w-3.5 h-3.5 transition-transform" :class="openDropdown === 'price' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            </button>
 
-            <transition
-                enter-active-class="transition ease-out duration-150" enter-from-class="opacity-0 translate-y-1" enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0 translate-y-1"
-            >
-                <div v-if="openDropdown === 'price'" class="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 p-3 z-30 min-w-[200px]">
-                    <div class="flex gap-2">
-                        <button
-                            v-for="(label, idx) in priceLabels"
-                            :key="idx"
-                            @click="togglePriceRange(idx + 1)"
-                            class="flex-1 py-2.5 text-sm font-bold rounded-lg border-2 transition-all"
-                            :class="selectedPriceRanges.includes(idx + 1)
-                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-transparent text-white shadow-md'
-                                : 'border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-600'"
-                        >
-                            {{ label }}
-                        </button>
-                    </div>
-                </div>
-            </transition>
-        </div>
 
         <!-- Rating Dropdown -->
         <div class="relative">

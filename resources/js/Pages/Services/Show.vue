@@ -172,9 +172,7 @@ const badgeClasses = computed(() => ({
     green: 'bg-green-100 text-green-700',
 }[props.service.badge_color] ?? 'bg-gray-100 text-gray-700'));
 
-function formatPrice(price) {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price || 0);
-}
+
 
 function formatTime(t) {
     if (!t) return '';
@@ -336,12 +334,7 @@ const mockReviews = [
 
                                     <!-- Price + indicator -->
                                     <div class="flex items-center gap-3 shrink-0">
-                                        <span
-                                            class="text-lg font-bold"
-                                            :class="selectedOffering?.id === offering.id ? 'text-blue-600' : 'text-gray-900'"
-                                        >
-                                            {{ formatPrice(offering.price) }}
-                                        </span>
+
                                         <div
                                             :class="[
                                                 'w-8 h-8 rounded-full flex items-center justify-center transition-all',
@@ -504,7 +497,7 @@ const mockReviews = [
                                     </div>
                                     <div class="min-w-0">
                                         <div class="text-sm font-semibold text-gray-900 truncate">{{ selectedOffering.name }}</div>
-                                        <div class="text-xs text-gray-500">{{ selectedOffering.duration_minutes }} mins · {{ formatPrice(selectedOffering.price) }}</div>
+                                        <div class="text-xs text-gray-500">{{ selectedOffering.duration_minutes }} mins</div>
                                     </div>
                                 </div>
                                 <button @click="selectedOffering = null" class="text-gray-400 hover:text-red-500 ml-2 shrink-0 transition-colors">
@@ -602,13 +595,7 @@ const mockReviews = [
                                 </div>
                             </div>
 
-                            <!-- Total Price -->
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                                <span class="text-sm font-medium text-gray-500">{{ $t('Total') }}</span>
-                                <span class="text-2xl font-bold text-gray-900">
-                                    {{ selectedOffering ? formatPrice(selectedOffering.price) : '—' }}
-                                </span>
-                            </div>
+
 
                             <!-- CTA -->
                             <button

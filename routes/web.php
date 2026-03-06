@@ -57,10 +57,6 @@ Route::get('/', function () {
 Route::middleware('auth')->get('/dashboard', function () {
     $user = Auth::user();
 
-    if ($user?->is_admin) {
-        return redirect()->route('admin.dashboard');
-    }
-
     if ($user?->is_service_provider) {
         return redirect()->route('vendor.dashboard');
     }
@@ -153,9 +149,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Admin Routes
-Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
-});
+
 
 require __DIR__ . '/auth.php';

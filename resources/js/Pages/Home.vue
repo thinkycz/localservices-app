@@ -135,10 +135,7 @@ function formatReviews(n) {
                                         d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
                                 </svg>
                             </div>
-                            <!-- Price overlay -->
-                            <div class="absolute top-2.5 right-2.5">
-                                <span class="bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">{{ '$'.repeat(service.price_range) }}</span>
-                            </div>
+
                             <!-- Badge -->
                             <div v-if="service.badge" class="absolute top-2.5 left-2.5">
                                 <span

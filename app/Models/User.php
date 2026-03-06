@@ -24,7 +24,6 @@ class User extends Authenticatable
         'password',
         'phone',
         'is_service_provider',
-        'is_admin',
         'has_local_password',
         'last_login_at',
     ];
@@ -50,7 +49,6 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_service_provider' => 'boolean',
-            'is_admin' => 'boolean',
             'has_local_password' => 'boolean',
             'last_login_at' => 'datetime',
         ];

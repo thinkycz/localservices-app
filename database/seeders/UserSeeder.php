@@ -23,7 +23,6 @@ class UserSeeder extends Seeder
                 'name' => 'Admin User',
                 'password' => Hash::make('password'),
                 'is_service_provider' => false,
-                'is_admin' => true,
                 'phone' => '+1 (555) 000-0000',
             ]
         );
@@ -35,7 +34,6 @@ class UserSeeder extends Seeder
                 'name' => 'Mike Johnson',
                 'password' => Hash::make('password'),
                 'is_service_provider' => true,
-                'is_admin' => false,
                 'phone' => '+1 (555) 123-4567',
             ]
         );
@@ -47,7 +45,6 @@ class UserSeeder extends Seeder
                 'name' => 'John Doe',
                 'password' => Hash::make('password'),
                 'is_service_provider' => false,
-                'is_admin' => false,
                 'phone' => '+1 (555) 111-1111',
             ]
         );

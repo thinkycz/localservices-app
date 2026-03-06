@@ -21,7 +21,6 @@ return new class extends Migration
             $table->date('booking_date');
             $table->time('start_time');
             $table->time('end_time');
-            $table->decimal('total_price', 10, 2);
             $table->text('notes')->nullable();
             $table->text('customer_notes')->nullable();
             $table->timestamps();
@@ -36,4 +35,3 @@ return new class extends Migration
         Schema::dropIfExists('bookings');
     }
 };
-

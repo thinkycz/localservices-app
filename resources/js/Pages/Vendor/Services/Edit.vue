@@ -15,7 +15,6 @@ const serviceForm = ref({
     name: props.service.name,
     category_id: props.service.category_id,
     description: props.service.description || '',
-    price_range: props.service.price_range || 1,
     badge: props.service.badge || '',
     badge_color: props.service.badge_color || 'blue',
     address: props.service.address || '',
@@ -35,9 +34,7 @@ const badgeColorOptions = [
     { value: 'blue', label: 'Blue' }, { value: 'gray', label: 'Gray' }, { value: 'green', label: 'Green' },
 ];
 
-const priceRangeOptions = [
-    { value: 1, label: '$ (Budget)' }, { value: 2, label: '$$ (Moderate)' }, { value: 3, label: '$$$ (Premium)' }, { value: 4, label: '$$$$ (Luxury)' },
-];
+
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -123,19 +120,11 @@ function getBadgeClasses(color) {
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Service Name *') }}</label>
                             <input v-model="serviceForm.name" type="text" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Category *') }}</label>
-                                <select v-model="serviceForm.category_id" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Price Range') }}</label>
-                                <select v-model="serviceForm.price_range" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option v-for="opt in priceRangeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Category *') }}</label>
+                            <select v-model="serviceForm.category_id" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Description') }}</label>

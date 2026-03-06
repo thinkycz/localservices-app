@@ -13,22 +13,15 @@ class Booking extends Model
         'service_offering_id',
         'provider_id',
         'status',
-        'payment_status',
-        'payment_method',
-        'paid_at',
-        'payment_notes',
         'booking_date',
         'start_time',
         'end_time',
-        'total_price',
         'notes',
         'customer_notes',
     ];
 
     protected $casts = [
         'booking_date' => 'date',
-        'total_price' => 'decimal:2',
-        'paid_at' => 'datetime',
     ];
 
     public function customer(): BelongsTo

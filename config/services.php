@@ -35,8 +35,6 @@ return [
         ],
     ],
 
-    'stripe' => [],
-
     'google' => [],
 
     'facebook' => [],

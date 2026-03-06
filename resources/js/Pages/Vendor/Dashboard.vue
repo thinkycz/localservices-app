@@ -91,9 +91,7 @@ function getStatusClasses(status) {
     return statusMap[s] || statusMap['PENDING'];
 }
 
-function formatPrice(price) {
-    return '$' + Number(price).toFixed(2);
-}
+
 
 function formatDate(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
@@ -118,29 +116,7 @@ function formatDate(dateStr) {
                         :class="[stat.iconBg, 'w-11 h-11 rounded-xl flex items-center justify-center']"
                     >
                         <!-- Calendar Check (Total Bookings) -->
-                        <template v-if="stat.icon === 'calendar-check'">
-                            <svg :class="[stat.iconColor, 'w-5 h-5']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                            </svg>
-                        </template>
-                        <!-- Calendar X (Cancellations) -->
-                        <template v-else-if="stat.icon === 'calendar-x'">
-                            <svg :class="[stat.iconColor, 'w-5 h-5']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7l-3 3m0-3l3 3"/>
-                            </svg>
-                        </template>
-                        <!-- User Plus (New Customers) -->
-                        <template v-else-if="stat.icon === 'user-plus'">
-                            <svg :class="[stat.iconColor, 'w-5 h-5']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                            </svg>
-                        </template>
-                        <!-- Cash (Revenue) -->
-                        <template v-else-if="stat.icon === 'cash'">
-                            <svg :class="[stat.iconColor, 'w-5 h-5']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                        </template>
+
                     </div>
 
                     <!-- Change badge -->
@@ -343,7 +319,6 @@ function formatDate(dateStr) {
                         <th class="px-6 py-3">Date</th>
                         <th class="px-6 py-3">Time</th>
                         <th class="px-6 py-3">Status</th>
-                        <th class="px-6 py-3 text-right">Price</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -387,9 +362,6 @@ function formatDate(dateStr) {
                                 <span :class="['w-1.5 h-1.5 rounded-full', getStatusClasses(booking.status).dot]"></span>
                                 {{ booking.status.charAt(0).toUpperCase() + booking.status.slice(1) }}
                             </span>
-                        </td>
-                        <td class="px-6 py-3.5 text-right">
-                            <span class="text-sm font-semibold text-gray-900">{{ formatPrice(booking.price) }}</span>
                         </td>
                     </tr>
                 </tbody>

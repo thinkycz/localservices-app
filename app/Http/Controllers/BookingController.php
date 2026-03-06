@@ -150,7 +150,6 @@ class BookingController extends Controller
             'booking_date' => $validated['booking_date'],
             'start_time' => $startTime->format('H:i:s'),
             'end_time' => $endTime->format('H:i:s'),
-            'total_price' => $offering->price,
             'customer_notes' => $validated['customer_notes'] ?? null,
         ]);
 

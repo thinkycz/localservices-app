@@ -13,7 +13,6 @@ return new class extends Migration
             $table->foreignId('service_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->decimal('price', 8, 2);
             $table->integer('duration_minutes')->default(60);
             $table->boolean('is_popular')->default(false);
             $table->string('category_tag')->nullable(); // e.g. "Haircuts", "Shaves", "Drain", "Electrical"

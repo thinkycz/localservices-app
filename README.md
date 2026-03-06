@@ -7,9 +7,6 @@ Marketplace-style app for discovering local services, booking providers, messagi
 - Laravel 12
 - Inertia + Vue 3
 - Tailwind CSS
-- Stripe (payments)
-- Socialite (Google/Facebook login)
-- Scout (search)
 
 ## Quick Start
 
@@ -25,21 +22,9 @@ Marketplace-style app for discovering local services, booking providers, messagi
 
 Set these in `.env` as needed:
 
-- Stripe
-  - `STRIPE_KEY`, `STRIPE_SECRET`
-  - `STRIPE_WEBHOOK_SECRET` (recommended for production)
-- Social Login
-  - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
-  - `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `FACEBOOK_REDIRECT_URI`
 - Contact Form
   - `CONTACT_TO_EMAIL` (admin inbox for contact submissions)
-- Search
-  - `SCOUT_DRIVER=database` (default)
 
-## Stripe Webhook
-
-- Endpoint: `POST /api/stripe/webhook`
-- Configure the webhook in Stripe and set `STRIPE_WEBHOOK_SECRET`.
 
 ## Notes
 

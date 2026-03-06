@@ -7,7 +7,6 @@ const props = defineProps({
     service: { type: Object, required: true },
 });
 
-const priceSymbol = computed(() => '$'.repeat(props.service.price_range));
 
 const badgeClasses = computed(() => ({
     blue:  'bg-blue-50 text-blue-700 ring-blue-600/20',
@@ -72,8 +71,6 @@ const formattedReviews = computed(() => {
                         <span class="font-bold text-gray-800">{{ service.rating }}</span>
                         <span class="text-gray-400">({{ formattedReviews }})</span>
                     </div>
-                    <span class="text-gray-300">·</span>
-                    <span class="text-xs text-gray-400 font-medium">{{ priceSymbol }}</span>
                 </div>
 
                 <!-- Description -->
