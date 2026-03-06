@@ -132,6 +132,18 @@ function formatTime(time) {
                     <div class="text-2xl font-bold text-green-600">{{ stats.completed }}</div>
                 </div>
 
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-500 mb-1">{{ $t('Cancelled') }}</div>
+                    <div class="text-2xl font-bold text-red-600">{{ stats.cancelled }}</div>
+                </div>
+
 
             </div>
 

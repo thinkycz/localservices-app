@@ -15,8 +15,6 @@ const shopForm = ref({
     name: props.shop.name,
     category_id: props.shop.category_id,
     description: props.shop.description || '',
-    badge: props.shop.badge || '',
-    badge_color: props.shop.badge_color || 'blue',
     address: props.shop.address || '',
     city: props.shop.city || '',
     state: props.shop.state || '',
@@ -24,15 +22,8 @@ const shopForm = ref({
     is_online_only: props.shop.is_online_only || false,
 });
 
-const badgeOptions = [
-    { value: '', label: 'No Badge' }, { value: 'EMERGENCY SERVICE', label: 'Emergency Service' },
-    { value: 'CERTIFIED PRO', label: 'Certified Pro' }, { value: 'ECO-FRIENDLY', label: 'Eco-Friendly' },
-    { value: '24/7 AVAILABLE', label: '24/7 Available' }, { value: 'BEST RATED', label: 'Best Rated' },
-];
 
-const badgeColorOptions = [
-    { value: 'blue', label: 'Blue' }, { value: 'gray', label: 'Gray' }, { value: 'green', label: 'Green' },
-];
+
 
 
 
@@ -95,7 +86,7 @@ function getBadgeClasses(color) {
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-3">
                             <h1 class="text-xl font-bold text-gray-900 truncate">Edit {{ shop.name }}</h1>
-                            <span v-if="shop.badge" :class="[getBadgeClasses(shop.badge_color), 'text-xs font-medium px-2.5 py-1 rounded-full ring-1 ring-inset']">{{ shop.badge }}</span>
+                            <span v-if="shop.computed_badge" :class="[getBadgeClasses(shop.computed_badge.color), 'text-xs font-medium px-2.5 py-1 rounded-full ring-1 ring-inset']">{{ shop.computed_badge.text }}</span>
                         </div>
                         <p class="text-sm text-gray-400 mt-0.5">{{ $t('Update service details and settings') }}</p>
                     </div>
@@ -200,26 +191,6 @@ function getBadgeClasses(color) {
                     </div>
                 </div>
 
-                <!-- Badge -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Badge Overlay</h2>
-                    </div>
-                    <div class="p-6 grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Badge</label>
-                            <select v-model="shopForm.badge" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option v-for="opt in badgeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-                            </select>
-                        </div>
-                        <div v-if="shopForm.badge">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Badge Color</label>
-                            <select v-model="shopForm.badge_color" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option v-for="opt in badgeColorOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Actions -->
                 <div class="flex items-center gap-3 justify-end">

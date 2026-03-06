@@ -100,11 +100,31 @@ function formatDate(dateStr) {
             >
                 <div class="flex items-start justify-between mb-4">
                     <!-- Icon -->
-                    <div
-                        :class="[stat.iconBg, 'w-11 h-11 rounded-xl flex items-center justify-center']"
-                    >
-                        <!-- Calendar Check (Total Bookings) -->
-
+                    <!-- Calendar Check (Total Bookings) -->
+                    <div v-if="stat.icon === 'calendar-check'" class="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <!-- Calendar X (Cancellations) -->
+                    <div v-else-if="stat.icon === 'calendar-x'" class="w-11 h-11 rounded-xl bg-red-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l4 4m0-4l-4 4"/>
+                        </svg>
+                    </div>
+                    <!-- User Plus (New Customers) -->
+                    <div v-else-if="stat.icon === 'user-plus'" class="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                        </svg>
+                    </div>
+                    <!-- Cash (Revenue) -->
+                    <div v-else-if="stat.icon === 'cash'" class="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                     </div>
 
                     <!-- Change badge -->

@@ -170,7 +170,7 @@ const badgeClasses = computed(() => ({
     blue:  'bg-blue-100 text-blue-700',
     gray:  'bg-gray-100 text-gray-700',
     green: 'bg-green-100 text-green-700',
-}[props.shop.badge_color] ?? 'bg-gray-100 text-gray-700'));
+}[props.shop.computed_badge?.color] ?? 'bg-gray-100 text-gray-700'));
 
 
 
@@ -233,7 +233,7 @@ const mockReviews = [
                         <div class="pb-0.5">
                             <div class="flex items-center gap-3 mb-1">
                                 <h1 class="text-2xl md:text-3xl font-bold text-white leading-tight">{{ shop.name }}</h1>
-                                <span v-if="shop.badge" :class="badgeClasses" class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">{{ shop.badge }}</span>
+                                <span v-if="shop.computed_badge" :class="badgeClasses" class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">{{ shop.computed_badge.text }}</span>
                             </div>
                             <div class="flex items-center gap-3 flex-wrap">
                                 <div class="flex items-center gap-1.5">

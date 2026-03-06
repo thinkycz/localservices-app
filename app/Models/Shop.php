@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,8 +16,6 @@ class Shop extends Model
         'slug',
         'description',
         'price_range',
-        'badge',
-        'badge_color',
         'image',
         'is_available',
         'available_at',
@@ -36,6 +35,36 @@ class Shop extends Model
         'rating' => 'float',
         'price_range' => 'integer',
     ];
+
+    protected $appends = ['computed_badge'];
+
+    /**
+     * Auto-compute a badge based on business rules.
+     * Priority: New > Popular > Top Rated
+     */
+    public function getComputedBadgeAttribute(): ?array
+    {
+        // New: created within the last 14 days
+        if ($this->created_at && $this->created_at->greaterThanOrEqualTo(Carbon::now()->subDays(14))) {
+            return ['text' => 'NEW', 'color' => 'blue'];
+        }
+
+        // Popular: 10+ bookings in the last 30 days
+        $recentBookings = $this->bookings()
+            ->where('created_at', '>=', Carbon::now()->subDays(30))
+            ->count();
+
+        if ($recentBookings >= 10) {
+            return ['text' => 'POPULAR', 'color' => 'green'];
+        }
+
+        // Top Rated: rating >= 4.8 with 50+ reviews
+        if ($this->rating >= 4.8 && $this->reviews_count >= 50) {
+            return ['text' => 'TOP RATED', 'color' => 'blue'];
+        }
+
+        return null;
+    }
 
     public function category(): BelongsTo
     {

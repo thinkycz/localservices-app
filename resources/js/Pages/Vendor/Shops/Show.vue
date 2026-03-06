@@ -89,7 +89,7 @@ function getBadgeClasses(color) {
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-3">
                             <h1 class="text-xl font-bold text-gray-900 truncate">{{ shop.name }}</h1>
-                            <span v-if="shop.badge" :class="[getBadgeClasses(shop.badge_color), 'text-xs font-medium px-2.5 py-1 rounded-full ring-1 ring-inset']">{{ shop.badge }}</span>
+                            <span v-if="shop.computed_badge" :class="[getBadgeClasses(shop.computed_badge.color), 'text-xs font-medium px-2.5 py-1 rounded-full ring-1 ring-inset']">{{ shop.computed_badge.text }}</span>
                         </div>
                         <p class="text-sm text-gray-400 mt-0.5">{{ shop.category?.name || 'Uncategorized' }} · {{ shop.services?.length || 0 }} services</p>
                     </div>
@@ -128,6 +128,13 @@ function getBadgeClasses(color) {
                     </div>
                     <div class="text-xs text-gray-500 mb-0.5">{{ $t('Cancelled') }}</div>
                     <div class="text-2xl font-bold text-red-600">{{ stats.cancelled_bookings }}</div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center mb-3">
+                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Revenue') }}</div>
+                    <div class="text-2xl font-bold text-purple-600">${{ Number(stats.total_revenue).toLocaleString() }}</div>
                 </div>
 
             </div>

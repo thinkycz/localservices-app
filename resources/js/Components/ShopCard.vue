@@ -12,7 +12,7 @@ const badgeClasses = computed(() => ({
     blue:  'bg-blue-50 text-blue-700 ring-blue-600/20',
     gray:  'bg-gray-50 text-gray-600 ring-gray-500/10',
     green: 'bg-green-50 text-green-700 ring-green-600/20',
-}[props.shop.badge_color] ?? 'bg-gray-50 text-gray-600 ring-gray-500/10'));
+}[props.shop.computed_badge?.color] ?? 'bg-gray-50 text-gray-600 ring-gray-500/10'));
 
 const formattedReviews = computed(() => {
     const n = props.shop.reviews_count;
@@ -49,10 +49,10 @@ const formattedReviews = computed(() => {
                 <div class="flex items-start justify-between gap-2 mb-1">
                     <div class="flex items-center gap-1.5 flex-wrap">
                         <span
-                            v-if="shop.badge"
+                            v-if="shop.computed_badge"
                             :class="badgeClasses"
                             class="text-[10px] font-bold px-1.5 py-0.5 rounded ring-1 ring-inset uppercase tracking-wider"
-                        >{{ shop.badge }}</span>
+                        >{{ shop.computed_badge.text }}</span>
                         <span class="text-[11px] text-gray-400 font-medium">{{ shop.category?.name }}</span>
                     </div>
                 </div>

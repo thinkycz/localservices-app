@@ -137,15 +137,15 @@ function formatReviews(n) {
                             </div>
 
                             <!-- Badge -->
-                            <div v-if="shop.badge" class="absolute top-2.5 left-2.5">
+                            <div v-if="shop.computed_badge" class="absolute top-2.5 left-2.5">
                                 <span
                                     class="text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide"
                                     :class="{
-                                        'bg-blue-500 text-white': shop.badge_color === 'blue',
-                                        'bg-green-500 text-white': shop.badge_color === 'green',
-                                        'bg-gray-700 text-white': !shop.badge_color || shop.badge_color === 'gray'
+                                        'bg-blue-500 text-white': shop.computed_badge.color === 'blue',
+                                        'bg-green-500 text-white': shop.computed_badge.color === 'green',
+                                        'bg-gray-700 text-white': !shop.computed_badge.color || shop.computed_badge.color === 'gray'
                                     }"
-                                >{{ shop.badge }}</span>
+                                >{{ shop.computed_badge.text }}</span>
                             </div>
                         </div>
 

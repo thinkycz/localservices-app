@@ -12,19 +12,12 @@ const errors = computed(() => page.props.errors || {});
 
 const form = ref({
     name: '', category_id: '', description: '',
-    badge: '', badge_color: 'blue', address: '', city: '', state: '',
+    address: '', city: '', state: '',
     is_available: true, is_online_only: false,
 });
 
-const badgeOptions = [
-    { value: '', label: 'No Badge' }, { value: 'EMERGENCY SERVICE', label: 'Emergency Service' },
-    { value: 'CERTIFIED PRO', label: 'Certified Pro' }, { value: 'ECO-FRIENDLY', label: 'Eco-Friendly' },
-    { value: '24/7 AVAILABLE', label: '24/7 Available' }, { value: 'BEST RATED', label: 'Best Rated' },
-];
 
-const badgeColorOptions = [
-    { value: 'blue', label: 'Blue' }, { value: 'gray', label: 'Gray' }, { value: 'green', label: 'Green' },
-];
+
 
 
 
@@ -172,46 +165,24 @@ function handleSubmit() {
                     </div>
                 </div>
 
-                <!-- Badge & Status -->
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                            <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Badge</h2>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Badge</label>
-                                <select v-model="form.badge" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option v-for="opt in badgeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-                                </select>
-                            </div>
-                            <div v-if="form.badge">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Badge Color</label>
-                                <select v-model="form.badge_color" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option v-for="opt in badgeColorOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-                                </select>
-                            </div>
-                        </div>
+                <!-- Status -->
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Status</h2>
                     </div>
-
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                            <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Status</h2>
-                        </div>
-                        <div class="p-6">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <div class="text-sm font-medium text-gray-700">Available</div>
-                                    <div class="text-xs text-gray-500 mt-0.5">Customers can book this shop</div>
-                                </div>
-                                <button
-                                    type="button"
-                                    @click="form.is_available = !form.is_available"
-                                    :class="['relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2', form.is_available ? 'bg-blue-600' : 'bg-gray-200']"
-                                >
-                                    <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', form.is_available ? 'translate-x-5' : 'translate-x-0']" />
-                                </button>
+                    <div class="p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm font-medium text-gray-700">Available</div>
+                                <div class="text-xs text-gray-500 mt-0.5">Customers can book this shop</div>
                             </div>
+                            <button
+                                type="button"
+                                @click="form.is_available = !form.is_available"
+                                :class="['relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2', form.is_available ? 'bg-blue-600' : 'bg-gray-200']"
+                            >
+                                <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', form.is_available ? 'translate-x-5' : 'translate-x-0']" />
+                            </button>
                         </div>
                     </div>
                 </div>

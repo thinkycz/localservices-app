@@ -101,6 +101,16 @@ function getBadgeClasses(color) {
                     <div class="text-2xl font-bold text-gray-900">{{ stats.available_shops }}</div>
                 </div>
 
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center mb-3">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                        </svg>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Inactive Shops') }}</div>
+                    <div class="text-2xl font-bold text-red-600">{{ stats.inactive_shops }}</div>
+                </div>
+
 
             </div>
 
@@ -172,8 +182,8 @@ function getBadgeClasses(color) {
                                     </div>
                                     <div class="min-w-0">
                                         <div class="font-semibold text-gray-900 text-sm truncate max-w-[200px]">{{ shop.name }}</div>
-                                        <div v-if="shop.badge" class="mt-0.5">
-                                            <span :class="[getBadgeClasses(shop.badge_color), 'text-[10px] font-bold px-1.5 py-0.5 rounded ring-1 ring-inset uppercase tracking-wider']">{{ shop.badge }}</span>
+                                        <div v-if="shop.computed_badge" class="mt-0.5">
+                                            <span :class="[getBadgeClasses(shop.computed_badge.color), 'text-[10px] font-bold px-1.5 py-0.5 rounded ring-1 ring-inset uppercase tracking-wider']">{{ shop.computed_badge.text }}</span>
                                         </div>
                                     </div>
                                 </div>
