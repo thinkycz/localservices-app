@@ -14,6 +14,7 @@ const errors = computed(() => page.props.errors || {});
 const shopForm = ref({
     name: props.shop.name,
     category_id: props.shop.category_id,
+    currency: props.shop.currency || 'CZK',
     description: props.shop.description || '',
     address: props.shop.address || '',
     city: props.shop.city || '',
@@ -116,6 +117,17 @@ function getBadgeClasses(color) {
                             <select v-model="shopForm.category_id" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Currency *') }}</label>
+                            <select v-model="shopForm.currency" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" :class="{ 'border-red-300': errors.currency }">
+                                <option value="CZK">CZK</option>
+                                <option value="EUR">EUR</option>
+                            </select>
+                            <p class="mt-1 text-xs text-orange-500" v-if="shopForm.currency !== shop.currency">
+                                {{ $t('Warning: Changing the currency will not recalculate your existing prices. Please update them manually.') }}
+                            </p>
+                            <p v-if="errors.currency" class="mt-1 text-xs text-red-500">{{ errors.currency }}</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Description') }}</label>

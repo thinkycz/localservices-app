@@ -43,7 +43,7 @@ class BookingConfirmed extends Notification implements ShouldQueue
             ->line('Package: ' . $offering->name)
             ->line('Date: ' . $this->booking->booking_date->format('F j, Y'))
             ->line('Time: ' . $this->booking->start_time)
-            ->line('Total: $' . number_format($this->booking->total_price, 2))
+            ->line('Total: ' . number_format($this->booking->total_price, 2) . ' ' . ($this->booking->shop->currency ?? 'CZK'))
             ->action('View Booking', route('bookings.confirmation', $this->booking->id))
             ->line('Thank you for using our service!');
     }

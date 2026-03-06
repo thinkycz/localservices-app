@@ -27,6 +27,11 @@ class CustomerController extends Controller
         $customerData = $bookings->groupBy('user_id')->map(function ($customerBookings) {
             $customer = $customerBookings->first()->customer;
             
+            $spentString = $customerBookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($sb) {
+                $shop = $sb->first()->shop;
+                return number_format($sb->sum('total_price'), 2) . ' ' . ($shop ? $shop->currency : 'CZK');
+            })->implode(' | ') ?: '0.00 CZK';
+
             return [
                 'id' => $customer->id,
                 'name' => $customer->name,
@@ -36,7 +41,7 @@ class CustomerController extends Controller
                 'total_bookings' => $customerBookings->count(),
                 'completed_bookings' => $customerBookings->where('status', 'completed')->count(),
                 'cancelled_bookings' => $customerBookings->where('status', 'cancelled')->count(),
-                'total_spent' => $customerBookings->where('status', '!=', 'cancelled')->sum('total_price'),
+                'total_spent' => $spentString,
                 'last_booking_date' => $customerBookings->max('booking_date'),
                 'first_booking_date' => $customerBookings->min('booking_date'),
                 'services_used' => $customerBookings->pluck('service.name')->unique()->values()->toArray(),
@@ -88,7 +93,10 @@ class CustomerController extends Controller
                 'total_customers' => $customerData->count(),
                 'new_customers' => $customerData->filter(fn($c) => $c['total_bookings'] === 1)->count(),
                 'returning_customers' => $customerData->filter(fn($c) => $c['total_bookings'] > 1)->count(),
-                'total_revenue' => $customerData->sum('total_spent'),
+                'total_revenue' => $bookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($sb) {
+                    $shop = $sb->first()->shop;
+                    return number_format($sb->sum('total_price'), 2) . ' ' . ($shop ? $shop->currency : 'CZK');
+                })->implode(' | ') ?: '0',
             ],
         ]);
     }
@@ -114,6 +122,11 @@ class CustomerController extends Controller
 
         $customer = $bookings->first()->customer;
         
+        $spentString = $bookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($sb) {
+            $shop = $sb->first()->shop;
+            return number_format($sb->sum('total_price'), 2) . ' ' . ($shop ? $shop->currency : 'CZK');
+        })->implode(' | ') ?: '0.00 CZK';
+
         $customerData = [
             'id' => $customer->id,
             'name' => $customer->name,
@@ -123,7 +136,7 @@ class CustomerController extends Controller
             'total_bookings' => $bookings->count(),
             'completed_bookings' => $bookings->where('status', 'completed')->count(),
             'cancelled_bookings' => $bookings->where('status', 'cancelled')->count(),
-            'total_spent' => $bookings->where('status', '!=', 'cancelled')->sum('total_price'),
+            'total_spent' => $spentString,
             'last_booking_date' => $bookings->max('booking_date'),
             'first_booking_date' => $bookings->min('booking_date'),
             'services_used' => $bookings->pluck('service.name')->unique()->values()->toArray(),

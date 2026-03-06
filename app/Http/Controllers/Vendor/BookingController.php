@@ -62,14 +62,25 @@ class BookingController extends Controller
         $bookings = $query->paginate(15)->withQueryString();
 
         // Calculate stats
-        $allBookings = Booking::whereIn('shop_id', $shopIds)->get();
+        $allBookings = Booking::whereIn('shop_id', $shopIds)->with('shop')->get();
+
+        // Calculate revenue per shop to show aggregates ONLY per shop
+        $revenueByShop = $allBookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($shopBookings) {
+            $shop = $shopBookings->first()->shop;
+            $currency = $shop ? $shop->currency : 'CZK';
+            $amount = $shopBookings->sum('total_price');
+            return $shop->name . ': ' . number_format($amount, 2) . ' ' . $currency;
+        });
+
+        $revenueString = $revenueByShop->isEmpty() ? '0.00 CZK' : $revenueByShop->implode(' | ');
+
         $stats = [
             'total' => $allBookings->count(),
             'pending' => $allBookings->where('status', 'pending')->count(),
             'confirmed' => $allBookings->where('status', 'confirmed')->count(),
             'completed' => $allBookings->where('status', 'completed')->count(),
             'cancelled' => $allBookings->where('status', 'cancelled')->count(),
-            'total_revenue' => $allBookings->where('status', '!=', 'cancelled')->sum('total_price'),
+            'total_revenue' => $revenueString,
         ];
 
         return Inertia::render('Vendor/Bookings/Index', [

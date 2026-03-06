@@ -37,10 +37,9 @@ function changePage(page) {
 }
 
 function formatPrice(amount) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(amount || 0);
+    // Return string directly since we formatted it in the backend
+    if (typeof amount === 'string') return amount;
+    return amount || 0;
 }
 
 function formatDate(dateString) {

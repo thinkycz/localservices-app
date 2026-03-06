@@ -91,7 +91,7 @@ class CalendarController extends Controller
                 'avatarText' => $this->getAvatarText($booking->customer->name),
                 'dateStr' => Carbon::parse($booking->booking_date)->format('D, M d'),
                 'timeStr' => $startTime->format('h:i A') . ' - ' . $endTime->format('h:i A'),
-                'price' => '$' . number_format($booking->total_price, 2),
+                'price' => number_format($booking->total_price, 2) . ' ' . ($booking->shop->currency ?? 'CZK'),
                 'customerType' => $customerType,
                 'notes' => $booking->customer_notes ? '"' . $booking->customer_notes . '"' : '',
                 'customerEmail' => $booking->customer->email,

@@ -14,6 +14,7 @@ class Shop extends Model
         'user_id',
         'name',
         'slug',
+        'currency',
         'description',
         'price_range',
         'image',
@@ -136,10 +137,11 @@ class Shop extends Model
     }
 
     /**
-     * Get price range as dollar signs string.
+     * Get price range as currency symbols string.
      */
     public function getPriceSymbolAttribute(): string
     {
-        return str_repeat('$', $this->price_range);
+        $symbol = $this->currency === 'EUR' ? '€' : 'Kč';
+        return trim(str_repeat($symbol . ' ', $this->price_range));
     }
 }

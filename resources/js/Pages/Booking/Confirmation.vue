@@ -105,6 +105,9 @@ const status = statusConfig[props.booking.status] || statusConfig.pending;
                                 <h3 class="font-bold text-gray-900 text-base">{{ booking.shop?.name }}</h3>
                                 <p class="text-sm text-gray-500 mt-0.5">{{ booking.service?.name }}</p>
                             </div>
+                            <div class="text-right">
+                                <p class="font-bold text-gray-900 text-base">{{ Number(booking.service?.price ?? 0).toFixed(2) }} {{ booking.shop?.currency || 'CZK' }}</p>
+                            </div>
                         </div>
 
                         <!-- Info Grid -->

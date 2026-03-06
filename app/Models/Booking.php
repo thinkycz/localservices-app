@@ -43,4 +43,9 @@ class Booking extends Model
     {
         return $this->belongsTo(User::class, 'provider_id');
     }
+
+    public function getTotalPriceAttribute()
+    {
+        return $this->service->price ?? 50.00;
+    }
 }

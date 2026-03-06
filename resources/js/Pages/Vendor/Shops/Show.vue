@@ -15,7 +15,7 @@ const errors = computed(() => page.props.errors || {});
 const showServiceModal = ref(false);
 const editingService = ref(null);
 const serviceForm = ref({
-    name: '', description: '', duration_minutes: '', is_popular: false, category_tag: '', staff_level: '',
+    name: '', description: '', duration_minutes: '', price: '', is_popular: false, category_tag: '', staff_level: '',
 });
 
 
@@ -25,7 +25,7 @@ function toggleAvailability() {
 
 function openAddService() {
     editingService.value = null;
-    serviceForm.value = { name: '', description: '', duration_minutes: '', is_popular: false, category_tag: '', staff_level: '' };
+    serviceForm.value = { name: '', description: '', duration_minutes: '', price: '', is_popular: false, category_tag: '', staff_level: '' };
     showServiceModal.value = true;
 }
 
@@ -33,7 +33,7 @@ function openEditService(svc) {
     editingService.value = svc;
     serviceForm.value = {
         name: svc.name, description: svc.description || '',
-        duration_minutes: svc.duration_minutes, is_popular: svc.is_popular,
+        duration_minutes: svc.duration_minutes, price: svc.price, is_popular: svc.is_popular,
         category_tag: svc.category_tag || '', staff_level: svc.staff_level || '',
     };
     showServiceModal.value = true;
@@ -153,6 +153,7 @@ function getBadgeClasses(color) {
                             <tr class="bg-gray-50/50">
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Service') }}</th>
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Duration') }}</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Price') }}</th>
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Category') }}</th>
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Staff Level') }}</th>
                                 <th class="px-6 py-3"></th>
@@ -173,6 +174,9 @@ function getBadgeClasses(color) {
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="text-sm text-gray-600">{{ service.duration_minutes }} mins</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-gray-600">{{ Number(service.price).toFixed(2) }} {{ shop.currency }}</span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="text-sm text-gray-600">{{ service.category_tag || '—' }}</span>
@@ -243,12 +247,23 @@ function getBadgeClasses(color) {
                                 <textarea v-model="serviceForm.description" rows="2" :placeholder="$t('Describe what\'s included in this service...')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none focus:bg-white transition-colors"></textarea>
                             </div>
 
-                            <!-- Duration -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Duration') }}<span class="text-red-400">*</span></label>
-                                <div class="relative">
-                                    <input v-model="serviceForm.duration_minutes" type="number" min="1" placeholder="60" class="w-full pl-4 pr-14 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
-                                    <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">{{ $t('mins') }}</span>
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Duration -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Duration') }}<span class="text-red-400">*</span></label>
+                                    <div class="relative">
+                                        <input v-model="serviceForm.duration_minutes" type="number" min="1" placeholder="60" class="w-full pl-4 pr-14 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
+                                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">{{ $t('mins') }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Price -->
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Price') }}<span class="text-red-400">*</span></label>
+                                    <div class="relative">
+                                        <input v-model="serviceForm.price" type="number" min="0" step="0.01" placeholder="50.00" class="w-full pl-4 pr-14 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
+                                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">{{ shop.currency || 'CZK' }}</span>
+                                    </div>
                                 </div>
                             </div>
 
