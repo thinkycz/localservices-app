@@ -87,7 +87,7 @@ function validateForm() {
             minutes = parseInt(parts[1]);
         }
         const startStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-        const endMinutes = hours * 60 + minutes + props.offering.duration_minutes;
+        const endMinutes = hours * 60 + minutes + props.service.duration_minutes;
         const endH = Math.floor(endMinutes / 60);
         const endM = endMinutes % 60;
         const endStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
@@ -185,7 +185,7 @@ function formatDate(dateStr) {
                                 </div>
                                 <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('Selected Package') }}</span>
                             </div>
-                            <h3 class="font-bold text-gray-900 text-sm mb-3">{{ offering.name }}</h3>
+                            <h3 class="font-bold text-gray-900 text-sm mb-3">{{ service.name }}</h3>
                             <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
                                 <span class="text-sm text-gray-600 flex items-center gap-1.5">
                                     <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -321,7 +321,7 @@ function formatDate(dateStr) {
                                     <!-- Summary bar -->
                                     <div v-if="offering" class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                                         <div class="text-sm text-gray-600">
-                                            <span class="font-semibold text-gray-900">{{ offering.name }}</span>
+                                            <span class="font-semibold text-gray-900">{{ service.name }}</span>
                                             <span class="mx-1.5 text-gray-300">·</span>
                                         </div>
                                     </div>

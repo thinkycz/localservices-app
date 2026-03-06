@@ -22,9 +22,9 @@
               <p class="text-gray-500 text-sm mb-6">{{ $t('Add at least one service. You can always add more later from your dashboard.') }}</p>
               
               <div class="space-y-6">
-                <div v-for="(offering, index) in form.offerings" :key="index" class="bg-white border border-gray-200 rounded-2xl p-6 relative shadow-sm hover:shadow-md transition-shadow">
+                <div v-for="(service, index) in form.services" :key="index" class="bg-white border border-gray-200 rounded-2xl p-6 relative shadow-sm hover:shadow-md transition-shadow">
                   <button
-                    v-if="form.offerings.length > 1"
+                    v-if="form.services.length > 1"
                     type="button"
                     @click="removeOffering(index)"
                     class="absolute top-4 right-4 text-gray-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-colors"
@@ -42,26 +42,26 @@
                       <label :for="'name-' + index" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Shop Name') }}</label>
                       <input
                         :id="'name-' + index"
-                        v-model="offering.name"
+                        v-model="service.name"
                         type="text"
                         required
                         class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200"
                         :placeholder="$t('e.g., Basic Plumbing Repair')"
                       />
-                      <p v-if="form.errors['offerings.' + index + '.name']" class="mt-1.5 text-xs text-red-500">{{ form.errors['offerings.' + index + '.name'] }}</p>
+                      <p v-if="form.errors['services.' + index + '.name']" class="mt-1.5 text-xs text-red-500">{{ form.errors['services.' + index + '.name'] }}</p>
                     </div>
 
                     <div class="md:col-span-2">
                       <label :for="'description-' + index" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Description') }}</label>
                       <textarea
                         :id="'description-' + index"
-                        v-model="offering.description"
+                        v-model="service.description"
                         rows="2"
                         required
                         class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200 resize-none"
                         :placeholder="$t('Brief description of what\'s included...')"
                       ></textarea>
-                      <p v-if="form.errors['offerings.' + index + '.description']" class="mt-1.5 text-xs text-red-500">{{ form.errors['offerings.' + index + '.description'] }}</p>
+                      <p v-if="form.errors['services.' + index + '.description']" class="mt-1.5 text-xs text-red-500">{{ form.errors['services.' + index + '.description'] }}</p>
                     </div>
 
 
@@ -71,7 +71,7 @@
                       <div class="relative">
                         <select
                           :id="'duration-' + index"
-                          v-model="offering.duration_minutes"
+                          v-model="service.duration_minutes"
                           required
                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200"
                         >
@@ -88,7 +88,7 @@
                           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                         </div>
                       </div>
-                      <p v-if="form.errors['offerings.' + index + '.duration_minutes']" class="mt-1.5 text-xs text-red-500">{{ form.errors['offerings.' + index + '.duration_minutes'] }}</p>
+                      <p v-if="form.errors['services.' + index + '.duration_minutes']" class="mt-1.5 text-xs text-red-500">{{ form.errors['services.' + index + '.duration_minutes'] }}</p>
                     </div>
                   </div>
                 </div>
@@ -140,7 +140,7 @@ const form = useForm({
 });
 
 const addOffering = () => {
-  form.offerings.push({
+  form.services.push({
     name: '',
     description: '',
     duration_minutes: '',
@@ -148,7 +148,7 @@ const addOffering = () => {
 };
 
 const removeOffering = (index) => {
-  form.offerings.splice(index, 1);
+  form.services.splice(index, 1);
 };
 
 const submit = () => {

@@ -12,9 +12,9 @@ const props = defineProps({
 const page = usePage();
 const errors = computed(() => page.props.errors || {});
 
-const showOfferingModal = ref(false);
-const editingOffering = ref(null);
-const offeringForm = ref({
+const showServiceModal = ref(false);
+const editingService = ref(null);
+const serviceForm = ref({
     name: '', description: '', duration_minutes: '', is_popular: false, category_tag: '', staff_level: '',
 });
 
@@ -23,39 +23,39 @@ function toggleAvailability() {
     router.post(route('vendor.shops.toggle', props.shop.id));
 }
 
-function openAddOffering() {
-    editingOffering.value = null;
-    offeringForm.value = { name: '', description: '', duration_minutes: '', is_popular: false, category_tag: '', staff_level: '' };
-    showOfferingModal.value = true;
+function openAddService() {
+    editingService.value = null;
+    serviceForm.value = { name: '', description: '', duration_minutes: '', is_popular: false, category_tag: '', staff_level: '' };
+    showServiceModal.value = true;
 }
 
-function openEditOffering(offering) {
-    editingOffering.value = offering;
-    offeringForm.value = {
-        name: offering.name, description: offering.description || '',
-        duration_minutes: offering.duration_minutes, is_popular: offering.is_popular,
-        category_tag: offering.category_tag || '', staff_level: offering.staff_level || '',
+function openEditService(svc) {
+    editingService.value = svc;
+    serviceForm.value = {
+        name: svc.name, description: svc.description || '',
+        duration_minutes: svc.duration_minutes, is_popular: svc.is_popular,
+        category_tag: svc.category_tag || '', staff_level: svc.staff_level || '',
     };
-    showOfferingModal.value = true;
+    showServiceModal.value = true;
 }
 
-function closeOfferingModal() {
-    showOfferingModal.value = false;
-    editingOffering.value = null;
+function closeServiceModal() {
+    showServiceModal.value = false;
+    editingService.value = null;
 }
 
-function saveOffering() {
-    const data = { ...offeringForm.value, duration_minutes: parseInt(offeringForm.value.duration_minutes) };
-    if (editingOffering.value) {
-        router.put(route('vendor.shops.offerings.update', { serviceId: props.shop.id, offeringId: editingOffering.value.id }), data, { onSuccess: closeOfferingModal });
+function saveService() {
+    const data = { ...serviceForm.value, duration_minutes: parseInt(serviceForm.value.duration_minutes) };
+    if (editingService.value) {
+        router.put(route('vendor.shops.services.update', { shopId: props.shop.id, serviceId: editingService.value.id }), data, { onSuccess: closeServiceModal });
     } else {
-        router.post(route('vendor.shops.offerings.store', { serviceId: props.shop.id }), data, { onSuccess: closeOfferingModal });
+        router.post(route('vendor.shops.services.store', { shopId: props.shop.id }), data, { onSuccess: closeServiceModal });
     }
 }
 
-function deleteOffering(offeringId) {
-    if (!confirm('Are you sure you want to delete this offering?')) return;
-    router.delete(route('vendor.shops.offerings.destroy', { serviceId: props.shop.id, offeringId }));
+function deleteService(serviceId) {
+    if (!confirm('Are you sure you want to delete this service?')) return;
+    router.delete(route('vendor.shops.services.destroy', { shopId: props.shop.id, serviceId }));
 }
 
 
@@ -91,7 +91,7 @@ function getBadgeClasses(color) {
                             <h1 class="text-xl font-bold text-gray-900 truncate">{{ shop.name }}</h1>
                             <span v-if="shop.badge" :class="[getBadgeClasses(shop.badge_color), 'text-xs font-medium px-2.5 py-1 rounded-full ring-1 ring-inset']">{{ shop.badge }}</span>
                         </div>
-                        <p class="text-sm text-gray-400 mt-0.5">{{ shop.category?.name || 'Uncategorized' }} · {{ shop.services?.length || 0 }} offerings</p>
+                        <p class="text-sm text-gray-400 mt-0.5">{{ shop.category?.name || 'Uncategorized' }} · {{ shop.services?.length || 0 }} services</p>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <button
@@ -136,7 +136,7 @@ function getBadgeClasses(color) {
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Services') }}</h2>
-                    <button @click="openAddOffering" class="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                    <button @click="openAddService" class="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>{{ $t('Add Service') }}</button>
                 </div>
 
@@ -144,7 +144,7 @@ function getBadgeClasses(color) {
                     <table class="w-full">
                         <thead>
                             <tr class="bg-gray-50/50">
-                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Offering') }}</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Service') }}</th>
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Duration') }}</th>
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Category') }}</th>
                                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Staff Level') }}</th>
@@ -153,32 +153,32 @@ function getBadgeClasses(color) {
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             <tr
-                                v-for="offering in shop.services"
-                                :key="offering.id"
+                                v-for="service in shop.services"
+                                :key="service.id"
                                 class="group hover:bg-blue-50/30 transition-colors"
                             >
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-semibold text-gray-900 text-sm">{{ offering.name }}</span>
-                                        <span v-if="offering.is_popular" class="text-[10px] text-blue-600 font-bold uppercase tracking-wide bg-blue-100 px-1.5 py-0.5 rounded">{{ $t('Popular') }}</span>
+                                        <span class="font-semibold text-gray-900 text-sm">{{ service.name }}</span>
+                                        <span v-if="service.is_popular" class="text-[10px] text-blue-600 font-bold uppercase tracking-wide bg-blue-100 px-1.5 py-0.5 rounded">{{ $t('Popular') }}</span>
                                     </div>
-                                    <p v-if="offering.description" class="text-xs text-gray-500 mt-0.5 max-w-xs truncate">{{ offering.description }}</p>
+                                    <p v-if="service.description" class="text-xs text-gray-500 mt-0.5 max-w-xs truncate">{{ service.description }}</p>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="text-sm text-gray-600">{{ offering.duration_minutes }} mins</span>
+                                    <span class="text-sm text-gray-600">{{ service.duration_minutes }} mins</span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="text-sm text-gray-600">{{ offering.category_tag || '—' }}</span>
+                                    <span class="text-sm text-gray-600">{{ service.category_tag || '—' }}</span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="text-sm text-gray-600">{{ offering.staff_level || '—' }}</span>
+                                    <span class="text-sm text-gray-600">{{ service.staff_level || '—' }}</span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-1">
-                                        <button @click="openEditOffering(offering)" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" :title="$t('Edit')">
+                                        <button @click="openEditService(service)" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" :title="$t('Edit')">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
-                                        <button @click="deleteOffering(offering.id)" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" :title="$t('Delete')">
+                                        <button @click="deleteService(service.id)" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" :title="$t('Delete')">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                         </button>
                                     </div>
@@ -192,10 +192,10 @@ function getBadgeClasses(color) {
                     <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
                         <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                     </div>
-                    <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No offerings yet') }}</h3>
-                    <p class="text-sm text-gray-500 mb-4">{{ $t('Add offerings to let customers book specific jobs.') }}</p>
-                    <button @click="openAddOffering" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>{{ $t('Add Your First Offering') }}</button>
+                    <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No services yet') }}</h3>
+                    <p class="text-sm text-gray-500 mb-4">{{ $t('Add services to let customers book specific jobs.') }}</p>
+                    <button @click="openAddService" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>{{ $t('Add Your First Service') }}</button>
                 </div>
             </div>
         </div>
@@ -206,7 +206,7 @@ function getBadgeClasses(color) {
                 enter-active-class="transition-opacity duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100"
                 leave-active-class="transition-opacity duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0"
             >
-                <div v-if="showOfferingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="closeOfferingModal">
+                <div v-if="showServiceModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="closeServiceModal">
                     <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
                         <!-- Modal Header -->
                         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 flex items-center justify-between">
@@ -215,32 +215,32 @@ function getBadgeClasses(color) {
                                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-bold text-white">{{ editingOffering ? 'Edit Service' : 'New Offering' }}</h3>
-                                    <p class="text-xs text-blue-100">{{ editingOffering ? 'Update the details below' : 'Add a new service' }}</p>
+                                    <h3 class="text-lg font-bold text-white">{{ editingService ? 'Edit Service' : 'New Service' }}</h3>
+                                    <p class="text-xs text-blue-100">{{ editingService ? 'Update the details below' : 'Add a new service' }}</p>
                                 </div>
                             </div>
-                            <button @click="closeOfferingModal" class="text-white/70 hover:text-white transition-colors p-1">
+                            <button @click="closeServiceModal" class="text-white/70 hover:text-white transition-colors p-1">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
 
                         <!-- Modal Body -->
-                        <form @submit.prevent="saveOffering" class="p-6 space-y-5">
+                        <form @submit.prevent="saveService" class="p-6 space-y-5">
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Offering Name') }}<span class="text-red-400">*</span></label>
-                                <input v-model="offeringForm.name" type="text" :placeholder="$t('e.g., Basic Drain Cleaning')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
+                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Service Name') }}<span class="text-red-400">*</span></label>
+                                <input v-model="serviceForm.name" type="text" :placeholder="$t('e.g., Basic Drain Cleaning')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
                             </div>
 
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Description') }}</label>
-                                <textarea v-model="offeringForm.description" rows="2" :placeholder="$t('Describe what\'s included in this offering...')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none focus:bg-white transition-colors"></textarea>
+                                <textarea v-model="serviceForm.description" rows="2" :placeholder="$t('Describe what\'s included in this service...')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none focus:bg-white transition-colors"></textarea>
                             </div>
 
                             <!-- Duration -->
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Duration') }}<span class="text-red-400">*</span></label>
                                 <div class="relative">
-                                    <input v-model="offeringForm.duration_minutes" type="number" min="1" placeholder="60" class="w-full pl-4 pr-14 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
+                                    <input v-model="serviceForm.duration_minutes" type="number" min="1" placeholder="60" class="w-full pl-4 pr-14 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
                                     <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">{{ $t('mins') }}</span>
                                 </div>
                             </div>
@@ -249,11 +249,11 @@ function getBadgeClasses(color) {
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Category Tag') }}</label>
-                                    <input v-model="offeringForm.category_tag" type="text" :placeholder="$t('e.g., Repair')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" />
+                                    <input v-model="serviceForm.category_tag" type="text" :placeholder="$t('e.g., Repair')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Staff Level') }}</label>
-                                    <input v-model="offeringForm.staff_level" type="text" :placeholder="$t('e.g., Senior')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" />
+                                    <input v-model="serviceForm.staff_level" type="text" :placeholder="$t('e.g., Senior')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" />
                                 </div>
                             </div>
 
@@ -265,23 +265,23 @@ function getBadgeClasses(color) {
                                     </div>
                                     <div>
                                         <div class="text-sm font-medium text-gray-800">{{ $t('Mark as Popular') }}</div>
-                                        <div class="text-xs text-gray-500">{{ $t('Highlight this offering for customers') }}</div>
+                                        <div class="text-xs text-gray-500">{{ $t('Highlight this service for customers') }}</div>
                                     </div>
                                 </div>
                                 <button
                                     type="button"
-                                    @click="offeringForm.is_popular = !offeringForm.is_popular"
-                                    :class="['relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out', offeringForm.is_popular ? 'bg-amber-500' : 'bg-gray-200']"
+                                    @click="serviceForm.is_popular = !serviceForm.is_popular"
+                                    :class="['relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out', serviceForm.is_popular ? 'bg-amber-500' : 'bg-gray-200']"
                                 >
-                                    <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', offeringForm.is_popular ? 'translate-x-5' : 'translate-x-0']" />
+                                    <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', serviceForm.is_popular ? 'translate-x-5' : 'translate-x-0']" />
                                 </button>
                             </div>
 
                             <!-- Actions -->
                             <div class="flex gap-3 pt-1">
-                                <button type="button" @click="closeOfferingModal" class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-2.5 rounded-xl transition-colors text-sm">{{ $t('Cancel') }}</button>
+                                <button type="button" @click="closeServiceModal" class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-2.5 rounded-xl transition-colors text-sm">{{ $t('Cancel') }}</button>
                                 <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg text-sm">
-                                    {{ editingOffering ? 'Save Changes' : 'Add Service' }}
+                                    {{ editingService ? 'Save Changes' : 'Add Service' }}
                                 </button>
                             </div>
                         </form>

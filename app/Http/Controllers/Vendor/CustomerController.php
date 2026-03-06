@@ -18,7 +18,7 @@ class CustomerController extends Controller
         $user = $request->user();
 
         // Get unique customers who have booked the vendor's services
-        $bookings = Booking::with(['customer', 'service', 'offering'])
+        $bookings = Booking::with(['customer', 'service', 'service'])
             ->where('provider_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -101,7 +101,7 @@ class CustomerController extends Controller
         $user = $request->user();
 
         // Get all bookings for this customer with this vendor
-        $bookings = Booking::with(['service', 'offering'])
+        $bookings = Booking::with(['service', 'service'])
             ->where('provider_id', $user->id)
             ->where('user_id', $customerId)
             ->orderBy('booking_date', 'desc')
@@ -131,7 +131,7 @@ class CustomerController extends Controller
                 return [
                     'id' => $booking->id,
                     'service_name' => $booking->service->name,
-                    'offering_name' => $booking->offering->name,
+                    'service_name' => $booking->service->name,
                     'date' => $booking->booking_date->format('Y-m-d'),
                     'time' => $booking->start_time,
                     'end_time' => $booking->end_time,

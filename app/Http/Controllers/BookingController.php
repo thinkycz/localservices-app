@@ -97,11 +97,11 @@ class BookingController extends Controller
         // If provider_id is not provided, get it from the service's user_id
         $providerId = $validated['provider_id'] ?? $shop->user_id;
 
-        // If still no provider, get the first service provider user as fallback
+        // If still no provider, get the first vendor user as fallback
         if (! $providerId) {
-            $provider = \App\Models\User::where('is_service_provider', true)->first();
+            $provider = \App\Models\User::where('is_vendor', true)->first();
             if (! $provider) {
-                return back()->with('error', __('No service provider available for this service.'));
+                return back()->with('error', __('No vendor available for this service.'));
             }
             $providerId = $provider->id;
         }

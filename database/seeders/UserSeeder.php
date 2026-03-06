@@ -16,13 +16,13 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Service Provider
+        // Vendor
         User::firstOrCreate(
             ['email' => 'vendor@email.com'],
             [
                 'name' => 'Mike Johnson',
                 'password' => Hash::make('password'),
-                'is_service_provider' => true,
+                'is_vendor' => true,
                 'phone' => '+1 (555) 123-4567',
             ]
         );
@@ -33,7 +33,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'John Doe',
                 'password' => Hash::make('password'),
-                'is_service_provider' => false,
+                'is_vendor' => false,
                 'phone' => '+1 (555) 111-1111',
             ]
         );

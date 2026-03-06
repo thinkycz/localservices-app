@@ -23,7 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
-        'is_service_provider',
+        'is_vendor',
         'has_local_password',
         'last_login_at',
     ];
@@ -48,7 +48,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_service_provider' => 'boolean',
+            'is_vendor' => 'boolean',
             'has_local_password' => 'boolean',
             'last_login_at' => 'datetime',
         ];
@@ -68,7 +68,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Get bookings for this user (as service provider).
+     * Get bookings for this user (as vendor).
      */
     public function providerBookings(): HasMany
     {

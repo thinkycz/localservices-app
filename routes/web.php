@@ -57,7 +57,7 @@ Route::get('/', function () {
 Route::middleware('auth')->get('/dashboard', function () {
     $user = Auth::user();
 
-    if ($user?->is_service_provider) {
+    if ($user?->is_vendor) {
         return redirect()->route('vendor.dashboard');
     }
 
@@ -91,7 +91,7 @@ Route::get('/faq', [PageController::class, 'faq'])->name('pages.faq');
 Route::get('/contact', [PageController::class, 'contact'])->name('pages.contact');
 Route::post('/contact', [PageController::class, 'submitContact'])->name('pages.contact.submit');
 
-// Vendor Onboarding (auth required, but NOT service provider)
+// Vendor Onboarding (auth required, but NOT vendor)
 Route::middleware(['auth', 'verified'])->prefix('become-vendor')->name('vendor.onboarding.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Vendor\OnboardingController::class, 'index'])->name('index');
     Route::get('/step1', [\App\Http\Controllers\Vendor\OnboardingController::class, 'step1'])->name('step1');
@@ -102,8 +102,8 @@ Route::middleware(['auth', 'verified'])->prefix('become-vendor')->name('vendor.o
     Route::post('/step3', [\App\Http\Controllers\Vendor\OnboardingController::class, 'storeStep3'])->name('step3.store');
 });
 
-// Vendor Routes - All under /vendor prefix, requires auth + service provider
-Route::prefix('vendor')->middleware(['auth', 'verified', 'service.provider'])->group(function () {
+// Vendor Routes - All under /vendor prefix, requires auth + vendor
+Route::prefix('vendor')->middleware(['auth', 'verified', 'vendor.check'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [\App\Http\Controllers\Vendor\DashboardController::class, 'index'])->name('vendor.dashboard');
 

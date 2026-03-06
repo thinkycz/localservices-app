@@ -8,7 +8,7 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
-    is_service_provider: false,
+    is_vendor: false,
 });
 
 const submit = () => {
@@ -35,10 +35,10 @@ const submit = () => {
                 <div class="flex items-center gap-3 bg-gray-100 p-1.5 rounded-xl">
                     <button
                         type="button"
-                        @click="form.is_service_provider = false"
+                        @click="form.is_vendor = false"
                         :class="[
                             'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200',
-                            !form.is_service_provider
+                            !form.is_vendor
                                 ? 'bg-white text-blue-600 shadow-sm'
                                 : 'text-gray-500 hover:text-gray-700'
                         ]"
@@ -50,10 +50,10 @@ const submit = () => {
                     </button>
                     <button
                         type="button"
-                        @click="form.is_service_provider = true"
+                        @click="form.is_vendor = true"
                         :class="[
                             'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200',
-                            form.is_service_provider
+                            form.is_vendor
                                 ? 'bg-white text-blue-600 shadow-sm'
                                 : 'text-gray-500 hover:text-gray-700'
                         ]"
@@ -65,9 +65,9 @@ const submit = () => {
                     </button>
                 </div>
                 <p class="text-xs text-gray-500 mt-2">
-                    {{ form.is_service_provider ? 'You will be able to list and manage your shops.' : 'You will be able to book and review shops.' }}
+                    {{ form.is_vendor ? 'You will be able to list and manage your shops.' : 'You will be able to book and review shops.' }}
                 </p>
-                <InputError class="mt-1.5" :message="form.errors.is_service_provider" />
+                <InputError class="mt-1.5" :message="form.errors.is_vendor" />
             </div>
 
             <!-- Full Name -->

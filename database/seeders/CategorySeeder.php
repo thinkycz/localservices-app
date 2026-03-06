@@ -12,6 +12,10 @@ class CategorySeeder extends Seeder
     {
         $categories = [
             ['name' => 'Barbershops',    'icon' => '💇'],
+            ['name' => 'Auto Repair',    'icon' => '🔧'],
+            ['name' => 'Fitness',        'icon' => '💪'],
+            ['name' => 'Pet Care',       'icon' => '🐾'],
+            ['name' => 'Cleaning',       'icon' => '🧹'],
         ];
 
         foreach ($categories as $cat) {

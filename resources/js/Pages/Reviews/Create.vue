@@ -110,7 +110,7 @@ const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
                         </div>
                         <div>
                             <h3 class="text-sm font-bold text-gray-900">{{ booking.shop.name }}</h3>
-                            <p class="text-[11px] text-gray-400">{{ booking.offering.name }}</p>
+                            <p class="text-[11px] text-gray-400">{{ booking.service.name }}</p>
                         </div>
                         <div class="ml-auto text-right">
                             <div class="flex items-center gap-1.5 text-xs text-gray-500">

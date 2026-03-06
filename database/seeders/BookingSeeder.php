@@ -14,7 +14,7 @@ class BookingSeeder extends Seeder
     public function run(): void
     {
         $shops = Shop::with('services')->get();
-        $customers = User::where('is_service_provider', false)->get();
+        $customers = User::where('is_vendor', false)->get();
 
         if ($shops->isEmpty() || $customers->isEmpty()) {
             return;

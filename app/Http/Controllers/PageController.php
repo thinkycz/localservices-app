@@ -103,7 +103,7 @@ class PageController extends Controller
                     'content' => 'You must create an account to use certain features. You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account.',
                 ],
                 [
-                    'title' => '3. Service Providers',
+                    'title' => '3. Vendors',
                     'content' => 'Service providers must meet our qualification standards and maintain appropriate licenses and insurance. We reserve the right to remove providers who violate our policies.',
                 ],
                 [
@@ -116,7 +116,7 @@ class PageController extends Controller
                 ],
                 [
                     'title' => '6. Limitation of Liability',
-                    'content' => 'Local Services acts as a platform connecting customers and service providers. We are not responsible for the quality of services provided by independent contractors.',
+                    'content' => 'Local Services acts as a platform connecting customers and vendors. We are not responsible for the quality of services provided by independent contractors.',
                 ],
             ],
         ];
@@ -139,7 +139,7 @@ class PageController extends Controller
                 ],
                 [
                     'title' => 'Information Sharing',
-                    'content' => 'We share necessary information with service providers to fulfill bookings. We do not sell your personal information to third parties for marketing purposes.',
+                    'content' => 'We share necessary information with vendors to fulfill bookings. We do not sell your personal information to third parties for marketing purposes.',
                 ],
                 [
                     'title' => 'Data Security',
@@ -164,11 +164,11 @@ class PageController extends Controller
                 'questions' => [
                     [
                         'question' => 'What is Local Services?',
-                        'answer' => 'Local Services is a platform that connects customers with trusted local service providers. You can browse, compare, and book services all in one place.',
+                        'answer' => 'Local Services is a platform that connects customers with trusted local vendors. You can browse, compare, and book services all in one place.',
                     ],
                     [
                         'question' => 'How do I create an account?',
-                        'answer' => 'Click the "Sign Up" button and fill in your details. You can register as a customer to book services or apply to become a service provider.',
+                        'answer' => 'Click the "Sign Up" button and fill in your details. You can register as a customer to book services or apply to become a vendor.',
                     ],
                     [
                         'question' => 'Is Local Services available in my area?',
@@ -194,10 +194,10 @@ class PageController extends Controller
                 ],
             ],
             [
-                'category' => 'Service Providers',
+                'category' => 'Vendors',
                 'questions' => [
                     [
-                        'question' => 'How do I become a service provider?',
+                        'question' => 'How do I become a vendor?',
                         'answer' => 'Click "Become a Provider" and complete our onboarding process. We will review your application and verify your credentials.',
                     ],
                     [
@@ -219,7 +219,7 @@ class PageController extends Controller
                     ],
                     [
                         'question' => 'What if I have an issue with a service?',
-                        'answer' => 'Contact the service provider first. If unresolved, reach out to our support team within 48 hours and we will help mediate.',
+                        'answer' => 'Contact the vendor first. If unresolved, reach out to our support team within 48 hours and we will help mediate.',
                     ],
                     [
                         'question' => 'Is there a satisfaction guarantee?',

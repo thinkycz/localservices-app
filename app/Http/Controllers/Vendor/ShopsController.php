@@ -56,19 +56,19 @@ class ShopsController extends Controller
         // Calculate stats
         $allServices = Shop::where('user_id', $user->id)->with('services')->get();
         $totalServices = $allServices->count();
-        $totalServicesCount = $allServices->sum(fn($s) => $s->offerings->count());
+        $totalServicesCount = $allServices->sum(fn($s) => $s->services->count());
         $availableServices = $allServices->where('is_available', true)->count();
 
-        // Calculate potential revenue (sum of all offering prices)
-        $potentialRevenue = $allServices->flatMap(fn($s) => $s->offerings)->sum('price');
+        // Calculate potential revenue (sum of all service prices)
+        $potentialRevenue = $allServices->flatMap(fn($s) => $s->services)->sum('price');
 
         return Inertia::render('Vendor/Shops/Index', [
-            'services' => $shops,
+            'shops' => $shops,
             'filters' => $request->only(['q', 'status', 'sort']),
             'stats' => [
-                'total_services' => $totalServices,
-                'total_offerings' => $totalServicesCount,
-                'available_services' => $availableServices,
+                'total_shops' => $totalServices,
+                'total_services' => $totalServicesCount,
+                'available_shops' => $availableServices,
                 'potential_revenue' => $potentialRevenue,
             ],
         ]);
@@ -161,7 +161,7 @@ class ShopsController extends Controller
         ];
 
         return Inertia::render('Vendor/Shops/Show', [
-            'service' => $shop,
+            'shop' => $shop,
             'categories' => $categories,
             'stats' => $stats,
         ]);
@@ -181,7 +181,7 @@ class ShopsController extends Controller
         $categories = Category::all();
 
         return Inertia::render('Vendor/Shops/Edit', [
-            'service' => $shop,
+            'shop' => $shop,
             'categories' => $categories,
         ]);
     }

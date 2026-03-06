@@ -11,35 +11,35 @@ const props = defineProps({
 });
 
 // ── Offerings / filter ────────────────────────────────────────────────────────
-const offerings = computed(() => props.shop.services ?? []);
+const services = computed(() => props.shop.services ?? []);
 
 const categoryTags = computed(() =>
-    [...new Set(offerings.value.map(o => o.category_tag).filter(Boolean))]
+    [...new Set(services.value.map(o => o.category_tag).filter(Boolean))]
 );
 
 const activeTag = ref(null);
 
-const filteredOfferings = computed(() =>
+const filteredServices = computed(() =>
     activeTag.value
-        ? offerings.value.filter(o => o.category_tag === activeTag.value)
-        : offerings.value
+        ? services.value.filter(o => o.category_tag === activeTag.value)
+        : services.value
 );
 
 // ── Booking sidebar ───────────────────────────────────────────────────────────
-const selectedOffering = ref(null);
+const selectedService = ref(null);
 
-function toggleOffering(offering) {
-    selectedOffering.value = selectedOffering.value?.id === offering.id ? null : offering;
+function toggleService(offering) {
+    selectedService.value = selectedService.value?.id === service.id ? null : offering;
 }
 
 function goToBooking() {
-    if (!selectedOffering.value) return;
+    if (!selectedService.value) return;
     const dateStr = selectedDay.value
         ? `${calYear.value}-${String(calMonth.value + 1).padStart(2, '0')}-${String(selectedDay.value).padStart(2, '0')}`
         : null;
     router.visit(route('shops.book', props.shop.slug), {
         data: {
-            offering_id: selectedOffering.value.id,
+            offering_id: selectedService.value.id,
             date: dateStr,
             time: selectedTime.value,
         },
@@ -93,7 +93,7 @@ function isDayAvailable(day) {
 }
 
 const availableTimeSlots = computed(() => {
-    if (!selectedDay.value || !selectedOffering.value || businessHours.value.length === 0) return [];
+    if (!selectedDay.value || !selectedService.value || businessHours.value.length === 0) return [];
     const selectedDate = new Date(calYear.value, calMonth.value, selectedDay.value);
     const dayOfWeek = selectedDate.getDay();
     const dayHours = businessHours.value.find(h => h.day_of_week === dayOfWeek);
@@ -103,7 +103,7 @@ const availableTimeSlots = computed(() => {
     const toParts = dayHours.time_to.split(':').map(Number);
     const startMins = fromParts[0] * 60 + fromParts[1];
     const endMins = toParts[0] * 60 + toParts[1];
-    const duration = selectedOffering.value.duration_minutes || 60;
+    const duration = selectedService.value.duration_minutes || 60;
     const interval = 30;
 
     const selectedDateStr = `${calYear.value}-${String(calMonth.value + 1).padStart(2, '0')}-${String(selectedDay.value).padStart(2, '0')}`;
@@ -295,11 +295,11 @@ const mockReviews = [
                         <!-- Offering rows -->
                         <div class="space-y-3">
                             <div
-                                v-for="offering in filteredOfferings"
-                                :key="offering.id"
-                                @click="toggleOffering(offering)"
+                                v-for="service in filteredServices"
+                                :key="service.id"
+                                @click="toggleService(offering)"
                                 class="bg-white rounded-2xl border-2 p-5 transition-all cursor-pointer group"
-                                :class="selectedOffering?.id === offering.id
+                                :class="selectedService?.id === service.id
                                     ? 'border-blue-500 bg-blue-50/30 shadow-lg shadow-blue-100/50'
                                     : 'border-gray-100 hover:border-blue-200 hover:shadow-md'"
                             >
@@ -309,25 +309,25 @@ const mockReviews = [
                                         <div class="flex items-center gap-2 mb-1.5">
                                             <h3
                                                 class="font-bold text-sm"
-                                                :class="selectedOffering?.id === offering.id ? 'text-blue-700' : 'text-gray-900'"
-                                            >{{ offering.name }}</h3>
-                                            <span v-if="offering.is_popular" class="text-[10px] text-amber-600 font-bold uppercase tracking-wider bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">{{ $t('★ Popular') }}</span>
+                                                :class="selectedService?.id === service.id ? 'text-blue-700' : 'text-gray-900'"
+                                            >{{ service.name }}</h3>
+                                            <span v-if="service.is_popular" class="text-[10px] text-amber-600 font-bold uppercase tracking-wider bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">{{ $t('★ Popular') }}</span>
                                         </div>
-                                        <p v-if="offering.description" class="text-sm text-gray-500 mb-2.5 leading-relaxed">{{ offering.description }}</p>
+                                        <p v-if="service.description" class="text-sm text-gray-500 mb-2.5 leading-relaxed">{{ service.description }}</p>
                                         <div class="flex items-center gap-3 text-xs text-gray-400">
                                             <span class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                {{ offering.duration_minutes }} mins
+                                                {{ service.duration_minutes }} mins
                                             </span>
-                                            <span v-if="offering.staff_level" class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
+                                            <span v-if="service.staff_level" class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                 </svg>
-                                                {{ offering.staff_level }}
+                                                {{ service.staff_level }}
                                             </span>
                                         </div>
                                     </div>
@@ -338,12 +338,12 @@ const mockReviews = [
                                         <div
                                             :class="[
                                                 'w-8 h-8 rounded-full flex items-center justify-center transition-all',
-                                                selectedOffering?.id === offering.id
+                                                selectedService?.id === service.id
                                                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md transform hover:-translate-y-0.5 transition-all hover:from-blue-700 hover:to-indigo-700'
                                                     : 'border-2 border-gray-200 text-gray-400 group-hover:border-blue-300 group-hover:text-blue-400'
                                             ]"
                                         >
-                                            <svg v-if="selectedOffering?.id === offering.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg v-if="selectedService?.id === service.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                                             </svg>
                                             <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -354,7 +354,7 @@ const mockReviews = [
                                 </div>
                             </div>
 
-                            <p v-if="filteredOfferings.length === 0" class="text-center py-10 text-sm text-gray-400">{{ $t('No services found for this category.') }}</p>
+                            <p v-if="filteredServices.length === 0" class="text-center py-10 text-sm text-gray-400">{{ $t('No services found for this category.') }}</p>
                         </div>
                     </div>
 
@@ -485,7 +485,7 @@ const mockReviews = [
 
                             <!-- Selected service chip -->
                             <div
-                                v-if="selectedOffering"
+                                v-if="selectedService"
                                 class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-4 py-3"
                             >
                                 <div class="flex items-center gap-3 min-w-0">
@@ -496,11 +496,11 @@ const mockReviews = [
                                         </svg>
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="text-sm font-semibold text-gray-900 truncate">{{ selectedOffering.name }}</div>
-                                        <div class="text-xs text-gray-500">{{ selectedOffering.duration_minutes }} mins</div>
+                                        <div class="text-sm font-semibold text-gray-900 truncate">{{ selectedService.name }}</div>
+                                        <div class="text-xs text-gray-500">{{ selectedService.duration_minutes }} mins</div>
                                     </div>
                                 </div>
-                                <button @click="selectedOffering = null" class="text-gray-400 hover:text-red-500 ml-2 shrink-0 transition-colors">
+                                <button @click="selectedService = null" class="text-gray-400 hover:text-red-500 ml-2 shrink-0 transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
@@ -572,7 +572,7 @@ const mockReviews = [
                             <div>
                                 <div class="text-sm font-bold text-gray-900 mb-3">{{ $t('Available Times') }}</div>
 
-                                <div v-if="!selectedOffering" class="text-sm text-gray-500 italic py-2">{{ $t('Please select a service first.') }}</div>
+                                <div v-if="!selectedService" class="text-sm text-gray-500 italic py-2">{{ $t('Please select a service first.') }}</div>
                                 <div v-else-if="!selectedDay" class="text-sm text-gray-500 italic py-2">{{ $t('Please select an available date.') }}</div>
                                 <div v-else-if="availableTimeSlots.length === 0" class="text-sm text-gray-500 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-start gap-2">
                                     <svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -599,20 +599,20 @@ const mockReviews = [
 
                             <!-- CTA -->
                             <button
-                                :disabled="!selectedOffering || !selectedTime || !selectedDay"
+                                :disabled="!selectedService || !selectedTime || !selectedDay"
                                 @click="goToBooking"
                                 :class="[
                                     'w-full py-4 rounded-xl text-base font-bold transition-all duration-200 flex items-center justify-center gap-2',
-                                    selectedOffering && selectedTime && selectedDay
+                                    selectedService && selectedTime && selectedDay
                                         ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-200/50 hover:shadow-xl hover:shadow-blue-300/50 transform hover:-translate-y-0.5'
                                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                 ]"
                             >
-                                <span v-if="selectedOffering && selectedTime && selectedDay">{{ $t('Book Now') }}</span>
-                                <span v-else-if="!selectedOffering">{{ $t('Select a Service') }}</span>
+                                <span v-if="selectedService && selectedTime && selectedDay">{{ $t('Book Now') }}</span>
+                                <span v-else-if="!selectedService">{{ $t('Select a Service') }}</span>
                                 <span v-else-if="!selectedDay">{{ $t('Select a Date') }}</span>
                                 <span v-else>{{ $t('Select a Time Slot') }}</span>
-                                <svg v-if="selectedOffering && selectedTime && selectedDay" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg v-if="selectedService && selectedTime && selectedDay" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>
                             </button>

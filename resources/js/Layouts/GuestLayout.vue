@@ -38,7 +38,7 @@ import { Link } from '@inertiajs/vue3';
                         </div>
                         <div>
                             <p class="text-white font-semibold text-sm">{{ $t('Verified Professionals') }}</p>
-                            <p class="text-blue-200 text-xs mt-0.5">{{ $t('All service providers are background-checked and reviewed') }}</p>
+                            <p class="text-blue-200 text-xs mt-0.5">{{ $t('All vendors are background-checked and reviewed') }}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-4">

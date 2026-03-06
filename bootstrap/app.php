@@ -20,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Register middleware aliases
         $middleware->alias([
-            'service.provider' => \App\Http\Middleware\ServiceProvider::class,
+            'vendor.check' => \App\Http\Middleware\VendorCheck::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
     })

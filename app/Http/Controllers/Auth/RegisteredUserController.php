@@ -34,14 +34,14 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'is_service_provider' => 'required|boolean',
+            'is_vendor' => 'required|boolean',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'is_service_provider' => $request->is_service_provider,
+            'is_vendor' => $request->is_vendor,
         ]);
 
         event(new Registered($user));

@@ -98,10 +98,10 @@ class OnboardingController extends Controller
     {
         $validated = $request->validate([
             'services' => 'required|array|min:1',
-            'offerings.*.name' => 'required|string|max:255',
-            'offerings.*.description' => 'required|string|max:500',
-            'offerings.*.price' => 'required|numeric|min:0',
-            'offerings.*.duration_minutes' => 'required|integer|min:15|max:480',
+            'services.*.name' => 'required|string|max:255',
+            'services.*.description' => 'required|string|max:500',
+            'services.*.price' => 'required|numeric|min:0',
+            'services.*.duration_minutes' => 'required|integer|min:15|max:480',
         ]);
 
         // Get all session data
@@ -109,10 +109,10 @@ class OnboardingController extends Controller
         $step2 = session()->get('onboarding.step2');
         $step3 = $validated;
 
-        // Update user to service provider
+        // Update user to vendor
         $user = $request->user();
         $user->update([
-            'is_service_provider' => true,
+            'is_vendor' => true,
             'phone' => $step1['business_phone'],
         ]);
 
@@ -139,13 +139,13 @@ class OnboardingController extends Controller
         ]);
 
         // Create service offerings
-        foreach ($step3['services'] as $offering) {
+        foreach ($step3['services'] as $service) {
             Service::create([
                 'shop_id' => $shop->id,
-                'name' => $offering['name'],
-                'description' => $offering['description'],
-                'price' => $offering['price'],
-                'duration_minutes' => $offering['duration_minutes'],
+                'name' => $service['name'],
+                'description' => $service['description'],
+                'price' => $service['price'],
+                'duration_minutes' => $service['duration_minutes'],
                 'is_popular' => false,
             ]);
         }

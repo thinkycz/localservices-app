@@ -126,7 +126,7 @@ const statusConfig = getStatusConfig(props.booking.status);
                                 {{ statusConfig.label }}
                             </span>
                         </div>
-                        <p class="text-sm text-gray-400 mt-0.5">{{ booking.offering.name }} · {{ formatDate(booking.booking_date) }}</p>
+                        <p class="text-sm text-gray-400 mt-0.5">{{ booking.service.name }} · {{ formatDate(booking.booking_date) }}</p>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <!-- Actions inline -->
@@ -187,7 +187,7 @@ const statusConfig = getStatusConfig(props.booking.status);
                         </svg>
                     </div>
                     <div class="text-xs text-gray-500 mb-0.5">Duration</div>
-                    <div class="text-sm font-bold text-gray-900">{{ booking.offering.duration_minutes }} min</div>
+                    <div class="text-sm font-bold text-gray-900">{{ booking.service.duration_minutes }} min</div>
                 </div>
 
 

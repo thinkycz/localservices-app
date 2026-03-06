@@ -6,23 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->boolean('is_vendor')->default(false)->after('password');
+            $table->renameColumn('is_vendor', 'is_vendor');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('is_vendor');
+            $table->renameColumn('is_vendor', 'is_vendor');
         });
     }
 };

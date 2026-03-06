@@ -33,7 +33,7 @@ class BookingConfirmed extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $service = $this->booking->service;
-        $offering = $this->booking->offering;
+        $service = $this->booking->service;
 
         return (new MailMessage)
             ->subject('Booking Confirmed - ' . $service->name)

@@ -235,7 +235,7 @@ function formatTime(time) {
                             </td>
                             <td class="px-6 py-4">
                                 <div class="font-medium text-gray-900 text-sm">{{ booking.shop.name }}</div>
-                                <div class="text-xs text-gray-400 mt-0.5">{{ booking.offering.name }}</div>
+                                <div class="text-xs text-gray-400 mt-0.5">{{ booking.service.name }}</div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="text-sm font-medium text-gray-800">{{ formatDate(booking.booking_date) }}</div>

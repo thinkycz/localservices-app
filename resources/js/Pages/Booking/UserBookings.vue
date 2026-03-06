@@ -119,7 +119,7 @@ function isPast(dateStr) {
                                     </h3>
 
                                     <p class="text-sm text-gray-500 mb-3">
-                                        {{ booking.offering?.name }} · {{ booking.provider?.name }}
+                                        {{ booking.service?.name }} · {{ booking.provider?.name }}
                                     </p>
 
                                     <div class="flex flex-wrap items-center gap-2 text-sm">

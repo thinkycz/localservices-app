@@ -173,7 +173,7 @@ function getStatusConfig(status) {
                             </td>
                             <td class="px-6 py-4">
                                 <div class="text-sm font-medium text-gray-900">{{ booking.shop_name }}</div>
-                                <div class="text-xs text-gray-400 mt-0.5">{{ booking.offering_name }}</div>
+                                <div class="text-xs text-gray-400 mt-0.5">{{ booking.service_name }}</div>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="text-sm text-gray-600">{{ formatTime(booking.time) }}</span>

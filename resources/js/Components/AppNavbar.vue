@@ -86,7 +86,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
                     <!-- Become Vendor Button (Auth, Non-Vendor) -->
                     <Link
-                        v-if="auth?.user && !auth.user.is_service_provider"
+                        v-if="auth?.user && !auth.user.is_vendor"
                         :href="route('vendor.onboarding.index')"
                         class="hidden sm:flex items-center text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:text-blue-600 px-4 py-2 rounded-full transition-colors"
                     >{{ $t('Become a provider') }}</Link>
@@ -123,7 +123,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>{{ $t('Admin Dashboard') }}</Link>
                                 <Link
-                                    v-if="auth.user.is_service_provider"
+                                    v-if="auth.user.is_vendor"
                                     :href="route('vendor.dashboard')"
                                     class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
                                     @click="showUserMenu = false"

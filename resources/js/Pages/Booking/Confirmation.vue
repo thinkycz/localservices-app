@@ -103,7 +103,7 @@ const status = statusConfig[props.booking.status] || statusConfig.pending;
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h3 class="font-bold text-gray-900 text-base">{{ booking.shop?.name }}</h3>
-                                <p class="text-sm text-gray-500 mt-0.5">{{ booking.offering?.name }}</p>
+                                <p class="text-sm text-gray-500 mt-0.5">{{ booking.service?.name }}</p>
                             </div>
                         </div>
 
@@ -174,7 +174,7 @@ const status = statusConfig[props.booking.status] || statusConfig.pending;
                 </div>
 
                 <!-- Help Text -->
-                <p class="text-center text-xs text-gray-400 mt-6 leading-relaxed">{{ $t('A confirmation email has been sent to your email address.') }}<br />{{ $t('The service provider will contact you if they have any questions.') }}</p>
+                <p class="text-center text-xs text-gray-400 mt-6 leading-relaxed">{{ $t('A confirmation email has been sent to your email address.') }}<br />{{ $t('The vendor will contact you if they have any questions.') }}</p>
             </div>
         </div>
     </AppLayout>

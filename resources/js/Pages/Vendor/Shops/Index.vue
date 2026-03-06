@@ -42,7 +42,7 @@ function toggleAvailability(serviceId) {
 }
 
 function deleteService(serviceId) {
-    if (!confirm('Are you sure you want to delete this shop? This will also delete all associated offerings.')) return;
+    if (!confirm('Are you sure you want to delete this shop? This will also delete all associated services.')) return;
     router.delete(route('vendor.shops.destroy', serviceId));
 }
 
@@ -78,7 +78,7 @@ function getBadgeClasses(color) {
                         </svg>
                     </div>
                     <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Shops') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.total_services }}</div>
+                    <div class="text-2xl font-bold text-gray-900">{{ stats.total_shops }}</div>
                 </div>
 
                 <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
@@ -88,7 +88,7 @@ function getBadgeClasses(color) {
                         </svg>
                     </div>
                     <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Services') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.total_offerings }}</div>
+                    <div class="text-2xl font-bold text-gray-900">{{ stats.total_services }}</div>
                 </div>
 
                 <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
@@ -98,7 +98,7 @@ function getBadgeClasses(color) {
                         </svg>
                     </div>
                     <div class="text-xs text-gray-500 mb-0.5">{{ $t('Active Shops') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.available_services }}</div>
+                    <div class="text-2xl font-bold text-gray-900">{{ stats.available_shops }}</div>
                 </div>
 
 
@@ -150,9 +150,9 @@ function getBadgeClasses(color) {
                 <table class="w-full">
                     <thead>
                         <tr class="bg-gray-50/80">
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Service') }}</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Shop') }}</th>
                             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Category') }}</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Offerings') }}</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Services') }}</th>
                             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Status') }}</th>
                             <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Created') }}</th>
                             <th class="px-6 py-3"></th>
@@ -199,7 +199,7 @@ function getBadgeClasses(color) {
                                 </button>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="text-sm text-gray-500">{{ formatDate(service.created_at) }}</span>
+                                <span class="text-sm text-gray-500">{{ formatDate(shop.created_at) }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-1">
