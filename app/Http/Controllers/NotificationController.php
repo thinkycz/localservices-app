@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-
     /**
      * Get recent notifications for the dropdown (API).
      */

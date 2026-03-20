@@ -15,13 +15,13 @@ Route::get('/language/{locale}', function ($locale) {
     if (in_array($locale, ['en', 'cs'])) {
         Session::put('locale', $locale);
     }
+
     return redirect()->back();
 })->name('language.switch');
 
-
 // Home page
 Route::get('/', function () {
-    $featuredServices = \App\Models\Shop::with('category')
+    $featuredShops = \App\Models\Shop::with('category')
         ->where('is_available', true)
         ->orderBy('rating', 'desc')
         ->orderBy('reviews_count', 'desc')
@@ -31,15 +31,16 @@ Route::get('/', function () {
     // Add is_bookmarked flag for authenticated users
     if (Auth::check()) {
         $userId = Auth::id();
-        $serviceIds = $featuredServices->pluck('id')->toArray();
+        $shopIds = $featuredShops->pluck('id')->toArray();
         $bookmarkedIds = \App\Models\Bookmark::where('user_id', $userId)
-            ->whereIn('shop_id', $serviceIds)
+            ->whereIn('shop_id', $shopIds)
             ->pluck('shop_id')
             ->toArray();
 
-        $featuredServices->transform(function ($service) use ($bookmarkedIds) {
-            $service->is_bookmarked = in_array($service->id, $bookmarkedIds);
-            return $service;
+        $featuredShops->transform(function ($shop) use ($bookmarkedIds) {
+            $shop->is_bookmarked = in_array($shop->id, $bookmarkedIds);
+
+            return $shop;
         });
     }
 
@@ -49,7 +50,7 @@ Route::get('/', function () {
         ->get();
 
     return Inertia::render('Home', [
-        'featuredShops' => $featuredServices,
+        'featuredShops' => $featuredShops,
         'categories' => $categories,
     ]);
 })->name('home');
@@ -116,6 +117,7 @@ Route::prefix('vendor')->middleware(['auth', 'verified', 'vendor.check'])->group
     Route::post('/bookings/{id}/confirm', [\App\Http\Controllers\Vendor\BookingController::class, 'confirm'])->name('vendor.bookings.confirm');
     Route::post('/bookings/{id}/complete', [\App\Http\Controllers\Vendor\BookingController::class, 'complete'])->name('vendor.bookings.complete');
     Route::post('/bookings/{id}/cancel', [\App\Http\Controllers\Vendor\BookingController::class, 'cancel'])->name('vendor.bookings.cancel');
+    Route::post('/bookings/{id}/update', [\App\Http\Controllers\Vendor\BookingController::class, 'update'])->name('vendor.bookings.update');
     Route::post('/bookings/{id}/notes', [\App\Http\Controllers\Vendor\BookingController::class, 'addNotes'])->name('vendor.bookings.notes');
     Route::get('/shops/{shopId}/available-slots', [\App\Http\Controllers\Vendor\BookingController::class, 'getAvailableSlots'])->name('vendor.bookings.slots');
 
@@ -149,6 +151,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-
-
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

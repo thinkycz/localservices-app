@@ -20,6 +20,8 @@ const userInitials = computed(() => {
     return names[0].substring(0, 2).toUpperCase();
 });
 
+const isAuthenticated = computed(() => !!auth?.user);
+
 // Check if current route is homepage
 const isOnHomePage = computed(() => {
     return route().current() === 'home';
@@ -110,11 +112,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                 class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
                             >
                                 <div class="px-4 py-2 border-b border-gray-100">
-                                    <p class="text-sm font-semibold text-gray-900 truncate">{{ auth.user.name }}</p>
-                                    <p class="text-xs text-gray-500 truncate">{{ auth.user.email }}</p>
+                                    <p class="text-sm font-semibold text-gray-900 truncate">{{ auth.user?.name }}</p>
+                                    <p class="text-xs text-gray-500 truncate">{{ auth.user?.email }}</p>
                                 </div>
                                 <Link
-                                    v-if="auth.user.is_admin"
+                                    v-if="auth.user?.is_admin"
                                     :href="route('admin.dashboard')"
                                     class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
                                     @click="showUserMenu = false"
@@ -123,7 +125,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>{{ $t('Admin Dashboard') }}</Link>
                                 <Link
-                                    v-if="auth.user.is_vendor"
+                                    v-if="auth.user?.is_vendor"
                                     :href="route('vendor.dashboard')"
                                     class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
                                     @click="showUserMenu = false"

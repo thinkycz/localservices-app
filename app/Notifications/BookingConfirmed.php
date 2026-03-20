@@ -36,14 +36,14 @@ class BookingConfirmed extends Notification implements ShouldQueue
         $service = $this->booking->service;
 
         return (new MailMessage)
-            ->subject('Booking Confirmed - ' . $service->name)
-            ->greeting('Hello ' . $notifiable->name . '!')
+            ->subject('Booking Confirmed - '.$service->name)
+            ->greeting('Hello '.$notifiable->name.'!')
             ->line('Your booking has been confirmed.')
-            ->line('Service: ' . $service->name)
-            ->line('Package: ' . $offering->name)
-            ->line('Date: ' . $this->booking->booking_date->format('F j, Y'))
-            ->line('Time: ' . $this->booking->start_time)
-            ->line('Total: ' . number_format($this->booking->total_price, 2) . ' ' . ($this->booking->shop->currency ?? 'CZK'))
+            ->line('Service: '.$service->name)
+            ->line('Package: '.$offering->name)
+            ->line('Date: '.$this->booking->booking_date->format('F j, Y'))
+            ->line('Time: '.$this->booking->start_time)
+            ->line('Total: '.number_format($this->booking->total_price, 2).' '.($this->booking->shop->currency ?? 'CZK'))
             ->action('View Booking', route('bookings.confirmation', $this->booking->id))
             ->line('Thank you for using our service!');
     }
@@ -57,7 +57,7 @@ class BookingConfirmed extends Notification implements ShouldQueue
             'booking_id' => $this->booking->id,
             'service_name' => $this->booking->service->name,
             'type' => 'booking_confirmed',
-            'message' => 'Your booking for ' . $this->booking->service->name . ' has been confirmed',
+            'message' => 'Your booking for '.$this->booking->service->name.' has been confirmed',
         ];
     }
 }

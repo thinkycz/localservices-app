@@ -112,7 +112,7 @@
 
             <div class="detail-row">
                 <span class="label">{{ __('Offering') }}</span>
-                <span class="value">{{ $booking->offering->name }}</span>
+                <span class="value">{{ $booking->service->name }}</span>
             </div>
 
             <div class="detail-row">
@@ -127,7 +127,7 @@
 
             <div class="detail-row">
                 <span class="label">{{ __('Duration') }}</span>
-                <span class="value">{{ $booking->offering->duration_minutes }} minutes</span>
+                <span class="value">{{ $booking->service->duration_minutes }} minutes</span>
             </div>
 
             <div class="detail-row">

@@ -34,7 +34,7 @@ class ShopImage extends Model
      */
     public function getUrlAttribute(): string
     {
-        return asset('storage/' . $this->path);
+        return asset('storage/'.$this->path);
     }
 
     /**
@@ -42,6 +42,6 @@ class ShopImage extends Model
      */
     public function getThumbnailUrlAttribute(): string
     {
-        return asset('storage/' . dirname($this->path) . '/thumbs/' . $this->filename);
+        return asset('storage/'.dirname($this->path).'/thumbs/'.$this->filename);
     }
 }

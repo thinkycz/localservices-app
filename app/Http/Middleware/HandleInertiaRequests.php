@@ -41,7 +41,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'locale' => $locale,
             'translations' => $translations,
-            'ziggy' => fn() => [
+            'ziggy' => fn () => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],

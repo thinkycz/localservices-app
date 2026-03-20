@@ -166,7 +166,7 @@
 
             <div class="detail-row">
                 <span class="label">{{ __('Offering') }}</span>
-                <span class="value">{{ $booking->offering->name }}</span>
+                <span class="value">{{ $booking->service->name }}</span>
             </div>
 
             <div class="detail-row">
@@ -202,9 +202,9 @@
         @if($newStatus === 'completed')
         <div style="text-align: center; margin: 30px 0;">
             <p>{{ __('We hope you enjoyed your experience!') }}</p>
-            <a href="{{ route('services.show', $booking->service->slug) }}" class="button">{{ __('Leave a Review') }}</a>
+            <a href="{{ route('shops.show', $booking->shop->slug) }}" class="button">{{ __('Leave a Review') }}</a>
         </div>
-        {{ __('@endif') }}
+        @endif
 
         <div style="text-align: center;">
             <a href="{{ route('bookings.index') }}" class="button">{{ __('View My Bookings') }}</a>

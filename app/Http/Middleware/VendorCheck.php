@@ -16,7 +16,7 @@ class VendorCheck
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user() || !$request->user()->is_vendor) {
+        if (! $request->user() || ! $request->user()->is_vendor) {
             // If not a vendor, redirect to home
             return redirect()->route('home');
         }

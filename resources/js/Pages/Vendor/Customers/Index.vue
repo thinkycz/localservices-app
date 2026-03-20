@@ -107,6 +107,9 @@ function formatDate(dateString) {
                     </div>
                     <div class="text-sm text-gray-500 mb-1">{{ $t('Total Revenue') }}</div>
                     <div class="text-2xl font-bold text-purple-600">{{ formatPrice(stats.total_revenue) }}</div>
+                    <div class="text-xs text-gray-400 mt-1 truncate" :title="stats.total_revenue">
+                        {{ stats.total_revenue }}
+                    </div>
                 </div>
             </div>
 
@@ -207,7 +210,12 @@ function formatDate(dateString) {
                             </td>
 
                             <td class="px-6 py-4">
-                                <span class="text-sm font-bold text-gray-900">{{ formatPrice(customer.total_spent) }}</span>
+                                <div>
+                                    <span class="text-sm font-bold text-gray-900">{{ formatPrice(customer.total_spent) }}</span>
+                                    <div v-if="customer.total_spent_details" class="text-xs text-gray-400 mt-0.5 truncate" :title="customer.total_spent_details">
+                                        {{ customer.total_spent_details }}
+                                    </div>
+                                </div>
                             </td>
 
                             <td class="px-6 py-4">

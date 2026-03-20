@@ -54,7 +54,7 @@ class NotificationService
             'cancelled' => 'Your booking has been cancelled.',
         ];
 
-        if (!isset($statusMessages[$booking->status])) {
+        if (! isset($statusMessages[$booking->status])) {
             return;
         }
 
@@ -62,7 +62,7 @@ class NotificationService
         Notification::create([
             'user_id' => $booking->user_id,
             'type' => 'booking',
-            'title' => 'Booking ' . ucfirst($booking->status),
+            'title' => 'Booking '.ucfirst($booking->status),
             'message' => $statusMessages[$booking->status],
             'data' => [
                 'booking_id' => $booking->id,
@@ -98,7 +98,7 @@ class NotificationService
             'user_id' => $booking->user_id,
             'type' => 'payment',
             'title' => 'Payment Successful',
-            'message' => "Your payment of " . number_format($booking->total_price, 2) . " " . ($booking->shop->currency ?? 'CZK') . " for {$booking->service->name} has been received.",
+            'message' => 'Your payment of '.number_format($booking->total_price, 2).' '.($booking->shop->currency ?? 'CZK')." for {$booking->service->name} has been received.",
             'data' => [
                 'booking_id' => $booking->id,
                 'amount' => $booking->total_price,
@@ -113,7 +113,7 @@ class NotificationService
             'user_id' => $booking->provider_id,
             'type' => 'payment',
             'title' => 'Payment Received',
-            'message' => "You received a payment of " . number_format($booking->total_price, 2) . " " . ($booking->shop->currency ?? 'CZK') . " from {$booking->customer->name}.",
+            'message' => 'You received a payment of '.number_format($booking->total_price, 2).' '.($booking->shop->currency ?? 'CZK')." from {$booking->customer->name}.",
             'data' => [
                 'booking_id' => $booking->id,
                 'amount' => $booking->total_price,
@@ -142,7 +142,7 @@ class NotificationService
                 'rating' => $review->rating,
                 'customer_name' => $review->user->name,
             ],
-            'action_url' => route('services.show', $booking->service->slug),
+            'action_url' => route('shops.show', $booking->shop->slug),
         ]);
     }
 
@@ -170,7 +170,7 @@ class NotificationService
             ],
         ];
 
-        if (!isset($reminders[$reminderType])) {
+        if (! isset($reminders[$reminderType])) {
             return;
         }
 
@@ -185,8 +185,8 @@ class NotificationService
                 'booking_id' => $booking->id,
                 'service_name' => $booking->service->name,
             ],
-            'action_url' => str_contains($reminderType, 'customer') 
-                ? route('bookings.index') 
+            'action_url' => str_contains($reminderType, 'customer')
+                ? route('bookings.index')
                 : route('vendor.bookings.show', $booking->id),
         ]);
     }

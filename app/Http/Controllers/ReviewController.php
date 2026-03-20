@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Review;
-use App\Models\Shop;
 use App\Models\Service;
-use Illuminate\Http\Request;
+use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 

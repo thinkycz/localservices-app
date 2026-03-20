@@ -142,6 +142,9 @@ function formatDate(dateStr) {
 
                 <div class="text-sm text-gray-500 mb-1">{{ stat.label }}</div>
                 <div class="text-2xl font-bold text-gray-900">{{ stat.value }}</div>
+                <div v-if="stat.details && stat.icon === 'cash'" class="text-xs text-gray-400 mt-1 truncate" :title="stat.details">
+                    {{ stat.details }}
+                </div>
             </div>
         </div>
 

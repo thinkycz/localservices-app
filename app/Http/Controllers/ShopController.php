@@ -18,8 +18,8 @@ class ShopController extends Controller
         // Search by keyword
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->q . '%')
-                    ->orWhere('description', 'like', '%' . $request->q . '%');
+                $q->where('name', 'like', '%'.$request->q.'%')
+                    ->orWhere('description', 'like', '%'.$request->q.'%');
             });
         }
 
@@ -74,6 +74,7 @@ class ShopController extends Controller
 
             $shops->getCollection()->transform(function ($shop) use ($bookmarkedIds) {
                 $shop->is_bookmarked = in_array($shop->id, $bookmarkedIds);
+
                 return $shop;
             });
         }
@@ -118,6 +119,7 @@ class ShopController extends Controller
 
             $related->transform(function ($relatedShop) use ($bookmarkedIds) {
                 $relatedShop->is_bookmarked = in_array($relatedShop->id, $bookmarkedIds);
+
                 return $relatedShop;
             });
         }

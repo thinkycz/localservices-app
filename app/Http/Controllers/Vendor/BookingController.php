@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Mail\BookingStatusUpdated;
 use App\Models\Booking;
-use App\Models\Shop;
 use App\Models\Service;
-use Illuminate\Http\Request;
+use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -46,7 +46,7 @@ class BookingController extends Controller
         // Search by customer name
         if ($request->filled('search')) {
             $query->whereHas('customer', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%');
+                $q->where('name', 'like', '%'.$request->search.'%');
             });
         }
 
@@ -65,11 +65,12 @@ class BookingController extends Controller
         $allBookings = Booking::whereIn('shop_id', $shopIds)->with('shop')->get();
 
         // Calculate revenue per shop to show aggregates ONLY per shop
-        $revenueByShop = $allBookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($shopBookings) {
+        $revenueByShop = $allBookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function ($shopBookings) {
             $shop = $shopBookings->first()->shop;
             $currency = $shop ? $shop->currency : 'CZK';
             $amount = $shopBookings->sum('total_price');
-            return $shop->name . ': ' . number_format($amount, 2) . ' ' . $currency;
+
+            return $shop->name.': '.number_format($amount, 2).' '.$currency;
         });
 
         $revenueString = $revenueByShop->isEmpty() ? '0.00 CZK' : $revenueByShop->implode(' | ');
@@ -136,7 +137,7 @@ class BookingController extends Controller
 
         $booking->update([
             'status' => 'confirmed',
-            'notes' => $booking->notes . "\n[Confirmed by vendor on " . now()->format('Y-m-d H:i') . "]",
+            'notes' => $booking->notes."\n[Confirmed by vendor on ".now()->format('Y-m-d H:i').']',
         ]);
 
         // Send status update email to customer
@@ -163,13 +164,29 @@ class BookingController extends Controller
 
         $booking->update([
             'status' => 'completed',
-            'notes' => $booking->notes . "\n[Completed on " . now()->format('Y-m-d H:i') . "]",
+            'notes' => $booking->notes."\n[Completed on ".now()->format('Y-m-d H:i').']',
         ]);
 
         // Send status update email to customer
         Mail::to($booking->customer->email)->send(new BookingStatusUpdated($booking, $oldStatus, 'completed'));
 
         return back()->with('success', __('Booking marked as completed.'));
+    }
+
+    /**
+     * Update booking status.
+     */
+    public function update(Request $request, int $bookingId): RedirectResponse
+    {
+        $request->validate([
+            'status' => 'required|in:pending,confirmed,completed,cancelled',
+        ]);
+
+        $booking = Booking::findOrFail($bookingId);
+        $booking->status = $request->status;
+        $booking->save();
+
+        return back()->with('success', __('Booking status updated successfully.'));
     }
 
     /**
@@ -192,9 +209,9 @@ class BookingController extends Controller
             'cancellation_reason' => 'nullable|string|max:500',
         ]);
 
-        $notes = $booking->notes . "\n[Cancelled by vendor on " . now()->format('Y-m-d H:i') . "]";
-        if (!empty($validated['cancellation_reason'])) {
-            $notes .= "\nReason: " . $validated['cancellation_reason'];
+        $notes = $booking->notes."\n[Cancelled by vendor on ".now()->format('Y-m-d H:i').']';
+        if (! empty($validated['cancellation_reason'])) {
+            $notes .= "\nReason: ".$validated['cancellation_reason'];
         }
 
         $booking->update([
@@ -224,7 +241,7 @@ class BookingController extends Controller
         ]);
 
         $existingNotes = $booking->notes ?? '';
-        $newNotes = $existingNotes . "\n[" . now()->format('Y-m-d H:i') . "] " . $validated['notes'];
+        $newNotes = $existingNotes."\n[".now()->format('Y-m-d H:i').'] '.$validated['notes'];
 
         $booking->update(['notes' => $newNotes]);
 
@@ -251,7 +268,7 @@ class BookingController extends Controller
         $businessHour = $shop->businessHours()->where('day_of_week', $dayOfWeek)->first();
 
         // If no business hours set for this day, return empty slots
-        if ($shop->businessHours()->exists() && !$businessHour) {
+        if ($shop->businessHours()->exists() && ! $businessHour) {
             return response()->json([
                 'shop_id' => $shopId,
                 'date' => $date,

@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Mail\ContactSubmissionReceived;
 use App\Models\ContactSubmission;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Facades\Mail;
 
 class PageController extends Controller
 {
@@ -59,7 +60,7 @@ class PageController extends Controller
     /**
      * Handle contact form submission.
      */
-    public function submitContact(Request $request)
+    public function submitContact(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',

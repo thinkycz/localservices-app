@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\Booking;
-use App\Models\Service;
 use App\Models\Review;
+use App\Models\Shop;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +17,7 @@ class AnalyticsService
     public function getVendorAnalytics(int $userId, string $period = '30_days'): array
     {
         $dateRange = $this->getDateRange($period);
-        
+
         return [
             'overview' => $this->getOverviewStats($userId, $dateRange),
             'revenue' => $this->getRevenueData($userId, $dateRange),
@@ -33,23 +33,23 @@ class AnalyticsService
      */
     private function getOverviewStats(int $userId, array $dateRange): array
     {
-        $serviceIds = Service::where('user_id', $userId)->pluck('id');
+        $shopIds = Shop::where('user_id', $userId)->pluck('id');
 
-        $currentRevenue = Booking::whereIn('service_id', $serviceIds)
+        $currentRevenue = Booking::whereIn('shop_id', $shopIds)
             ->whereBetween('booking_date', $dateRange)
             ->where('status', '!=', 'cancelled')
             ->sum('total_price');
 
-        $previousRevenue = Booking::whereIn('service_id', $serviceIds)
+        $previousRevenue = Booking::whereIn('shop_id', $shopIds)
             ->whereBetween('booking_date', $this->getPreviousPeriod($dateRange))
             ->where('status', '!=', 'cancelled')
             ->sum('total_price');
 
-        $currentBookings = Booking::whereIn('service_id', $serviceIds)
+        $currentBookings = Booking::whereIn('shop_id', $shopIds)
             ->whereBetween('booking_date', $dateRange)
             ->count();
 
-        $previousBookings = Booking::whereIn('service_id', $serviceIds)
+        $previousBookings = Booking::whereIn('shop_id', $shopIds)
             ->whereBetween('booking_date', $this->getPreviousPeriod($dateRange))
             ->count();
 
@@ -64,8 +64,8 @@ class AnalyticsService
                 'previous' => $previousBookings,
                 'change' => $this->calculatePercentageChange($currentBookings, $previousBookings),
             ],
-            'services' => Service::where('user_id', $userId)->count(),
-            'rating' => Review::whereIn('service_id', $serviceIds)->avg('rating') ?? 0,
+            'services' => Shop::where('user_id', $userId)->withCount('services')->get()->sum('services_count'),
+            'rating' => Review::whereIn('shop_id', $shopIds)->approved()->avg('rating') ?? 0,
         ];
     }
 
@@ -74,9 +74,9 @@ class AnalyticsService
      */
     private function getRevenueData(int $userId, array $dateRange): array
     {
-        $serviceIds = Service::where('user_id', $userId)->pluck('id');
+        $shopIds = Shop::where('user_id', $userId)->pluck('id');
 
-        $bookings = Booking::whereIn('service_id', $serviceIds)
+        $bookings = Booking::whereIn('shop_id', $shopIds)
             ->whereBetween('booking_date', $dateRange)
             ->where('status', '!=', 'cancelled')
             ->select(
@@ -114,9 +114,9 @@ class AnalyticsService
      */
     private function getBookingsData(int $userId, array $dateRange): array
     {
-        $serviceIds = Service::where('user_id', $userId)->pluck('id');
+        $shopIds = Shop::where('user_id', $userId)->pluck('id');
 
-        $statusCounts = Booking::whereIn('service_id', $serviceIds)
+        $statusCounts = Booking::whereIn('shop_id', $shopIds)
             ->whereBetween('booking_date', $dateRange)
             ->select('status', DB::raw('COUNT(*) as count'))
             ->groupBy('status')
@@ -140,7 +140,9 @@ class AnalyticsService
      */
     private function getTopServices(int $userId, array $dateRange): array
     {
-        return Service::where('user_id', $userId)
+        $shopIds = Shop::where('user_id', $userId)->pluck('id');
+
+        return \App\Models\Service::whereIn('shop_id', $shopIds)
             ->withCount(['bookings' => function ($query) use ($dateRange) {
                 $query->whereBetween('booking_date', $dateRange);
             }])
@@ -156,7 +158,6 @@ class AnalyticsService
                 'name' => $service->name,
                 'bookings' => $service->bookings_count,
                 'revenue' => $service->revenue ?? 0,
-                'rating' => $service->rating,
             ])
             ->toArray();
     }
@@ -166,14 +167,14 @@ class AnalyticsService
      */
     private function getCustomerStats(int $userId, array $dateRange): array
     {
-        $serviceIds = Service::where('user_id', $userId)->pluck('id');
+        $shopIds = Shop::where('user_id', $userId)->pluck('id');
 
-        $totalCustomers = Booking::whereIn('service_id', $serviceIds)
+        $totalCustomers = Booking::whereIn('shop_id', $shopIds)
             ->whereBetween('booking_date', $dateRange)
             ->distinct('user_id')
             ->count('user_id');
 
-        $returningCustomers = Booking::whereIn('service_id', $serviceIds)
+        $returningCustomers = Booking::whereIn('shop_id', $shopIds)
             ->whereBetween('booking_date', $dateRange)
             ->select('user_id')
             ->groupBy('user_id')
@@ -192,9 +193,9 @@ class AnalyticsService
      */
     private function getRatingStats(int $userId): array
     {
-        $serviceIds = Service::where('user_id', $userId)->pluck('id');
+        $shopIds = Shop::where('user_id', $userId)->pluck('id');
 
-        $ratingDistribution = Review::whereIn('service_id', $serviceIds)
+        $ratingDistribution = Review::whereIn('shop_id', $shopIds)
             ->approved()
             ->select('rating', DB::raw('COUNT(*) as count'))
             ->groupBy('rating')
@@ -211,8 +212,8 @@ class AnalyticsService
         }
 
         return [
-            'average' => Review::whereIn('service_id', $serviceIds)->approved()->avg('rating') ?? 0,
-            'total' => Review::whereIn('service_id', $serviceIds)->approved()->count(),
+            'average' => Review::whereIn('shop_id', $shopIds)->approved()->avg('rating') ?? 0,
+            'total' => Review::whereIn('shop_id', $shopIds)->approved()->count(),
             'distribution' => $distribution,
         ];
     }
@@ -223,8 +224,8 @@ class AnalyticsService
     private function getDateRange(string $period): array
     {
         $end = Carbon::now()->endOfDay();
-        
-        $start = match($period) {
+
+        $start = match ($period) {
             '7_days' => Carbon::now()->subDays(7)->startOfDay(),
             '30_days' => Carbon::now()->subDays(30)->startOfDay(),
             '90_days' => Carbon::now()->subDays(90)->startOfDay(),
@@ -246,7 +247,7 @@ class AnalyticsService
     private function getPreviousPeriod(array $currentRange): array
     {
         $days = $currentRange['start']->diffInDays($currentRange['end']);
-        
+
         return [
             'start' => $currentRange['start']->copy()->subDays($days),
             'end' => $currentRange['start']->copy()->subDay(),

@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use Illuminate\Http\Request;
-use Inertia\Response;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class CustomerController extends Controller
 {
@@ -18,7 +18,7 @@ class CustomerController extends Controller
         $user = $request->user();
 
         // Get unique customers who have booked the vendor's services
-        $bookings = Booking::with(['customer', 'service', 'service'])
+        $bookings = Booking::with(['customer', 'service', 'shop'])
             ->where('provider_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -26,11 +26,19 @@ class CustomerController extends Controller
         // Group by customer and aggregate data
         $customerData = $bookings->groupBy('user_id')->map(function ($customerBookings) {
             $customer = $customerBookings->first()->customer;
+
+            // Calculate total spent (excluding cancelled)
+            $totalSpent = $customerBookings->where('status', '!=', 'cancelled')->sum('total_price');
             
-            $spentString = $customerBookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($sb) {
+            // Get primary currency for formatting
+            $primaryCurrency = $customerBookings->first()->shop?->currency ?? 'CZK';
+            $spentString = $totalSpent > 0 ? number_format($totalSpent, 2).' '.$primaryCurrency : '0.00 '.$primaryCurrency;
+            
+            // Create detailed breakdown for tooltip
+            $spentDetails = $customerBookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function ($sb) {
                 $shop = $sb->first()->shop;
-                return number_format($sb->sum('total_price'), 2) . ' ' . ($shop ? $shop->currency : 'CZK');
-            })->implode(' | ') ?: '0.00 CZK';
+                return number_format($sb->sum('total_price'), 2).' '.($shop ? $shop->currency : 'CZK');
+            })->implode(' | ') ?: 'No revenue yet';
 
             return [
                 'id' => $customer->id,
@@ -42,6 +50,7 @@ class CustomerController extends Controller
                 'completed_bookings' => $customerBookings->where('status', 'completed')->count(),
                 'cancelled_bookings' => $customerBookings->where('status', 'cancelled')->count(),
                 'total_spent' => $spentString,
+                'total_spent_details' => $spentDetails,
                 'last_booking_date' => $customerBookings->max('booking_date'),
                 'first_booking_date' => $customerBookings->min('booking_date'),
                 'services_used' => $customerBookings->pluck('service.name')->unique()->values()->toArray(),
@@ -52,7 +61,7 @@ class CustomerController extends Controller
         $search = $request->get('search', '');
         if ($search) {
             $customerData = $customerData->filter(function ($customer) use ($search) {
-                return stripos($customer['name'], $search) !== false 
+                return stripos($customer['name'], $search) !== false
                     || stripos($customer['email'], $search) !== false;
             })->values();
         }
@@ -91,12 +100,11 @@ class CustomerController extends Controller
             ],
             'stats' => [
                 'total_customers' => $customerData->count(),
-                'new_customers' => $customerData->filter(fn($c) => $c['total_bookings'] === 1)->count(),
-                'returning_customers' => $customerData->filter(fn($c) => $c['total_bookings'] > 1)->count(),
-                'total_revenue' => $bookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($sb) {
-                    $shop = $sb->first()->shop;
-                    return number_format($sb->sum('total_price'), 2) . ' ' . ($shop ? $shop->currency : 'CZK');
-                })->implode(' | ') ?: '0',
+                'new_customers' => $customerData->filter(fn ($c) => $c['total_bookings'] === 1)->count(),
+                'returning_customers' => $customerData->filter(fn ($c) => $c['total_bookings'] > 1)->count(),
+                'total_revenue' => $bookings->where('status', '!=', 'cancelled')->sum('total_price') > 0 
+                    ? number_format($bookings->where('status', '!=', 'cancelled')->sum('total_price'), 2).' '.($bookings->first()->shop?->currency ?? 'CZK') 
+                    : '0.00 '.($bookings->first()->shop?->currency ?? 'CZK'),
             ],
         ]);
     }
@@ -109,7 +117,7 @@ class CustomerController extends Controller
         $user = $request->user();
 
         // Get all bookings for this customer with this vendor
-        $bookings = Booking::with(['service', 'service'])
+        $bookings = Booking::with(['service', 'shop'])
             ->where('provider_id', $user->id)
             ->where('user_id', $customerId)
             ->orderBy('booking_date', 'desc')
@@ -121,11 +129,10 @@ class CustomerController extends Controller
         }
 
         $customer = $bookings->first()->customer;
-        
-        $spentString = $bookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($sb) {
-            $shop = $sb->first()->shop;
-            return number_format($sb->sum('total_price'), 2) . ' ' . ($shop ? $shop->currency : 'CZK');
-        })->implode(' | ') ?: '0.00 CZK';
+
+        $spentString = $bookings->where('status', '!=', 'cancelled')->sum('total_price') > 0
+            ? number_format($bookings->where('status', '!=', 'cancelled')->sum('total_price'), 2).' '.($bookings->first()->shop?->currency ?? 'CZK')
+            : '0.00 '.($bookings->first()->shop?->currency ?? 'CZK');
 
         $customerData = [
             'id' => $customer->id,
@@ -143,7 +150,6 @@ class CustomerController extends Controller
             'bookings' => $bookings->map(function ($booking) {
                 return [
                     'id' => $booking->id,
-                    'service_name' => $booking->service->name,
                     'service_name' => $booking->service->name,
                     'date' => $booking->booking_date->format('Y-m-d'),
                     'time' => $booking->start_time,
@@ -168,9 +174,9 @@ class CustomerController extends Controller
     {
         $words = explode(' ', trim($name));
         if (count($words) >= 2) {
-            return strtoupper($words[0][0] . $words[1][0]);
+            return strtoupper($words[0][0].$words[1][0]);
         }
+
         return strtoupper(substr($name, 0, 2));
     }
 }
-

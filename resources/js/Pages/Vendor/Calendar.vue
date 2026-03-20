@@ -1,6 +1,6 @@
 <script setup>
 import VendorLayout from '@/Layouts/VendorLayout.vue';
-import { Head, router, Link } from '@inertiajs/vue3';
+import { Head, router, Link, useRemember } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
@@ -21,6 +21,31 @@ watch(
 );
 
 const hourHeight = 80;
+
+// Status dropdown functionality
+const showStatusDropdown = ref(false);
+
+function getStatusConfig(status) {
+    const config = {
+        pending: { label: 'Pending', bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-600/20', dot: 'bg-amber-500' },
+        confirmed: { label: 'Confirmed', bg: 'bg-blue-50', text: 'text-blue-700', ring: 'ring-blue-700/20', dot: 'bg-blue-500' },
+        completed: { label: 'Completed', bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-600/20', dot: 'bg-emerald-500' },
+        cancelled: { label: 'Cancelled', bg: 'bg-red-50', text: 'text-red-700', ring: 'ring-red-600/20', dot: 'bg-red-500' },
+    };
+    return config[status] || config.pending;
+}
+
+function updateStatus(newStatus) {
+    if (!selectedBooking.value) return;
+
+    router.post(route('vendor.bookings.update', selectedBooking.value.id), {
+        status: newStatus,
+    }, {
+        onSuccess: () => {
+            showStatusDropdown.value = false;
+        },
+    });
+}
 
 const startHour = computed(() => {
     if (!bookings.value.length) return 8;
@@ -51,16 +76,26 @@ const gridHeight = computed(() => (endHour.value - startHour.value) * hourHeight
 
 const bookings = computed(() => props.bookings || []);
 
-const selectedBooking = ref(null);
+const rememberedState = useRemember({
+    selectedBookingId: null,
+}, 'vendor-calendar:selected-booking');
+const selectedBooking = computed(() => bookings.value.find((booking) => booking.id === rememberedState.value.selectedBookingId) || null);
 
 function selectBooking(booking) {
     if (booking.colorType === 'blocked') return;
-    selectedBooking.value = booking;
+    rememberedState.value.selectedBookingId = booking.id;
 }
 
 function closeDetails() {
-    selectedBooking.value = null;
+    rememberedState.value.selectedBookingId = null;
+    showStatusDropdown.value = false;
 }
+
+watch(selectedBooking, (booking) => {
+    if (!booking) {
+        showStatusDropdown.value = false;
+    }
+});
 
 function getBookingsForDay(day) {
     return bookings.value.filter((b) => b.fullDate === day.fullDate);
@@ -546,75 +581,32 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
 
                             <!-- Status actions -->
                             <div class="px-5 py-4">
-                                <!-- Pending: Approve + Decline -->
-                                <template v-if="selectedBooking.status === 'pending'">
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                <!-- Status dropdown -->
+                                <div class="relative">
+                                    <button
+                                        @click="showStatusDropdown = !showStatusDropdown.value"
+                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                                    >
+                                        <span :class="['w-2 h-2 rounded-full', getStatusConfig(selectedBooking.status).dot]"></span>
+                                        <span class="ml-2">{{ getStatusConfig(selectedBooking.status).label }}</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                         </svg>
-                                        <span class="text-xs font-bold text-amber-600">Waiting for your approval</span>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <Link 
-                                            :href="route('vendor.bookings.cancel', selectedBooking.id)" 
-                                            method="post"
-                                            as="button"
-                                            class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors"
-                                        >
-                                            Decline
-                                        </Link>
-                                        <Link 
-                                            :href="route('vendor.bookings.confirm', selectedBooking.id)" 
-                                            method="post"
-                                            as="button"
-                                            class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white font-semibold text-sm py-2.5 rounded-xl transition-all duration-200"
-                                        >
-                                            Approve
-                                        </Link>
-                                    </div>
-                                </template>
+                                    </button>
 
-                                <!-- Confirmed: Complete + Cancel -->
-                                <template v-else-if="selectedBooking.status === 'confirmed'">
-                                    <div class="flex gap-2">
-                                        <Link 
-                                            :href="route('vendor.bookings.cancel', selectedBooking.id)" 
-                                            method="post"
-                                            as="button"
-                                            class="flex-1 border border-red-200 hover:bg-red-50 text-red-600 font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                    <!-- Dropdown Menu -->
+                                    <div v-if="showStatusDropdown" class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-10">
+                                        <button
+                                            v-for="status in ['pending', 'confirmed', 'completed', 'cancelled']"
+                                            :key="status"
+                                            @click="updateStatus(status)"
+                                            class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
                                         >
-                                            Cancel
-                                        </Link>
-                                        <Link 
-                                            :href="route('vendor.bookings.complete', selectedBooking.id)" 
-                                            method="post"
-                                            as="button"
-                                            class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors"
-                                        >
-                                            Mark Completed
-                                        </Link>
+                                            <span :class="['w-2 h-2 rounded-full', getStatusConfig(status).dot]"></span>
+                                            {{ getStatusConfig(status).label }}
+                                        </button>
                                     </div>
-                                </template>
-
-                                <!-- Completed -->
-                                <template v-else-if="selectedBooking.status === 'completed'">
-                                    <div class="flex items-center gap-2 text-green-600">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        <span class="text-xs font-bold">Completed</span>
-                                    </div>
-                                </template>
-
-                                <!-- Cancelled -->
-                                <template v-else-if="selectedBooking.status === 'cancelled'">
-                                    <div class="flex items-center gap-2 text-red-500">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        <span class="text-xs font-bold">Cancelled</span>
-                                    </div>
-                                </template>
+                                </div>
                             </div>
 
                         </div>

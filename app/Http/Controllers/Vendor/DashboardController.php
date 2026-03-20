@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\Shop;
 use App\Models\Service;
+use App\Models\Shop;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -41,9 +41,9 @@ class DashboardController extends Controller
         $totalCustomers = $bookings->unique('user_id')->count();
 
         // Calculate new vs returning customers
-        $customerCounts = $bookings->groupBy('user_id')->map(fn($b) => $b->count());
-        $newCustomers = $customerCounts->filter(fn($count) => $count === 1)->count();
-        $returningCustomers = $customerCounts->filter(fn($count) => $count > 1)->count();
+        $customerCounts = $bookings->groupBy('user_id')->map(fn ($b) => $b->count());
+        $newCustomers = $customerCounts->filter(fn ($count) => $count === 1)->count();
+        $returningCustomers = $customerCounts->filter(fn ($count) => $count > 1)->count();
 
         // Today's bookings
         $today = Carbon::today();
@@ -62,7 +62,7 @@ class DashboardController extends Controller
 
         // Service popularity (based on booking count)
         $servicePopularity = $bookings->groupBy('shop_id')
-            ->map(fn($b, $shopId) => [
+            ->map(fn ($b, $shopId) => [
                 'shop' => Shop::find($shopId)?->name ?? 'Unknown',
                 'count' => $b->count(),
                 'percentage' => $totalBookings > 0 ? round(($b->count() / $totalBookings) * 100) : 0,
@@ -81,7 +81,7 @@ class DashboardController extends Controller
                 ->where('status', '!=', 'cancelled')
                 ->get();
 
-            $revenueByShopForMonth = $monthBookings->groupBy('shop_id')->map(function($shopBookings) {
+            $revenueByShopForMonth = $monthBookings->groupBy('shop_id')->map(function ($shopBookings) {
                 return $shopBookings->sum('total_price');
             })->sum(); // Add up total numbers as a generic visual indicator if mixed, else true value
 
@@ -98,10 +98,9 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
-            ->map(fn($booking) => [
+            ->map(fn ($booking) => [
                 'id' => $booking->id,
                 'customer_name' => $booking->customer->name,
-                'service_name' => $booking->shop->name,
                 'service_name' => $booking->service->name,
                 'date' => $booking->booking_date->format('Y-m-d'),
                 'time' => $booking->start_time,
@@ -110,14 +109,23 @@ class DashboardController extends Controller
             ]);
 
         // Group revenue by shop to show aggregates ONLY per shop, as requested by user
-        $revenueByShop = $bookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($shopBookings) {
+        $revenueByShop = $bookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function ($shopBookings) {
             $shop = $shopBookings->first()->shop;
             $currency = $shop ? $shop->currency : 'CZK';
             $amount = $shopBookings->sum('total_price');
-            return $shop->name . ': ' . number_format($amount, 2) . ' ' . $currency;
+
+            return $shop->name.': '.number_format($amount, 2).' '.$currency;
         });
 
-        $revenueString = $revenueByShop->isEmpty() ? '0.00 CZK' : $revenueByShop->implode(' | ');
+        // Calculate total revenue for the main stat card
+        $totalRevenue = $bookings->where('status', '!=', 'cancelled')->sum('total_price');
+        
+        // Get primary currency (from first shop) and format total
+        $primaryCurrency = $shops->first()?->currency ?? 'CZK';
+        $revenueString = $totalRevenue > 0 ? number_format($totalRevenue, 2).' '.$primaryCurrency : '0.00 '.$primaryCurrency;
+        
+        // Create detailed revenue info for tooltip or additional display
+        $revenueDetails = $revenueByShop->isEmpty() ? 'No revenue yet' : $revenueByShop->implode(' | ');
 
         // Stats for the stats cards
         $stats = [
@@ -142,7 +150,7 @@ class DashboardController extends Controller
             [
                 'label' => 'New Customers',
                 'value' => $newCustomers,
-                'change' => '+' . $newCustomers . ' this month',
+                'change' => '+'.$newCustomers.' this month',
                 'positive' => true,
                 'icon' => 'user-plus',
                 'iconBg' => 'bg-green-100',
@@ -151,6 +159,7 @@ class DashboardController extends Controller
             [
                 'label' => 'Revenue',
                 'value' => $revenueString,
+                'details' => $revenueDetails,
                 'change' => $this->calculateRevenueChange($bookings),
                 'positive' => true,
                 'icon' => 'cash',
@@ -161,11 +170,11 @@ class DashboardController extends Controller
 
         return Inertia::render('Vendor/Dashboard', [
             'stats' => $stats,
-            'todayBookings' => $todayBookings->map(fn($b) => [
+            'todayBookings' => $todayBookings->map(fn ($b) => [
                 'id' => $b->id,
                 'time' => Carbon::parse($b->start_time)->format('g:i A'),
                 'end_time' => Carbon::parse($b->end_time)->format('g:i A'),
-                'duration' => ($b->service->duration_minutes ?? 60) . ' min',
+                'duration' => ($b->service->duration_minutes ?? 60).' min',
                 'title' => $b->service->name ?? $b->shop->name,
                 'customer' => $b->customer->name,
                 'customer_initials' => $this->getInitials($b->customer->name),
@@ -175,9 +184,10 @@ class DashboardController extends Controller
             'weekStats' => [
                 'total_bookings' => $weekBookings->count(),
                 'completed' => $weekBookings->where('status', 'completed')->count(),
-                'revenue' => $weekBookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function($sb) {
+                'revenue' => $weekBookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function ($sb) {
                     $shop = $sb->first()->shop;
-                    return number_format($sb->sum('total_price'), 2) . ' ' . ($shop ? $shop->currency : 'CZK');
+
+                    return number_format($sb->sum('total_price'), 2).' '.($shop ? $shop->currency : 'CZK');
                 })->implode(' | ') ?: '0',
             ],
             'servicePopularity' => $servicePopularity,
@@ -212,8 +222,8 @@ class DashboardController extends Controller
             default => $now->copy()->subWeek()->startOfWeek(),
         };
 
-        $current = $bookings->filter(fn($b) => $b->created_at->gte($currentPeriod))->count();
-        $previous = $bookings->filter(fn($b) => $b->created_at->gte($previousPeriod) && $b->created_at->lt($currentPeriod))->count();
+        $current = $bookings->filter(fn ($b) => $b->created_at->gte($currentPeriod))->count();
+        $previous = $bookings->filter(fn ($b) => $b->created_at->gte($previousPeriod) && $b->created_at->lt($currentPeriod))->count();
 
         if ($previous === 0) {
             return $current > 0 ? '+100%' : '0%';
@@ -222,7 +232,7 @@ class DashboardController extends Controller
         $change = (($current - $previous) / $previous) * 100;
         $sign = $change >= 0 ? '+' : '';
 
-        return $sign . round($change) . '%';
+        return $sign.round($change).'%';
     }
 
     /**
@@ -238,7 +248,7 @@ class DashboardController extends Controller
         $cancelled = $bookings->where('status', 'cancelled')->count();
         $rate = ($cancelled / $total) * 100;
 
-        return round($rate) . '% rate';
+        return round($rate).'% rate';
     }
 
     /**
@@ -249,15 +259,19 @@ class DashboardController extends Controller
         $now = Carbon::now();
 
         $thisMonthGrouped = $bookings->filter(
-            fn($b) => $b->created_at->gte($now->copy()->startOfMonth()) &&
+            fn ($b) => $b->created_at->gte($now->copy()->startOfMonth()) &&
                 $b->status !== 'cancelled'
-        )->groupBy(function($b) { return $b->shop->currency ?? 'CZK'; });
+        )->groupBy(function ($b) {
+            return $b->shop->currency ?? 'CZK';
+        });
 
         $lastMonthGrouped = $bookings->filter(
-            fn($b) => $b->created_at->gte($now->copy()->subMonth()->startOfMonth()) &&
+            fn ($b) => $b->created_at->gte($now->copy()->subMonth()->startOfMonth()) &&
                 $b->created_at->lt($now->copy()->startOfMonth()) &&
                 $b->status !== 'cancelled'
-        )->groupBy(function($b) { return $b->shop->currency ?? 'CZK'; });
+        )->groupBy(function ($b) {
+            return $b->shop->currency ?? 'CZK';
+        });
 
         // Calculate total amount across currencies to show an overall percentage metric
         // A proper way would be per currency. For simplicity we sum the raw numbers.
@@ -271,7 +285,7 @@ class DashboardController extends Controller
         $change = (($thisMonth - $lastMonth) / $lastMonth) * 100;
         $sign = $change >= 0 ? '+' : '';
 
-        return $sign . round($change) . '%';
+        return $sign.round($change).'%';
     }
 
     /**
@@ -281,7 +295,7 @@ class DashboardController extends Controller
     {
         $words = explode(' ', trim($name));
         if (count($words) >= 2) {
-            return strtoupper($words[0][0] . $words[1][0]);
+            return strtoupper($words[0][0].$words[1][0]);
         }
 
         return strtoupper(substr($name, 0, 2));

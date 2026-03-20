@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Booking;
-use App\Models\Shop;
 use App\Models\Service;
+use App\Models\Shop;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -33,7 +33,9 @@ class BookingSeeder extends Seeder
         // Generate bookings across the date range
         for ($date = $startDate->copy(); $date <= $endDate && $bookingCount < $maxBookings; $date->addDay()) {
             // Skip some days randomly to make it realistic
-            if (rand(1, 100) > 70) continue;
+            if (rand(1, 100) > 70) {
+                continue;
+            }
 
             // Number of bookings for this day (0-5)
             $dailyBookings = rand(0, 5);
@@ -42,7 +44,9 @@ class BookingSeeder extends Seeder
                 $shop = $shops->random();
 
                 // Skip if service has no services
-                if ($shop->services->isEmpty()) continue;
+                if ($shop->services->isEmpty()) {
+                    continue;
+                }
 
                 $service = $shop->services->random();
                 $customer = $customers->random();
@@ -97,7 +101,9 @@ class BookingSeeder extends Seeder
         $todayServices = $shops->take(3);
 
         foreach ($todayServices as $index => $shop) {
-            if ($shop->services->isEmpty()) continue;
+            if ($shop->services->isEmpty()) {
+                continue;
+            }
 
             $service = $shop->services->first();
             $customer = $customers[$index % $customers->count()];

@@ -4,7 +4,7 @@ import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 defineProps({
-    featuredServices: {
+    featuredShops: {
         type: Array,
         default: () => [],
     },
@@ -114,9 +114,9 @@ function formatReviews(n) {
                     </Link>
                 </div>
 
-                <div v-if="featuredServices.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div v-if="featuredShops.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Link
-                        v-for="shop in featuredServices"
+                        v-for="shop in featuredShops"
                         :key="shop.id"
                         :href="route('shops.show', shop.slug)"
                         class="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-gray-200 transition-all duration-300 group"

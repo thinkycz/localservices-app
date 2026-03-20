@@ -1,7 +1,7 @@
 <script setup>
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
     booking: { type: Object, default: () => ({}) },
@@ -12,6 +12,8 @@ const showCancelModal = ref(false);
 const cancellationReason = ref('');
 const showNotesModal = ref(false);
 const newNote = ref('');
+const showStatusDropdown = ref(false);
+const currentStatus = computed(() => props.booking.status);
 
 function confirmBooking() {
     router.post(route('vendor.bookings.confirm', props.booking.id));
@@ -28,6 +30,16 @@ function cancelBooking() {
         onSuccess: () => {
             showCancelModal.value = false;
             cancellationReason.value = '';
+        },
+    });
+}
+
+function updateStatus(newStatus) {
+    router.post(route('vendor.bookings.update', props.booking.id), {
+        status: newStatus,
+    }, {
+        onSuccess: () => {
+            showStatusDropdown.value = false;
         },
     });
 }
@@ -92,7 +104,7 @@ function formatTime(time) {
     return s;
 }
 
-const statusConfig = getStatusConfig(props.booking.status);
+const currentStatusConfig = computed(() => getStatusConfig(currentStatus.value));
 </script>
 
 <template>
@@ -121,39 +133,43 @@ const statusConfig = getStatusConfig(props.booking.status);
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-3">
                             <h1 class="text-xl font-bold text-gray-900">{{ booking.shop.name }}</h1>
-                            <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset', statusConfig.bg, statusConfig.text, statusConfig.ring]">
-                                <span :class="['w-1.5 h-1.5 rounded-full', statusConfig.dot]"></span>
-                                {{ statusConfig.label }}
+                            <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset', currentStatusConfig.bg, currentStatusConfig.text, currentStatusConfig.ring]">
+                                <span :class="['w-1.5 h-1.5 rounded-full', currentStatusConfig.dot]"></span>
+                                {{ currentStatusConfig.label }}
                             </span>
                         </div>
                         <p class="text-sm text-gray-400 mt-0.5">{{ booking.service.name }} · {{ formatDate(booking.booking_date) }}</p>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <!-- Actions inline -->
-                        <template v-if="booking.status === 'pending'">
-                            <button
-                                @click="confirmBooking"
-                                class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white font-semibold text-sm rounded-xl transition-all duration-200"
-                            >{{ $t('Confirm') }}</button>
-                            <button
-                                @click="showCancelModal = true"
-                                class="px-5 py-2.5 border border-red-200 hover:bg-red-50 text-red-600 font-semibold text-sm rounded-xl transition-colors"
-                            >{{ $t('Decline') }}</button>
-                        </template>
-                        <template v-else-if="booking.status === 'confirmed'">
-                            <button
-                                @click="completeBooking"
-                                class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl transition-colors shadow-sm"
-                            >
-                                Mark Completed
-                            </button>
-                            <button
-                                @click="showCancelModal = true"
-                                class="px-5 py-2.5 border border-red-200 hover:bg-red-50 text-red-600 font-semibold text-sm rounded-xl transition-colors"
-                            >
-                                Cancel
-                            </button>
-                        </template>
+                        <div class="relative">
+                            <!-- Status Dropdown -->
+                            <div class="relative">
+                                <button
+                                    @click="showStatusDropdown = !showStatusDropdown.value"
+                                    class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                                >
+                                    <span :class="['w-2 h-2 rounded-full', getStatusConfig(currentStatus).dot]"></span>
+                                    <span class="ml-2">{{ getStatusConfig(currentStatus).label }}</span>
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Dropdown Menu -->
+                                <div v-if="showStatusDropdown" class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-10">
+                                    <button
+                                        v-for="status in ['pending', 'confirmed', 'completed', 'cancelled']"
+                                        :key="status"
+                                        @click="updateStatus(status)"
+                                        class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                    >
+                                        <span :class="['w-2 h-2 rounded-full', getStatusConfig(status).dot]"></span>
+                                        {{ getStatusConfig(status).label }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

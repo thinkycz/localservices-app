@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Shop;
 use App\Models\Service;
-use Illuminate\Http\Request;
+use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,7 +27,7 @@ class OnboardingController extends Controller
     public function step1(): Response
     {
         $user = auth()->user();
-        
+
         return Inertia::render('Vendor/Onboarding/Step1', [
             'user' => [
                 'name' => $user->name,
@@ -121,7 +121,7 @@ class OnboardingController extends Controller
         $counter = 1;
         $originalSlug = $slug;
         while (Shop::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter++;
+            $slug = $originalSlug.'-'.$counter++;
         }
 
         $shop = Shop::create([

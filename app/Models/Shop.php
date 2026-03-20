@@ -142,6 +142,7 @@ class Shop extends Model
     public function getPriceSymbolAttribute(): string
     {
         $symbol = $this->currency === 'EUR' ? '€' : 'Kč';
-        return trim(str_repeat($symbol . ' ', $this->price_range));
+
+        return trim(str_repeat($symbol.' ', $this->price_range));
     }
 }

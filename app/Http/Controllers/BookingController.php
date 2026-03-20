@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Mail\BookingConfirmation;
 use App\Mail\NewBookingNotification;
 use App\Models\Booking;
-use App\Models\Shop;
 use App\Models\Service;
+use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -40,7 +40,7 @@ class BookingController extends Controller
                 ->whereDate('booking_date', $request->date)
                 ->whereIn('status', ['pending', 'confirmed'])
                 ->get(['start_time', 'end_time'])
-                ->map(fn($b) => [
+                ->map(fn ($b) => [
                     'start_time' => substr($b->start_time, 0, 5),
                     'end_time' => substr($b->end_time, 0, 5),
                 ])
@@ -71,7 +71,7 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
-            'shop_id' => 'required|exists:services,id',
+            'service_id' => 'required|exists:services,id',
             'provider_id' => 'nullable|exists:users,id',
             'booking_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required',
@@ -90,7 +90,7 @@ class BookingController extends Controller
 
         $businessHour = $shop->businessHours->firstWhere('day_of_week', $dayOfWeek);
 
-        if ($shop->businessHours->isNotEmpty() && !$businessHour) {
+        if ($shop->businessHours->isNotEmpty() && ! $businessHour) {
             return back()->withErrors(['booking_date' => 'The service is not available on this day.']);
         }
 
@@ -119,7 +119,7 @@ class BookingController extends Controller
             $bhTo = \Carbon\Carbon::parse($businessHour->time_to);
 
             if ($startTime->format('H:i') < $bhFrom->format('H:i') || $endTime->format('H:i') > $bhTo->format('H:i')) {
-                return back()->withErrors(['start_time' => 'The selected time is outside of business hours (' . $businessHour->time_from . ' - ' . $businessHour->time_to . ').']);
+                return back()->withErrors(['start_time' => 'The selected time is outside of business hours ('.$businessHour->time_from.' - '.$businessHour->time_to.').']);
             }
         }
 

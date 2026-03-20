@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\Booking;
 use App\Models\Review;
-use App\Models\Shop;
 use App\Models\Service;
+use App\Models\Shop;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
@@ -18,7 +18,7 @@ class ReviewSeeder extends Seeder
             ->whereNotIn('id', Review::pluck('booking_id'))
             ->with(['service', 'customer'])
             ->get();
-        
+
         $tags = [
             'Professional',
             'On-time',
@@ -29,7 +29,7 @@ class ReviewSeeder extends Seeder
             'Expert',
             'Recommended',
         ];
-        
+
         $comments = [
             'Excellent service! Very professional and completed the job quickly.',
             'Great experience. Arrived on time and did quality work.',
@@ -42,18 +42,18 @@ class ReviewSeeder extends Seeder
             'Quick response time and quality workmanship.',
             'Reasonable price for excellent service. Will definitely recommend.',
         ];
-        
+
         // Create reviews for about 60% of completed bookings
         $bookingsToReview = $completedBookings->shuffle()->take((int) ($completedBookings->count() * 0.6));
-        
+
         foreach ($bookingsToReview as $booking) {
             $rating = $this->weightedRandomChoice(
                 [5, 4, 3, 2, 1],
                 [50, 30, 12, 5, 3] // Mostly positive reviews
             );
-            
+
             $selectedTags = collect($tags)->random(rand(1, 4))->toArray();
-            
+
             Review::create([
                 'user_id' => $booking->user_id,
                 'shop_id' => $booking->shop_id,
@@ -64,13 +64,13 @@ class ReviewSeeder extends Seeder
                 'is_approved' => true,
                 'reviewed_at' => Carbon::parse($booking->booking_date)->addDays(rand(1, 5)),
             ]);
-            
+
             // Update service rating stats
             $shop = Shop::find($booking->shop_id);
             $shop->updateRatingStats();
         }
     }
-    
+
     /**
      * Weighted random choice from array
      */
@@ -78,7 +78,7 @@ class ReviewSeeder extends Seeder
     {
         $totalWeight = array_sum($weights);
         $random = rand(1, $totalWeight);
-        
+
         $currentWeight = 0;
         foreach ($choices as $index => $choice) {
             $currentWeight += $weights[$index];
@@ -86,7 +86,7 @@ class ReviewSeeder extends Seeder
                 return $choice;
             }
         }
-        
+
         return $choices[0];
     }
 }

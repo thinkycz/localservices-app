@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessHour;
 use App\Models\Category;
-use App\Models\Shop;
-// use App\Models\Service;
 use App\Models\Service;
+// use App\Models\Something;
+use App\Models\Shop;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Str;
 
 class ShopsController extends Controller
 {
@@ -28,8 +28,8 @@ class ShopsController extends Controller
         // Search functionality
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->q . '%')
-                    ->orWhere('description', 'like', '%' . $request->q . '%');
+                $q->where('name', 'like', '%'.$request->q.'%')
+                    ->orWhere('description', 'like', '%'.$request->q.'%');
             });
         }
 
@@ -56,21 +56,21 @@ class ShopsController extends Controller
         // Calculate stats
         $allServices = Shop::where('user_id', $user->id)->with('services')->get();
         $totalServices = $allServices->count();
-        $totalServicesCount = $allServices->sum(fn($s) => $s->services->count());
+        $totalServicesCount = $allServices->sum(fn ($s) => $s->services->count());
         $availableServices = $allServices->where('is_available', true)->count();
 
         // Calculate potential revenue (sum of all service prices) grouped by currency
-        $potentialRevenueByCurrency = $allServices->flatMap(function($shop) {
-            return $shop->services->map(function($service) use ($shop) {
+        $potentialRevenueByCurrency = $allServices->flatMap(function ($shop) {
+            return $shop->services->map(function ($service) use ($shop) {
                 return ['currency' => $shop->currency ?? 'CZK', 'price' => $service->price];
             });
-        })->groupBy('currency')->map(function($items) {
+        })->groupBy('currency')->map(function ($items) {
             return $items->sum('price');
         });
 
         $potentialRevenueDisplay = [];
         foreach ($potentialRevenueByCurrency as $currency => $amount) {
-            $potentialRevenueDisplay[] = number_format($amount, 2) . ' ' . $currency;
+            $potentialRevenueDisplay[] = number_format($amount, 2).' '.$currency;
         }
         $potentialRevenueString = empty($potentialRevenueDisplay) ? '0.00 CZK' : implode(' + ', $potentialRevenueDisplay);
 
@@ -131,7 +131,7 @@ class ShopsController extends Controller
         $counter = 1;
         $originalSlug = $validated['slug'];
         while (Shop::where('slug', $validated['slug'])->exists()) {
-            $validated['slug'] = $originalSlug . '-' . $counter++;
+            $validated['slug'] = $originalSlug.'-'.$counter++;
         }
 
         $shop = Shop::create($validated);
@@ -139,7 +139,7 @@ class ShopsController extends Controller
         // Save business hours
         foreach ($businessHoursData as $hour) {
             BusinessHour::create([
-                'service_id' => $shop->id,
+                'shop_id' => $shop->id,
                 'day_of_week' => $hour['day_of_week'],
                 'time_from' => $hour['time_from'],
                 'time_to' => $hour['time_to'],
@@ -151,7 +151,7 @@ class ShopsController extends Controller
     }
 
     /**
-     * Show the detailed dashboard for a service.
+     * Show the detailed dashboard for a shop.
      */
     public function show(Request $request, int $id): Response
     {
@@ -163,8 +163,8 @@ class ShopsController extends Controller
 
         $categories = Category::all();
 
-        // Get booking stats for this service
-        $bookings = \App\Models\Booking::where('service_id', $id)->get();
+        // Get booking stats for this shop
+        $bookings = \App\Models\Booking::where('shop_id', $id)->get();
         $stats = [
             'total_bookings' => $bookings->count(),
             'completed_bookings' => $bookings->where('status', 'completed')->count(),
@@ -234,7 +234,7 @@ class ShopsController extends Controller
             $counter = 1;
             $originalSlug = $validated['slug'];
             while (Shop::where('slug', $validated['slug'])->where('id', '!=', $id)->exists()) {
-                $validated['slug'] = $originalSlug . '-' . $counter++;
+                $validated['slug'] = $originalSlug.'-'.$counter++;
             }
         }
 
@@ -244,7 +244,7 @@ class ShopsController extends Controller
         $shop->businessHours()->delete();
         foreach ($businessHoursData as $hour) {
             BusinessHour::create([
-                'service_id' => $shop->id,
+                'shop_id' => $shop->id,
                 'day_of_week' => $hour['day_of_week'],
                 'time_from' => $hour['time_from'],
                 'time_to' => $hour['time_to'],
@@ -290,7 +290,7 @@ class ShopsController extends Controller
             'staff_level' => 'nullable|string|max:100',
         ]);
 
-        $validated['service_id'] = $shop->id;
+        $validated['shop_id'] = $shop->id;
 
         Service::create($validated);
 
@@ -306,7 +306,7 @@ class ShopsController extends Controller
 
         $shop = Shop::where('user_id', $user->id)->findOrFail($shopId);
 
-        $service = Service::where('service_id', $shop->id)->findOrFail($serviceId);
+        $service = Service::where('shop_id', $shop->id)->findOrFail($serviceId);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -332,7 +332,7 @@ class ShopsController extends Controller
 
         $shop = Shop::where('user_id', $user->id)->findOrFail($shopId);
 
-        $service = Service::where('service_id', $shop->id)->findOrFail($serviceId);
+        $service = Service::where('shop_id', $shop->id)->findOrFail($serviceId);
 
         $service->delete();
 
@@ -348,11 +348,11 @@ class ShopsController extends Controller
 
         $shop = Shop::where('user_id', $user->id)->findOrFail($id);
 
-        $shop->update(['is_available' => !$shop->is_available]);
+        $shop->update(['is_available' => ! $shop->is_available]);
 
         $status = $shop->is_available ? 'available' : 'unavailable';
 
-        return back()->with('success', $status === 'active' ? __('Service is now active.') : __('Service is now inactive.'));
+        return back()->with('success', $status === 'available' ? __('Shop is now active.') : __('Shop is now inactive.'));
     }
 
     /**
@@ -375,7 +375,7 @@ class ShopsController extends Controller
 
         foreach ($validated['hours'] as $hour) {
             BusinessHour::create([
-                'service_id' => $shop->id,
+                'shop_id' => $shop->id,
                 'day_of_week' => $hour['day_of_week'],
                 'time_from' => $hour['time_from'],
                 'time_to' => $hour['time_to'],

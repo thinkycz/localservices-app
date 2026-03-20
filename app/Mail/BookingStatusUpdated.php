@@ -27,7 +27,7 @@ class BookingStatusUpdated extends Mailable
      */
     public function envelope(): Envelope
     {
-        $subject = match($this->newStatus) {
+        $subject = match ($this->newStatus) {
             'confirmed' => 'Your Booking Has Been Confirmed',
             'completed' => 'Your Service Has Been Completed',
             'cancelled' => 'Your Booking Has Been Cancelled',
@@ -35,7 +35,7 @@ class BookingStatusUpdated extends Mailable
         };
 
         return new Envelope(
-            subject: $subject . ' - ' . $this->booking->service->name,
+            subject: $subject.' - '.$this->booking->service->name,
         );
     }
 
