@@ -1,0 +1,10 @@
+- [ ] All routed pages render and support intended actions without placeholder behavior
+- [ ] All declared feature flows are fully implemented end-to-end (UI, validation, backend, persistence)
+- [ ] Guest, authenticated customer, and vendor role paths are verified for access and behavior correctness
+- [ ] Dead code and unneeded files are removed without regressions
+- [ ] Duplicate implementations (including default Breeze leftovers) are consolidated into canonical code paths
+- [ ] Repository optimizations and refactors preserve behavior and improve maintainability
+- [ ] Automated tests are updated or added for completed and merged behavior
+- [ ] Lint/static diagnostics are clean for touched code
+- [ ] Integrated-browser headed flow verification passes for critical journeys
+- [ ] Spec documents and implementation state are synchronized and up to date

@@ -39,7 +39,7 @@ function goToBooking() {
         : null;
     router.visit(route('shops.book', props.shop.slug), {
         data: {
-            offering_id: selectedService.value.id,
+            service_id: selectedService.value.id,
             date: dateStr,
             time: selectedTime.value,
         },
@@ -211,7 +211,7 @@ const mockReviews = [
             <img
                 v-if="shop.image"
                 :src="shop.image"
-                ::alt="$t('shop.name')"
+                :alt="shop.name"
                 class="w-full h-full object-cover opacity-60"
             />
             <div v-else class="w-full h-full bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900" />
@@ -297,7 +297,7 @@ const mockReviews = [
                             <div
                                 v-for="service in filteredServices"
                                 :key="service.id"
-                                @click="toggleService(offering)"
+                                @click="toggleService(service)"
                                 class="bg-white rounded-2xl border-2 p-5 transition-all cursor-pointer group"
                                 :class="selectedService?.id === service.id
                                     ? 'border-blue-500 bg-blue-50/30 shadow-lg shadow-blue-100/50'

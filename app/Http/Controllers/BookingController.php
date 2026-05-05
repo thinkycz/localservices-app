@@ -25,8 +25,9 @@ class BookingController extends Controller
             ->firstOrFail();
 
         $service = null;
-        if ($request->filled('service_id')) {
-            $service = $shop->services->firstWhere('id', (int) $request->service_id);
+        $selectedServiceId = $request->input('service_id', $request->input('offering_id'));
+        if ($selectedServiceId) {
+            $service = $shop->services->firstWhere('id', (int) $selectedServiceId);
         }
 
         // Convert service to array and ensure user_id is included
@@ -53,6 +54,7 @@ class BookingController extends Controller
         return Inertia::render('Booking/Index', [
             'shop' => $shopArray,
             'service' => $service,
+            'offering' => $service, // Backward-compatible alias for legacy frontend prop name
             'date' => $request->get('date'),
             'time' => $request->get('time'),
             'existingBookings' => $existingBookings,
@@ -84,6 +86,13 @@ class BookingController extends Controller
         // Get the service to determine provider_id
         $shop = Shop::with('businessHours')->findOrFail($validated['shop_id']);
 
+        $service = Service::where('shop_id', $shop->id)->find($validated['service_id']);
+        if (! $service) {
+            return back()->withErrors([
+                'service_id' => __('Selected service does not belong to this shop.'),
+            ]);
+        }
+
         // Validate against business hours
         $bookingDate = \Carbon\Carbon::parse($validated['booking_date']);
         $dayOfWeek = (int) $bookingDate->dayOfWeek; // 0=Sunday, 6=Saturday
@@ -96,18 +105,11 @@ class BookingController extends Controller
 
         // If provider_id is not provided, get it from the service's user_id
         $providerId = $validated['provider_id'] ?? $shop->user_id;
-
-        // If still no provider, get the first vendor user as fallback
-        if (! $providerId) {
-            $provider = \App\Models\User::where('is_vendor', true)->first();
-            if (! $provider) {
-                return back()->with('error', __('No vendor available for this service.'));
-            }
-            $providerId = $provider->id;
+        if ((int) $providerId !== (int) $shop->user_id) {
+            return back()->withErrors([
+                'provider_id' => __('Selected provider is invalid for this shop.'),
+            ]);
         }
-
-        // Get the offering to calculate total price
-        $service = Service::findOrFail($validated['service_id']);
 
         // Calculate end time based on duration
         $startTime = \Carbon\Carbon::parse($validated['start_time']);

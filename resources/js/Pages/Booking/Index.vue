@@ -6,16 +6,19 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 const props = defineProps({
     shop:  { type: Object, required: true },
     offering: { type: Object, default: null },
+    service: { type: Object, default: null },
     date:     { type: String, default: null },
     time:     { type: String, default: null },
     authUser: { type: Object, default: null },
     existingBookings: { type: Array, default: () => [] },
 });
 
+const selectedOffering = computed(() => props.offering || props.service || null);
+
 // ── Form state ────────────────────────────────────────────────────────────────
 const form = useForm({
     shop_id: props.shop.id,
-    service_offering_id: props.offering?.id || null,
+    service_id: selectedOffering.value?.id || null,
     provider_id: props.shop.user_id || props.shop.owner?.id || null,
     booking_date: props.date || '',
     start_time: props.time || '',
@@ -72,7 +75,7 @@ function validateForm() {
     }
 
     // Existing booking conflict check
-    if (!e.start_time && form.start_time && props.existingBookings.length > 0 && props.offering) {
+    if (!e.start_time && form.start_time && props.existingBookings.length > 0 && selectedOffering.value) {
         let timeStr = form.start_time;
         let hours, minutes;
         const ampmMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -87,7 +90,7 @@ function validateForm() {
             minutes = parseInt(parts[1]);
         }
         const startStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-        const endMinutes = hours * 60 + minutes + props.service.duration_minutes;
+        const endMinutes = hours * 60 + minutes + (selectedOffering.value.duration_minutes || 60);
         const endH = Math.floor(endMinutes / 60);
         const endM = endMinutes % 60;
         const endStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
@@ -110,7 +113,7 @@ function submitBooking() {
     form.transform((data) => ({
         ...data,
         shop_id: form.shop_id,
-        service_offering_id: form.service_offering_id || props.offering?.id,
+        service_id: form.service_id || selectedOffering.value?.id,
         provider_id: form.provider_id,
         booking_date: form.booking_date,
         start_time: form.start_time,
@@ -176,7 +179,7 @@ function formatDate(dateStr) {
                         </div>
 
                         <!-- Selected Package -->
-                        <div v-if="offering" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <div v-if="selectedOffering" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                             <div class="flex items-center gap-2 mb-3">
                                 <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
                                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +188,7 @@ function formatDate(dateStr) {
                                 </div>
                                 <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('Selected Package') }}</span>
                             </div>
-                            <h3 class="font-bold text-gray-900 text-sm mb-3">{{ service.name }}</h3>
+                            <h3 class="font-bold text-gray-900 text-sm mb-3">{{ selectedOffering.name }}</h3>
                             <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
                                 <span class="text-sm text-gray-600 flex items-center gap-1.5">
                                     <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -319,11 +322,11 @@ function formatDate(dateStr) {
                                     </div>
 
                                     <!-- Summary bar -->
-                                    <div v-if="offering" class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div v-if="selectedOffering" class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                                         <div class="text-sm text-gray-600">
-                                            <span class="font-semibold text-gray-900">{{ offering.name }}</span>
+                                            <span class="font-semibold text-gray-900">{{ selectedOffering.name }}</span>
                                             <span class="mx-1.5 text-gray-300">·</span>
-                                            <span class="font-semibold text-gray-900">{{ Number(offering.price).toFixed(2) }} {{ shop.currency || 'CZK' }}</span>
+                                            <span class="font-semibold text-gray-900">{{ Number(selectedOffering.price).toFixed(2) }} {{ shop.currency || 'CZK' }}</span>
                                         </div>
                                     </div>
 

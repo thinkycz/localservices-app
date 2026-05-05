@@ -73,10 +73,14 @@ class OnboardingController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'service_name' => 'required|string|max:255',
+            'shop_name' => 'nullable|string|max:255|required_without:service_name',
+            'service_name' => 'nullable|string|max:255|required_without:shop_name',
             'description' => 'required|string|min:50|max:1000',
-            'price_range' => 'required|integer|min:1|max:4',
+            'price_range' => 'nullable|integer|min:1|max:4',
         ]);
+
+        $validated['shop_name'] = $validated['shop_name'] ?? $validated['service_name'];
+        $validated['price_range'] = $validated['price_range'] ?? 2;
 
         session()->put('onboarding.step2', $validated);
 
@@ -100,7 +104,7 @@ class OnboardingController extends Controller
             'services' => 'required|array|min:1',
             'services.*.name' => 'required|string|max:255',
             'services.*.description' => 'required|string|max:500',
-            'services.*.price' => 'required|numeric|min:0',
+            'services.*.price' => 'nullable|numeric|min:0',
             'services.*.duration_minutes' => 'required|integer|min:15|max:480',
         ]);
 
@@ -108,6 +112,11 @@ class OnboardingController extends Controller
         $step1 = session()->get('onboarding.step1');
         $step2 = session()->get('onboarding.step2');
         $step3 = $validated;
+
+        if (! $step1 || ! $step2) {
+            return redirect()->route('vendor.onboarding.step1')
+                ->with('error', __('Please complete onboarding from step 1.'));
+        }
 
         // Update user to vendor
         $user = $request->user();
@@ -117,7 +126,8 @@ class OnboardingController extends Controller
         ]);
 
         // Create the service
-        $slug = \Illuminate\Support\Str::slug($step2['service_name']);
+        $shopName = $step2['shop_name'] ?? $step2['service_name'];
+        $slug = \Illuminate\Support\Str::slug($shopName);
         $counter = 1;
         $originalSlug = $slug;
         while (Shop::where('slug', $slug)->exists()) {
@@ -127,7 +137,7 @@ class OnboardingController extends Controller
         $shop = Shop::create([
             'user_id' => $user->id,
             'category_id' => $step2['category_id'],
-            'name' => $step2['service_name'],
+            'name' => $shopName,
             'slug' => $slug,
             'description' => $step2['description'],
             'price_range' => $step2['price_range'],
@@ -144,7 +154,7 @@ class OnboardingController extends Controller
                 'shop_id' => $shop->id,
                 'name' => $service['name'],
                 'description' => $service['description'],
-                'price' => $service['price'],
+                'price' => $service['price'] ?? 0,
                 'duration_minutes' => $service['duration_minutes'],
                 'is_popular' => false,
             ]);

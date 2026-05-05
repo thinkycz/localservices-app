@@ -178,11 +178,15 @@ class BookingController extends Controller
      */
     public function update(Request $request, int $bookingId): RedirectResponse
     {
+        $user = $request->user();
+
         $request->validate([
             'status' => 'required|in:pending,confirmed,completed,cancelled',
         ]);
 
-        $booking = Booking::findOrFail($bookingId);
+        $shopIds = Shop::where('user_id', $user->id)->pluck('id');
+
+        $booking = Booking::whereIn('shop_id', $shopIds)->findOrFail($bookingId);
         $booking->status = $request->status;
         $booking->save();
 

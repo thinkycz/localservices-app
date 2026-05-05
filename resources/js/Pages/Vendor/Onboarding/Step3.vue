@@ -39,7 +39,7 @@
                   
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2">
-                      <label :for="'name-' + index" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Shop Name') }}</label>
+                      <label :for="'name-' + index" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Service Name') }}</label>
                       <input
                         :id="'name-' + index"
                         v-model="service.name"
@@ -64,10 +64,25 @@
                       <p v-if="form.errors['services.' + index + '.description']" class="mt-1.5 text-xs text-red-500">{{ form.errors['services.' + index + '.description'] }}</p>
                     </div>
 
+                    <div>
+                      <label :for="'price-' + index" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Price') }}</label>
+                      <input
+                        :id="'price-' + index"
+                        v-model="service.price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200"
+                        :placeholder="$t('e.g., 49.99')"
+                      />
+                      <p v-if="form.errors['services.' + index + '.price']" class="mt-1.5 text-xs text-red-500">{{ form.errors['services.' + index + '.price'] }}</p>
+                    </div>
+
 
 
                     <div>
-                      <label :for="'duration-' + index" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Duration') }}<span class="text-gray-400 font-normal lowercase">{{ $t('(minutes)') }}</span></label>
+                      <label :for="'duration-' + index" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Duration') }}</label>
                       <div class="relative">
                         <select
                           :id="'duration-' + index"
@@ -134,6 +149,7 @@ const form = useForm({
     {
       name: '',
       description: '',
+      price: '',
       duration_minutes: '',
     },
   ],
@@ -143,6 +159,7 @@ const addOffering = () => {
   form.services.push({
     name: '',
     description: '',
+    price: '',
     duration_minutes: '',
   });
 };

@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Review;
-use App\Models\Service;
-use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -42,7 +40,7 @@ class ReviewController extends Controller
     {
         $validated = $request->validate([
             'booking_id' => 'required|exists:bookings,id',
-            'shop_id' => 'required|exists:shops,id',
+            'shop_id' => 'nullable|exists:shops,id',
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'required|string|min:10|max:1000',
             'tags' => 'nullable|array',
@@ -52,7 +50,12 @@ class ReviewController extends Controller
         $booking = Booking::where('user_id', $request->user()->id)
             ->where('id', $validated['booking_id'])
             ->where('status', 'completed')
+            ->with('shop')
             ->firstOrFail();
+
+        if (isset($validated['shop_id']) && (int) $validated['shop_id'] !== (int) $booking->shop_id) {
+            return back()->with('error', __('Invalid review payload.'));
+        }
 
         // Check if already reviewed
         $existingReview = Review::where('booking_id', $validated['booking_id'])->first();
@@ -62,7 +65,7 @@ class ReviewController extends Controller
 
         $review = Review::create([
             'user_id' => $request->user()->id,
-            'shop_id' => $validated['shop_id'],
+            'shop_id' => $booking->shop_id,
             'booking_id' => $validated['booking_id'],
             'rating' => $validated['rating'],
             'comment' => $validated['comment'],
@@ -72,8 +75,7 @@ class ReviewController extends Controller
         ]);
 
         // Update service rating stats
-        $shop = Shop::find($validated['shop_id']);
-        $shop->updateRatingStats();
+        $booking->shop?->updateRatingStats();
 
         return redirect()->route('bookings.index')
             ->with('success', __('Thank you for your review!'));

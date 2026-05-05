@@ -54,6 +54,28 @@
               </div>
 
               <div>
+                <label for="price_range" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Price Range') }}</label>
+                <div class="relative">
+                  <select
+                    id="price_range"
+                    v-model="form.price_range"
+                    required
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200"
+                  >
+                    <option value="" disabled>{{ $t('Select your price range') }}</option>
+                    <option value="1">$</option>
+                    <option value="2">$$</option>
+                    <option value="3">$$$</option>
+                    <option value="4">$$$$</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </div>
+                <p v-if="form.errors.price_range" class="mt-1.5 text-xs text-red-500">{{ form.errors.price_range }}</p>
+              </div>
+
+              <div>
                 <label for="description" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Shop Description') }}</label>
                 <textarea
                   id="description"
@@ -104,6 +126,7 @@ const props = defineProps({
 const form = useForm({
   category_id: '',
   shop_name: '',
+  price_range: '',
   description: '',
 });
 
