@@ -3,6 +3,10 @@ import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
+    test: {
+        environment: 'jsdom',
+        include: ['resources/js/**/*.test.js'],
+    },
     server: {
         host: 'localhost',
         port: 5173,

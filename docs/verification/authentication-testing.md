@@ -1,5 +1,7 @@
 # Authentication Testing Report
 
+> **Historical verification — superseded 2026-08-23.** Route availability and code inspection in this March report do not prove end-to-end behavior. Consult [the current route/flow matrix](./route-flow-matrix.md) and the active Domluveno progress tracker for fresh evidence and gaps.
+
 ## Test Environment Setup
 - **Date**: 2026-03-20
 - **Laravel Version**: 12

@@ -1,55 +1,90 @@
 <script setup>
+import { computed } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { ArrowRight, Mail } from '@lucide/vue';
 import AppNavbar from '@/Components/AppNavbar.vue';
-import { Link } from '@inertiajs/vue3';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import ToastRegion from '@/Components/ToastRegion.vue';
+
+const page = usePage();
+const user = computed(() => page.props.auth?.user ?? null);
+const providerHref = computed(() => user.value?.is_vendor
+    ? route('vendor.dashboard')
+    : route('vendor.onboarding.index'));
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-50 flex flex-col">
+    <div class="flex min-h-screen min-w-0 flex-col bg-canvas">
         <AppNavbar />
-        <main class="flex-1">
+
+        <main id="main-content" class="min-w-0 flex-1">
             <slot />
         </main>
-        <footer class="bg-white border-t border-gray-200 mt-auto">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div>
-                        <div class="flex items-center gap-2.5 mb-3">
-                            <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
-                                <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
-                                    <path d="M4 4.5A2.5 2.5 0 016.5 2H12v9l-3-2.5L6 11V4.5z" fill="currentColor" opacity="0.5"/>
-                                    <path d="M12 2h5.5A2.5 2.5 0 0120 4.5v15a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 19.5V11l5-2.5L12 11V2z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                                </svg>
-                            </div>
-                            <span class="text-gray-900" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em;">{{ $t('Bookable') }}</span>
-                        </div>
-                        <p class="text-sm text-gray-500 leading-relaxed">{{ $t('Connecting you with trusted local shops since 2020. Quality, reliability, and community at every booking.') }}</p>
+
+        <footer class="mt-auto border-t border-line bg-white" aria-labelledby="footer-heading">
+            <h2 id="footer-heading" class="sr-only">{{ $t('Footer') }}</h2>
+            <div class="ui-container py-10 sm:py-12">
+                <div class="grid gap-9 md:grid-cols-[1.4fr_1fr_1fr]">
+                    <div class="max-w-sm">
+                        <Link :href="route('home')" class="inline-flex min-h-11 items-center rounded-xl focus-visible:outline-none">
+                            <ApplicationLogo />
+                        </Link>
+                        <p class="mt-4 text-sm leading-6 text-muted">
+                            {{ $t('Find a local service, choose an available time and keep your booking details in one place.') }}
+                        </p>
                     </div>
+
                     <div>
-                        <h4 class="text-sm font-bold text-gray-900 mb-3">{{ $t('Quick Links') }}</h4>
-                        <ul class="space-y-2">
-                            <li><Link :href="route('shops.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('Browse Shops') }}</Link></li>
-                            <li><Link :href="route('bookings.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('My Bookings') }}</Link></li>
-                            <li><Link :href="route('vendor.onboarding.index')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('List Your Shop') }}</Link></li>
-                            <li><Link :href="route('pages.faq')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('Help &amp; Support') }}</Link></li>
+                        <h3 class="text-sm font-bold text-ink">{{ $t('Explore') }}</h3>
+                        <ul class="mt-4 space-y-3 text-sm">
+                            <li>
+                                <Link :href="route('shops.index')" class="inline-flex min-h-11 items-center text-muted transition hover:text-brand-700">
+                                    {{ $t('Browse Shops') }}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    :href="user ? route('bookings.index') : route('login')"
+                                    class="inline-flex min-h-11 items-center text-muted transition hover:text-brand-700"
+                                >{{ $t('My Bookings') }}</Link>
+                            </li>
+                            <li>
+                                <Link :href="providerHref" class="inline-flex min-h-11 items-center gap-1.5 text-muted transition hover:text-brand-700">
+                                    {{ user?.is_vendor ? $t('Provider dashboard') : $t('Become a provider') }}
+                                    <ArrowRight :size="14" aria-hidden="true" />
+                                </Link>
+                            </li>
                         </ul>
                     </div>
+
                     <div>
-                        <h4 class="text-sm font-bold text-gray-900 mb-3">{{ $t('Contact') }}</h4>
-                        <ul class="space-y-2">
-                            <li><Link :href="route('pages.contact')" class="text-sm text-gray-500 hover:text-blue-600 transition">{{ $t('Contact Support') }}</Link></li>
-                            <li class="text-sm text-gray-500">(555) 123-4567</li>
-                            <li class="text-sm text-gray-500">{{ $t('hello@bookable.com') }}</li>
+                        <h3 class="text-sm font-bold text-ink">{{ $t('Help') }}</h3>
+                        <ul class="mt-4 space-y-3 text-sm">
+                            <li>
+                                <Link :href="route('pages.faq')" class="inline-flex min-h-11 items-center text-muted transition hover:text-brand-700">
+                                    {{ $t('Frequently Asked Questions') }}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link :href="route('pages.contact')" class="inline-flex min-h-11 items-center gap-2 text-muted transition hover:text-brand-700">
+                                    <Mail :size="16" aria-hidden="true" />
+                                    {{ $t('Contact Support') }}
+                                </Link>
+                            </li>
                         </ul>
                     </div>
                 </div>
-                <div class="border-t border-gray-100 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <p class="text-xs text-gray-400">© {{ new Date().getFullYear() }} Bookable. All rights reserved.</p>
-                    <div class="flex gap-4">
-                        <Link :href="route('pages.privacy')" class="text-xs text-gray-400 hover:text-gray-600">{{ $t('Privacy Policy') }}</Link>
-                        <Link :href="route('pages.terms')" class="text-xs text-gray-400 hover:text-gray-600">{{ $t('Terms of Service') }}</Link>
+
+                <div class="mt-10 flex flex-col gap-4 border-t border-line pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+                    <p>© {{ new Date().getFullYear() }} Domluveno.</p>
+                    <div class="flex flex-wrap gap-x-5 gap-y-2">
+                        <Link :href="route('pages.privacy')" class="inline-flex min-h-11 items-center transition hover:text-brand-700">{{ $t('Privacy Policy') }}</Link>
+                        <Link :href="route('pages.terms')" class="inline-flex min-h-11 items-center transition hover:text-brand-700">{{ $t('Terms of Service') }}</Link>
                     </div>
                 </div>
             </div>
         </footer>
+
+        <ToastRegion />
     </div>
 </template>

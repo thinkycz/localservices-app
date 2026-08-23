@@ -1,324 +1,90 @@
 <script setup>
+import EmptyState from '@/Components/EmptyState.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import UiButton from '@/Components/UiButton.vue';
+import UiCard from '@/Components/UiCard.vue';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { CalendarCheck, CalendarClock, CalendarX, CircleDollarSign, Clock3, Store, UserPlus, Users, Wrench } from '@lucide/vue';
 import { computed } from 'vue';
 
 const props = defineProps({
     stats: { type: Array, default: () => [] },
     todayBookings: { type: Array, default: () => [] },
     weekStats: { type: Object, default: () => ({}) },
-
+    servicePopularity: { type: Array, default: () => [] },
     monthlyRevenue: { type: Array, default: () => [] },
     recentBookings: { type: Array, default: () => [] },
     overview: { type: Object, default: () => ({}) },
 });
 
-const appointments = computed(() => props.todayBookings);
+const iconMap = { 'calendar-check': CalendarCheck, 'calendar-x': CalendarX, 'user-plus': UserPlus, cash: CircleDollarSign };
+const labelMap = { 'Total Bookings': 'Všechny rezervace', Cancellations: 'Zrušené rezervace', 'New Customers': 'Noví zákazníci tento měsíc', Revenue: 'Hodnota nezrušených rezervací' };
+const todayLabel = new Intl.DateTimeFormat('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
+const isNewAccount = computed(() => !props.stats.some((stat) => Number(stat.value) > 0) && props.recentBookings.length === 0);
 
+const statusMap = {
+    pending: { label: 'Čeká', tone: 'warning' }, PENDING: { label: 'Čeká', tone: 'warning' },
+    confirmed: { label: 'Potvrzená', tone: 'brand' }, CONFIRMED: { label: 'Potvrzená', tone: 'brand' },
+    completed: { label: 'Dokončená', tone: 'success' }, COMPLETED: { label: 'Dokončená', tone: 'success' },
+    cancelled: { label: 'Zrušená', tone: 'danger' }, CANCELLED: { label: 'Zrušená', tone: 'danger' },
+};
 
-const today = new Date();
+function formatDate(value) { return value ? new Intl.DateTimeFormat('cs-CZ', { day: 'numeric', month: 'short' }).format(new Date(`${value}T12:00:00`)) : '—'; }
+function monthLabel(value) { return ({ Jan: 'Led', Feb: 'Úno', Mar: 'Bře', Apr: 'Dub', May: 'Kvě', Jun: 'Čvn', Jul: 'Čvc', Aug: 'Srp', Sep: 'Zář', Oct: 'Říj', Nov: 'Lis', Dec: 'Pro' })[value] || value; }
 
-function toISODateLocal(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
-
-const todayIso = computed(() => toISODateLocal(today));
-
-const weekStartIso = computed(() => {
-    const d = new Date(today);
-    const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
-    return toISODateLocal(d);
-});
-
-const weekEndIso = computed(() => {
-    const d = new Date(today);
-    const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff + 6);
-    return toISODateLocal(d);
-});
-
-function formatScheduleDate(date) {
-    return new Intl.DateTimeFormat('en-US', {
-        weekday: 'long',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    }).format(date);
-}
-
-const todayScheduleSubtitle = computed(() => formatScheduleDate(today));
-
-function getAvatarColors(name) {
-    const colors = [
-        { bg: 'bg-pink-100', text: 'text-pink-600' },
-        { bg: 'bg-blue-100', text: 'text-blue-600' },
-        { bg: 'bg-emerald-100', text: 'text-emerald-600' },
-        { bg: 'bg-violet-100', text: 'text-violet-600' },
-        { bg: 'bg-amber-100', text: 'text-amber-600' },
-        { bg: 'bg-teal-100', text: 'text-teal-600' },
-    ];
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
-}
-
-function getStatusClasses(status) {
-    const s = status.toUpperCase();
-    const statusMap = {
-        'PENDING': { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-400', dot: 'bg-amber-400' },
-        'CONFIRMED': { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-500', dot: 'bg-blue-500' },
-        'COMPLETED': { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-400', dot: 'bg-emerald-400' },
-        'CANCELLED': { bg: 'bg-red-50', text: 'text-red-500', border: 'border-red-400', dot: 'bg-red-400' },
-    };
-    return statusMap[s] || statusMap['PENDING'];
-}
-
-
-
-function formatDate(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+function europeanTime(value) {
+    const string = String(value || '').trim();
+    const match = string.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) return string.slice(0, 5);
+    let hour = Number(match[1]);
+    if (match[3].toUpperCase() === 'PM' && hour !== 12) hour += 12;
+    if (match[3].toUpperCase() === 'AM' && hour === 12) hour = 0;
+    return `${String(hour).padStart(2, '0')}:${match[2]}`;
 }
 </script>
 
 <template>
-    <Head :title="$t('Dashboard')" />
-
+    <Head title="Přehled" />
     <VendorLayout activePage="dashboard">
-        <!-- ── Stats Row ──────────────────────────────────────────────── -->
-        <div class="grid grid-cols-4 gap-4 mb-6">
-            <div
-                v-for="stat in stats"
-                :key="stat.label"
-                class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-            >
-                <div class="flex items-start justify-between mb-4">
-                    <!-- Icon -->
-                    <!-- Calendar Check (Total Bookings) -->
-                    <div v-if="stat.icon === 'calendar-check'" class="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4"/>
-                        </svg>
-                    </div>
-                    <!-- Calendar X (Cancellations) -->
-                    <div v-else-if="stat.icon === 'calendar-x'" class="w-11 h-11 rounded-xl bg-red-100 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l4 4m0-4l-4 4"/>
-                        </svg>
-                    </div>
-                    <!-- User Plus (New Customers) -->
-                    <div v-else-if="stat.icon === 'user-plus'" class="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                        </svg>
-                    </div>
-                    <!-- Cash (Revenue) -->
-                    <div v-else-if="stat.icon === 'cash'" class="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
+        <div class="min-w-0 space-y-6">
+            <PageHeader title="Přehled" description="Dnešní termíny, nové požadavky a výsledky bez míchání různých měn.">
+                <template #actions><UiButton :href="route('vendor.calendar')" variant="secondary"><CalendarClock :size="18" /> Otevřít kalendář</UiButton></template>
+            </PageHeader>
 
-                    <!-- Change badge -->
-                    <span
-                        :class="[
-                            'text-xs font-semibold px-2 py-0.5 rounded-full',
-                            stat.positive
-                                ? 'text-green-600 bg-green-50'
-                                : 'text-red-500 bg-red-50',
-                        ]"
-                    >
-                        {{ stat.change }}
-                    </span>
-                </div>
+            <div v-if="isNewAccount" class="rounded-2xl border border-brand-200 bg-brand-50 p-5 sm:p-6"><div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><h2 class="font-extrabold text-brand-900">Vítejte v Domluveno</h2><p class="mt-1 max-w-2xl text-sm leading-6 text-brand-800">Začněte kontrolou provozovny, otevírací doby a služeb. Jakmile je provozovna aktivní, zákazníci si mohou vybrat volný termín.</p></div><UiButton :href="route('vendor.shops.index')"><Store :size="18" /> Zkontrolovat provozovny</UiButton></div></div>
 
-                <div class="text-sm text-gray-500 mb-1">{{ stat.label }}</div>
-                <div class="text-2xl font-bold text-gray-900">{{ stat.value }}</div>
-                <div v-if="stat.details && stat.icon === 'cash'" class="text-xs text-gray-400 mt-1 truncate" :title="stat.details">
-                    {{ stat.details }}
-                </div>
-            </div>
-        </div>
-
-        <!-- ── Main Grid: Recent Bookings (left, bigger) + Today's Schedule (right) ── -->
-        <div class="grid grid-cols-3 gap-4">
-
-            <!-- ── Recent Bookings (spans 2 cols) ──────────────────────── -->
-            <div class="col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-50">
-                    <h2 class="text-lg font-bold text-gray-900">Recent Bookings</h2>
-                    <Link
-                        :href="route('vendor.bookings.index')"
-                        class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                        View All
-                    </Link>
-                </div>
-
-                <div v-if="recentBookings.length === 0" class="px-6 py-12 text-center">
-                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-sm font-semibold text-gray-500 mb-1">No bookings yet</h3>
-                    <p class="text-xs text-gray-400">Bookings will appear here once customers start booking your shops.</p>
-                </div>
-
-                <table v-else class="w-full">
-                    <thead>
-                        <tr class="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                            <th class="px-6 py-3">Customer</th>
-                            <th class="px-6 py-3">Service</th>
-                            <th class="px-6 py-3">Date</th>
-                            <th class="px-6 py-3">Time</th>
-                            <th class="px-6 py-3">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-                        <tr
-                            v-for="booking in recentBookings"
-                            :key="booking.id"
-                            class="hover:bg-gray-50 transition-colors cursor-pointer"
-                            @click="$inertia.visit(route('vendor.bookings.show', booking.id))"
-                        >
-                            <td class="px-6 py-3.5">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        :class="[
-                                            'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0',
-                                            getAvatarColors(booking.customer_name).bg,
-                                            getAvatarColors(booking.customer_name).text,
-                                        ]"
-                                    >
-                                        {{ booking.customer_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() }}
-                                    </div>
-                                    <span class="text-sm font-medium text-gray-900">{{ booking.customer_name }}</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-3.5">
-                                <span class="text-sm text-gray-600">{{ booking.service_name }}</span>
-                            </td>
-                            <td class="px-6 py-3.5">
-                                <span class="text-sm text-gray-600">{{ formatDate(booking.date) }}</span>
-                            </td>
-                            <td class="px-6 py-3.5">
-                                <span class="text-sm text-gray-600">{{ booking.time }}</span>
-                            </td>
-                            <td class="px-6 py-3.5">
-                                <span
-                                    :class="[
-                                        'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full',
-                                        getStatusClasses(booking.status).bg,
-                                        getStatusClasses(booking.status).text,
-                                    ]"
-                                >
-                                    <span :class="['w-1.5 h-1.5 rounded-full', getStatusClasses(booking.status).dot]"></span>
-                                    {{ booking.status.charAt(0).toUpperCase() + booking.status.slice(1) }}
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <UiCard v-for="stat in stats" :key="stat.label" padding="sm" class="min-w-0">
+                    <div class="flex items-start gap-3"><span class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-50 text-brand-700"><component :is="iconMap[stat.icon] || CalendarCheck" :size="19" /></span><div class="min-w-0 flex-1"><p class="text-xs font-bold uppercase tracking-wide text-muted">{{ labelMap[stat.label] || stat.label }}</p><p class="mt-1 break-words text-xl font-extrabold text-ink">{{ stat.value }}</p><p v-if="stat.change" class="mt-1 break-words text-xs text-muted">{{ stat.change.replace('this month', 'tento měsíc').replace('rate', 'podíl') }}</p></div></div>
+                </UiCard>
             </div>
 
-            <!-- ── Today's Schedule (1 col, right) ─────────────────────── -->
-            <div class="col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-                <!-- Header -->
-                <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-50">
-                    <div>
-                        <h2 class="text-base font-bold text-gray-900">Today's Schedule</h2>
-                        <p class="text-xs text-gray-400 mt-0.5">{{ todayScheduleSubtitle }}</p>
+            <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(19rem,0.85fr)]">
+                <UiCard padding="none" class="min-w-0 overflow-hidden">
+                    <div class="flex items-center justify-between gap-3 border-b border-line px-5 py-4 sm:px-6"><div><h2 class="font-extrabold text-ink">Nedávné rezervace</h2><p class="mt-1 text-xs text-muted">Nejnovější požadavky napříč provozovnami</p></div><Link :href="route('vendor.bookings.index')" class="min-h-11 flex-none content-center text-sm font-bold text-brand-700 hover:text-brand-800">Zobrazit vše</Link></div>
+                    <EmptyState v-if="!recentBookings.length" class="m-4 border-0" title="Zatím žádné rezervace" description="Po zveřejnění aktivní provozovny se nové rezervace zobrazí tady."><template #icon><CalendarCheck :size="23" /></template></EmptyState>
+                    <div v-else>
+                        <div class="grid gap-0 divide-y divide-line md:hidden"><Link v-for="booking in recentBookings" :key="booking.id" :href="route('vendor.bookings.show', booking.id)" class="p-4"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="break-words font-bold text-ink">{{ booking.customer_name }}</p><p class="mt-1 text-sm text-muted">{{ booking.service_name }}</p></div><StatusBadge :tone="statusMap[booking.status]?.tone || 'neutral'">{{ statusMap[booking.status]?.label || booking.status }}</StatusBadge></div><p class="mt-3 text-sm font-semibold text-ink">{{ formatDate(booking.date) }} · {{ europeanTime(booking.time) }} · {{ booking.formatted_price }}</p></Link></div>
+                        <div class="hidden overflow-x-auto md:block"><table class="w-full min-w-[620px] text-left"><thead class="border-b border-line bg-gray-50 text-xs font-bold uppercase tracking-wide text-muted"><tr><th class="px-5 py-3">Zákazník</th><th class="px-5 py-3">Služba</th><th class="px-5 py-3">Termín</th><th class="px-5 py-3">Cena</th><th class="px-5 py-3">Stav</th></tr></thead><tbody class="divide-y divide-line"><tr v-for="booking in recentBookings" :key="booking.id"><td class="px-5 py-4"><Link :href="route('vendor.bookings.show', booking.id)" class="font-bold text-ink hover:text-brand-700">{{ booking.customer_name }}</Link></td><td class="px-5 py-4 text-sm text-muted">{{ booking.service_name }}</td><td class="px-5 py-4 text-sm text-muted">{{ formatDate(booking.date) }} · {{ europeanTime(booking.time) }}</td><td class="px-5 py-4 text-sm font-bold text-ink">{{ booking.formatted_price }}</td><td class="px-5 py-4"><StatusBadge :tone="statusMap[booking.status]?.tone || 'neutral'">{{ statusMap[booking.status]?.label || booking.status }}</StatusBadge></td></tr></tbody></table></div>
                     </div>
-                    <Link
-                        :href="route('vendor.calendar', { start_date: weekStartIso, end_date: weekEndIso, view: 'week' })"
-                        class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                        View Week
-                    </Link>
-                </div>
+                </UiCard>
 
-                <!-- Appointment List -->
-                <div class="flex-1 px-4 py-3 space-y-2 overflow-y-auto max-h-[400px]">
-                    <!-- Empty state -->
-                    <div v-if="appointments.length === 0" class="flex flex-col items-center justify-center py-10 text-center">
-                        <div class="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center mb-3">
-                            <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                        <h3 class="text-sm font-semibold text-gray-500 mb-1">No bookings today</h3>
-                        <p class="text-xs text-gray-400">Your schedule is clear!</p>
-                    </div>
-
-                    <Link
-                        v-for="appt in appointments"
-                        :key="appt.id"
-                        :href="route('vendor.bookings.show', appt.id)"
-                        :class="[
-                            'block rounded-xl border-l-4 bg-gray-50 hover:bg-gray-100 px-3 py-2.5 transition-colors',
-                            getStatusClasses(appt.status).border,
-                            appt.completed ? 'opacity-70' : '',
-                        ]"
-                    >
-                        <div class="flex items-center justify-between">
-                            <span
-                                :class="[
-                                    'font-semibold text-sm',
-                                    appt.completed ? 'line-through text-gray-400' : 'text-gray-900',
-                                ]"
-                            >
-                                {{ appt.title }}
-                            </span>
-                            <span
-                                :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full',
-                                    getStatusClasses(appt.status).bg,
-                                    getStatusClasses(appt.status).text,
-                                ]"
-                            >
-                                {{ appt.status }}
-                            </span>
-                        </div>
-                        <div class="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-                            <span class="font-medium">{{ appt.time }}</span>
-                            <span>·</span>
-                            <span>{{ appt.duration }}</span>
-                            <span>·</span>
-                            <div class="flex items-center gap-1">
-                                <div
-                                    :class="[
-                                        'w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-semibold',
-                                        getAvatarColors(appt.customer).bg,
-                                        getAvatarColors(appt.customer).text,
-                                    ]"
-                                >
-                                    {{ appt.customer_initials }}
-                                </div>
-                                <span>{{ appt.customer }}</span>
-                            </div>
-                        </div>
-                    </Link>
-                </div>
-
-                <!-- Footer link -->
-                <div v-if="appointments.length > 0" class="px-5 py-3 border-t border-gray-50 text-center">
-                    <Link
-                        :href="route('vendor.bookings.index', { date_from: todayIso, date_to: todayIso, sort: 'date_asc' })"
-                        class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                        See All {{ todayBookings.length }} Bookings Today
-                    </Link>
-                </div>
+                <UiCard padding="none" class="min-w-0 overflow-hidden">
+                    <div class="border-b border-line px-5 py-4"><h2 class="font-extrabold text-ink">Dnes</h2><p class="mt-1 text-xs capitalize text-muted">{{ todayLabel }}</p></div>
+                    <EmptyState v-if="!todayBookings.length" class="m-4 border-0" title="Dnes máte volno" description="Na dnešek není naplánovaný žádný termín."><template #icon><Clock3 :size="23" /></template></EmptyState>
+                    <div v-else class="divide-y divide-line"><Link v-for="booking in todayBookings" :key="booking.id" :href="route('vendor.bookings.show', booking.id)" class="flex gap-3 p-4 transition hover:bg-brand-50/30"><div class="w-14 flex-none"><p class="text-sm font-extrabold text-ink">{{ europeanTime(booking.time) }}</p><p class="mt-1 text-xs text-muted">{{ europeanTime(booking.end_time) }}</p></div><div class="min-w-0 flex-1"><p class="break-words text-sm font-bold text-ink">{{ booking.title }}</p><p class="mt-1 break-words text-xs text-muted">{{ booking.customer }} · {{ booking.duration }}</p><StatusBadge class="mt-2" :tone="statusMap[booking.status]?.tone || 'neutral'">{{ statusMap[booking.status]?.label || booking.status }}</StatusBadge></div></Link></div>
+                </UiCard>
             </div>
+
+            <div class="grid gap-5 lg:grid-cols-2">
+                <UiCard><h2 class="font-extrabold text-ink">Tento týden</h2><dl class="mt-5 grid grid-cols-3 gap-3"><div class="rounded-xl bg-gray-50 p-3"><dt class="text-xs font-bold uppercase text-muted">Rezervace</dt><dd class="mt-2 text-xl font-extrabold text-ink">{{ weekStats.total_bookings ?? 0 }}</dd></div><div class="rounded-xl bg-gray-50 p-3"><dt class="text-xs font-bold uppercase text-muted">Dokončené</dt><dd class="mt-2 text-xl font-extrabold text-ink">{{ weekStats.completed ?? 0 }}</dd></div><div class="min-w-0 rounded-xl bg-gray-50 p-3"><dt class="text-xs font-bold uppercase text-muted">Nezrušené</dt><dd class="mt-2 break-words text-base font-extrabold text-ink">{{ weekStats.revenue || '0,00 CZK' }}</dd></div></dl></UiCard>
+                <UiCard><h2 class="font-extrabold text-ink">Nabídka a zákazníci</h2><dl class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3"><div v-for="item in [{ label: 'Aktivní služby', value: overview.available_services ?? 0, icon: Wrench }, { label: 'Čekající', value: overview.pending_bookings ?? 0, icon: CalendarClock }, { label: 'Vracející se', value: overview.returning_customers ?? 0, icon: Users }]" :key="item.label" class="min-w-0 rounded-xl bg-gray-50 p-3"><dt class="text-xs font-bold uppercase text-muted"><component :is="item.icon" :size="18" class="mb-3 text-brand-700" aria-hidden="true" />{{ item.label }}</dt><dd class="mt-1 text-xl font-extrabold text-ink">{{ item.value }}</dd></div></dl></UiCard>
+            </div>
+
+            <UiCard v-if="monthlyRevenue.length"><h2 class="font-extrabold text-ink">Posledních šest měsíců</h2><p class="mt-1 text-sm text-muted">Hodnota nezrušených rezervací je vždy oddělená podle měny.</p><div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"><div v-for="month in monthlyRevenue" :key="month.month" class="min-w-0 rounded-xl border border-line p-3"><p class="text-xs font-bold uppercase text-muted">{{ monthLabel(month.month) }}</p><p class="mt-2 break-words text-sm font-extrabold text-ink">{{ month.formatted_revenue || '0,00 CZK' }}</p><p class="mt-1 text-xs text-muted">{{ month.bookings }} rezervací</p></div></div></UiCard>
         </div>
     </VendorLayout>
 </template>

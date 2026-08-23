@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Shop;
+use App\Support\Money;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -53,8 +55,16 @@ class CalendarController extends Controller
             ->orderBy('start_time')
             ->get();
 
+        // Guest bookings cannot be grouped by their null user_id. Use the stored
+        // contact email as their identity so unrelated guests stay separate.
+        $customerBookingCounts = Booking::whereIn('shop_id', $shopIds)
+            ->with('customer')
+            ->get()
+            ->groupBy(fn (Booking $booking) => $this->customerIdentity($booking))
+            ->map->count();
+
         // Format bookings for the calendar
-        $formattedBookings = $bookings->map(function ($booking) use ($startDate) {
+        $formattedBookings = $bookings->map(function (Booking $booking) use ($customerBookingCounts, $startDate) {
             $startTime = Carbon::parse($booking->start_time);
             $endTime = Carbon::parse($booking->end_time);
 
@@ -67,34 +77,36 @@ class CalendarController extends Controller
                 default => 'blue',
             };
 
-            // Determine customer type
-            $customerBookingsCount = Booking::where('user_id', $booking->user_id)
-                ->where('provider_id', $booking->provider_id)
-                ->count();
+            $customerName = $booking->customer_display_name ?: 'Zákazník bez jména';
+            $customerBookingsCount = $customerBookingCounts->get($this->customerIdentity($booking), 1);
             $customerType = $customerBookingsCount > 1 ? 'Regular Customer' : 'New Customer';
+            $duration = $booking->service?->duration_minutes
+                ?? $startTime->diffInMinutes($endTime);
+            $currency = strtoupper($booking->currency ?: $booking->shop?->currency ?: 'CZK');
 
             return [
                 'id' => $booking->id,
-                'customer' => $booking->customer->name,
-                'shop' => $booking->service->name,
-                'serviceDetail' => $booking->service->name,
+                'customer' => $customerName,
+                'shop' => $booking->service?->name ?? $booking->shop?->name ?? 'Služba',
+                'serviceDetail' => $booking->service?->name ?? 'Služba',
                 'dayIndex' => Carbon::parse($booking->booking_date)->startOfDay()->diffInDays($startDate->copy()->startOfDay()),
                 'fullDate' => Carbon::parse($booking->booking_date)->format('Y-m-d'),
                 'startHour' => (int) $startTime->format('H'),
                 'startMin' => (int) $startTime->format('i'),
-                'duration' => $booking->service->duration_minutes,
+                'duration' => $duration,
                 'colorType' => $colorType,
                 'status' => $booking->status,
-                'initials' => $this->getInitials($booking->customer->name),
-                'avatarBg' => $this->getAvatarBg($booking->customer->name),
-                'avatarText' => $this->getAvatarText($booking->customer->name),
-                'dateStr' => Carbon::parse($booking->booking_date)->format('D, M d'),
-                'timeStr' => $startTime->format('h:i A').' - '.$endTime->format('h:i A'),
-                'price' => number_format($booking->total_price, 2).' '.($booking->shop->currency ?? 'CZK'),
+                'initials' => $this->getInitials($customerName),
+                'avatarBg' => $this->getAvatarBg($customerName),
+                'avatarText' => $this->getAvatarText($customerName),
+                'dateStr' => Carbon::parse($booking->booking_date)->locale('cs')->translatedFormat('j. F Y'),
+                'timeStr' => $startTime->format('H:i').'–'.$endTime->format('H:i'),
+                'price' => $this->formatMoney($booking->total_price, $currency),
+                'currency' => $currency,
                 'customerType' => $customerType,
                 'notes' => $booking->customer_notes ? '"'.$booking->customer_notes.'"' : '',
-                'customerEmail' => $booking->customer->email,
-                'customerPhone' => $booking->customer->phone,
+                'customerEmail' => $booking->customer_contact_email,
+                'customerPhone' => $booking->customer_phone ?: $booking->customer?->phone,
             ];
         });
 
@@ -104,7 +116,7 @@ class CalendarController extends Controller
         for ($i = 0; $i < $daysCount; $i++) {
             $date = $startDate->copy()->addDays($i);
             $weekDays[] = [
-                'day' => $date->format('D'),
+                'day' => $date->locale('cs')->translatedFormat('D'),
                 'date' => (int) $date->format('d'),
                 'dayIndex' => $i,
                 'isToday' => $date->isToday(),
@@ -113,21 +125,28 @@ class CalendarController extends Controller
         }
 
         if ($view === 'month') {
-            $rangeLabel = $startDate->format('F Y');
+            $rangeLabel = $startDate->locale('cs')->translatedFormat('F Y');
         } elseif ($view === 'day' || $view === 'today') {
-            $rangeLabel = $startDate->format('M d, Y');
+            $rangeLabel = $startDate->locale('cs')->translatedFormat('j. F Y');
         } else {
-            $rangeLabel = $startDate->format('M d').' – '.$endDate->format('M d, Y');
+            $rangeLabel = $startDate->locale('cs')->translatedFormat('j. M').' – '.$endDate->locale('cs')->translatedFormat('j. M Y');
         }
 
         // Calculate stats for the week
+        $revenueByCurrency = $this->revenueByCurrency($bookings);
         $weekStats = [
             'total_bookings' => $bookings->count(),
             'completed' => $bookings->where('status', 'completed')->count(),
             'pending' => $bookings->where('status', 'pending')->count(),
             'confirmed' => $bookings->where('status', 'confirmed')->count(),
             'cancelled' => $bookings->where('status', 'cancelled')->count(),
-            'revenue' => $bookings->where('status', '!=', 'cancelled')->sum('total_price'),
+            // Preserve the numeric prop when there is one currency; a mixed
+            // total is intentionally null because adding raw currencies is false.
+            'revenue' => $revenueByCurrency->count() <= 1
+                ? (float) ($revenueByCurrency->first() ?? 0)
+                : null,
+            'formatted_revenue' => $this->formatCurrencyTotals($revenueByCurrency, $shops->pluck('currency')),
+            'revenue_by_currency' => $revenueByCurrency->all(),
         ];
 
         return Inertia::render('Vendor/Calendar', [
@@ -148,12 +167,61 @@ class CalendarController extends Controller
      */
     private function getInitials(string $name): string
     {
-        $words = explode(' ', trim($name));
+        $words = preg_split('/\s+/u', trim($name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         if (count($words) >= 2) {
-            return strtoupper($words[0][0].$words[1][0]);
+            return mb_strtoupper(mb_substr($words[0], 0, 1).mb_substr($words[1], 0, 1));
         }
 
-        return strtoupper(substr($name, 0, 2));
+        return $words === [] ? '?' : mb_strtoupper(mb_substr($words[0], 0, 2));
+    }
+
+    private function customerIdentity(Booking $booking): string
+    {
+        if ($booking->user_id !== null) {
+            return 'user:'.$booking->user_id;
+        }
+
+        $email = mb_strtolower(trim($booking->customer_contact_email));
+
+        return $email !== '' ? 'guest:'.$email : 'guest-booking:'.$booking->id;
+    }
+
+    private function revenueByCurrency(Collection $bookings): Collection
+    {
+        return $bookings
+            ->where('status', '!=', 'cancelled')
+            ->groupBy(fn (Booking $booking) => strtoupper(
+                $booking->currency ?: $booking->shop?->currency ?: 'CZK'
+            ))
+            ->map(fn (Collection $currencyBookings) => $currencyBookings->sum(
+                fn (Booking $booking) => (float) $booking->total_price
+            ));
+    }
+
+    private function formatCurrencyTotals(Collection $totals, Collection $fallbackCurrencies): string
+    {
+        if ($totals->isNotEmpty()) {
+            return $totals->map(
+                fn ($amount, string $currency) => $this->formatMoney($amount, $currency)
+            )->implode(' | ');
+        }
+
+        $currencies = $fallbackCurrencies
+            ->filter()
+            ->map(fn ($currency) => strtoupper((string) $currency))
+            ->unique()
+            ->values();
+
+        if ($currencies->isEmpty()) {
+            $currencies = collect(['CZK']);
+        }
+
+        return $currencies->map(fn (string $currency) => $this->formatMoney(0, $currency))->implode(' | ');
+    }
+
+    private function formatMoney($amount, string $currency): string
+    {
+        return Money::format($amount, $currency);
     }
 
     /**

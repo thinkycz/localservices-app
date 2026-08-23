@@ -1,93 +1,71 @@
 <script setup>
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import { ChevronLeft, ChevronRight } from '@lucide/vue';
 
 const props = defineProps({
-    meta: {
-        type: Object,
-        required: true,
-    },
-    links: {
-        type: Array,
-        required: true,
-    },
+    meta: { type: Object, required: true },
+    links: { type: Array, required: true },
 });
 
-// Build visible page numbers with ellipsis
+const currentPage = computed(() => Number(props.meta.current_page ?? 1));
+const lastPage = computed(() => Number(props.meta.last_page ?? 1));
 const visiblePages = computed(() => {
-    const current = props.meta.current_page;
-    const last = props.meta.last_page;
     const pages = [];
 
-    if (last <= 7) {
-        for (let i = 1; i <= last; i++) pages.push(i);
+    if (lastPage.value <= 7) {
+        for (let page = 1; page <= lastPage.value; page += 1) pages.push(page);
         return pages;
     }
 
     pages.push(1);
-    if (current > 3) pages.push('...');
+    if (currentPage.value > 3) pages.push('start-ellipsis');
 
-    const start = Math.max(2, current - 1);
-    const end = Math.min(last - 1, current + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
+    const start = Math.max(2, currentPage.value - 1);
+    const end = Math.min(lastPage.value - 1, currentPage.value + 1);
+    for (let page = start; page <= end; page += 1) pages.push(page);
 
-    if (current < last - 2) pages.push('...');
-    pages.push(last);
-
+    if (currentPage.value < lastPage.value - 2) pages.push('end-ellipsis');
+    pages.push(lastPage.value);
     return pages;
 });
 
-function getPageUrl(page) {
-    const link = props.links.find(l => l.label == page);
-    return link?.url ?? null;
+const previousUrl = computed(() => props.links[0]?.url ?? null);
+const nextUrl = computed(() => props.links[props.links.length - 1]?.url ?? null);
+
+function pageUrl(page) {
+    return props.links.find((link) => Number(link.label) === page)?.url ?? null;
 }
 </script>
 
 <template>
-    <div class="flex flex-col items-center gap-4 mt-8">
-        <!-- Load More (optional visual) -->
-        <div class="text-sm text-gray-500">
-            {{ meta.from }}–{{ meta.to }} of {{ meta.total }} results
-        </div>
+    <nav v-if="lastPage > 1" class="mt-8 flex flex-col items-center gap-4" :aria-label="$t('Pagination')">
+        <p class="text-sm text-muted">
+            {{ meta.from ?? 0 }}–{{ meta.to ?? 0 }} {{ $t('of') }} {{ meta.total ?? 0 }}
+        </p>
 
-        <!-- Page numbers -->
-        <div class="flex items-center gap-1">
-            <!-- Prev -->
-            <Link
-                v-if="meta.current_page > 1"
-                :href="links[0]?.url ?? '#'"
-                class="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition"
-            >
-                ‹
+        <div class="flex flex-wrap items-center justify-center gap-1">
+            <Link v-if="previousUrl" :href="previousUrl" class="ui-icon-button" rel="prev" :aria-label="$t('Previous page')">
+                <ChevronLeft :size="19" aria-hidden="true" />
             </Link>
+            <span v-else class="h-11 w-11" aria-hidden="true"></span>
 
             <template v-for="page in visiblePages" :key="page">
-                <span
-                    v-if="page === '...'"
-                    class="px-3 py-2 text-sm text-gray-400"
-                >
-                    ...
-                </span>
+                <span v-if="typeof page === 'string'" class="flex h-11 min-w-8 items-center justify-center px-1 text-sm text-muted" aria-hidden="true">…</span>
                 <Link
                     v-else
-                    :href="getPageUrl(page) ?? '#'"
-                    class="px-3 py-2 text-sm rounded-lg transition font-medium"
-                    :class="page === meta.current_page
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                        : 'text-gray-600 hover:bg-gray-100'"
-                >
-                    {{ page }}
-                </Link>
+                    :href="pageUrl(page) ?? '#'"
+                    class="flex h-11 min-w-11 items-center justify-center rounded-xl px-2 text-sm font-bold transition"
+                    :class="page === currentPage ? 'bg-brand-600 text-white' : 'text-muted hover:bg-brand-50 hover:text-brand-800'"
+                    :aria-current="page === currentPage ? 'page' : undefined"
+                    :aria-label="`${$t('Page')} ${page}`"
+                >{{ page }}</Link>
             </template>
 
-            <!-- Next -->
-            <Link
-                v-if="meta.current_page < meta.last_page"
-                :href="links[links.length - 1]?.url ?? '#'"
-                class="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition"
-            >
-                ›
+            <Link v-if="nextUrl" :href="nextUrl" class="ui-icon-button" rel="next" :aria-label="$t('Next page')">
+                <ChevronRight :size="19" aria-hidden="true" />
             </Link>
+            <span v-else class="h-11 w-11" aria-hidden="true"></span>
         </div>
-    </div>
+    </nav>
 </template>

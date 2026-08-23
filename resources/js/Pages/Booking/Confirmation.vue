@@ -1,183 +1,184 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import {
+    CalendarDays,
+    Check,
+    Clock3,
+    Mail,
+    MapPin,
+    NotebookPen,
+    ShieldCheck,
+} from '@lucide/vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
     booking: { type: Object, required: true },
 });
 
-
-
-function formatDate(dateStr) {
-    if (!dateStr) return 'Invalid Date';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) {
-        const isoDate = new Date(dateStr + 'T00:00:00');
-        if (!isNaN(isoDate.getTime())) {
-            return isoDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-        }
-        return 'Invalid Date';
-    }
-    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-}
-
-function formatTime(time) {
-    if (!time) return '';
-    const s = String(time).trim();
-    if (!s) return '';
-    if (/[ap]m\b/.test(s) && !s.includes('T')) return s;
-    const asDate = new Date(s);
-    if (!Number.isNaN(asDate.getTime())) {
-        return asDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    }
-    const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/);
-    if (m) {
-        const h = Number(m[1]);
-        const min = Number(m[2]);
-        const d = new Date(1970, 0, 1, h, min, 0);
-        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    }
-    return s;
-}
+const page = usePage();
+const isEnglish = computed(() => page.props.locale === 'en');
+const locale = computed(() => isEnglish.value ? 'en-US' : 'cs-CZ');
+const tr = (czech, english) => isEnglish.value ? english : czech;
 
 const statusConfig = {
-    pending:   { label: 'Pending',   bg: 'bg-amber-50',  text: 'text-amber-700',  ring: 'ring-amber-600/20',  dot: 'bg-amber-500' },
-    confirmed: { label: 'Confirmed', bg: 'bg-green-50',  text: 'text-green-700',  ring: 'ring-green-600/20',  dot: 'bg-green-500' },
-    completed: { label: 'Completed', bg: 'bg-gray-50',   text: 'text-gray-700',   ring: 'ring-gray-600/10',   dot: 'bg-gray-500' },
-    cancelled: { label: 'Cancelled', bg: 'bg-red-50',    text: 'text-red-700',    ring: 'ring-red-600/20',    dot: 'bg-red-500' },
+    pending: { cs: 'Čeká na potvrzení', en: 'Pending', classes: 'bg-amber-50 text-amber-800 ring-amber-600/20' },
+    confirmed: { cs: 'Potvrzeno', en: 'Confirmed', classes: 'bg-green-50 text-green-800 ring-green-600/20' },
+    completed: { cs: 'Dokončeno', en: 'Completed', classes: 'bg-gray-100 text-gray-700 ring-gray-500/20' },
+    cancelled: { cs: 'Zrušeno', en: 'Cancelled', classes: 'bg-red-50 text-red-800 ring-red-600/20' },
 };
 
-const status = statusConfig[props.booking.status] || statusConfig.pending;
+const status = computed(() => statusConfig[props.booking.status] ?? statusConfig.pending);
+const statusLabel = computed(() => isEnglish.value ? status.value.en : status.value.cs);
+const price = computed(() => props.booking.price_amount ?? props.booking.total_price ?? props.booking.service?.price ?? null);
+const currency = computed(() => props.booking.currency || props.booking.shop?.currency || 'CZK');
+const timezone = computed(() => props.booking.timezone || props.booking.shop?.timezone || 'Europe/Prague');
+
+function dateOnly(value) {
+    if (!value) return '';
+    return String(value).slice(0, 10);
+}
+
+function formatDate(value) {
+    const raw = dateOnly(value);
+    if (!raw) return '—';
+    const date = new Date(`${raw}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return '—';
+    return new Intl.DateTimeFormat(locale.value, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    }).format(date);
+}
+
+function formatTime(value) {
+    if (!value) return '—';
+    const match = String(value).match(/^(\d{1,2}):(\d{2})/);
+    return match ? `${String(Number(match[1])).padStart(2, '0')}:${match[2]}` : '—';
+}
+
+function formatMoney(value) {
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) return '—';
+    try {
+        return new Intl.NumberFormat(locale.value, {
+            style: 'currency',
+            currency: currency.value,
+            maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+        }).format(amount);
+    } catch {
+        return `${amount.toFixed(2)} ${currency.value}`;
+    }
+}
 </script>
 
 <template>
+    <Head :title="tr('Rezervace vytvořena', 'Booking created')" />
+
     <AppLayout>
-        <div class="min-h-screen bg-gradient-to-b from-green-50/50 via-white to-gray-50 py-12">
-            <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="ui-container py-10 sm:py-14">
+            <div class="mx-auto max-w-3xl">
+                <header class="text-center">
+                    <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-soft">
+                        <Check :size="34" stroke-width="2.5" aria-hidden="true" />
+                    </span>
+                    <p class="mt-5 text-sm font-bold text-brand-700">{{ tr('Hotovo', 'All set') }}</p>
+                    <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-ink">
+                        {{ tr('Rezervaci jsme přijali', 'We received your booking') }}
+                    </h1>
+                    <p class="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted sm:text-base">
+                        {{ tr(
+                            'Potvrzení jsme poslali e-mailem. Aktuální stav rezervace najdete kdykoli ve svém účtu.',
+                            'We sent a confirmation by email. You can find the current booking status in your account at any time.',
+                        ) }}
+                    </p>
+                </header>
 
-                <!-- Success Header -->
-                <div class="text-center mb-10">
-                    <div class="relative inline-block mb-5">
-                        <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-xl shadow-green-200/50">
-                            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                            </svg>
+                <article class="ui-card mt-8 overflow-hidden" aria-labelledby="booking-details-heading">
+                    <div class="flex flex-col gap-3 border-b border-line bg-brand-50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                        <div>
+                            <h2 id="booking-details-heading" class="font-bold text-ink">
+                                {{ tr('Podrobnosti rezervace', 'Booking details') }}
+                            </h2>
+                            <p class="mt-1 text-xs text-muted">{{ tr('Číslo rezervace', 'Booking number') }} #{{ booking.id }}</p>
                         </div>
-                        <!-- Pulse ring -->
-                        <div class="absolute inset-0 w-20 h-20 bg-green-400 rounded-full animate-ping opacity-20"></div>
-                    </div>
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $t('Booking Confirmed!') }}</h1>
-                    <p class="text-gray-500 text-base">{{ $t('Your appointment has been successfully scheduled') }}</p>
-                </div>
-
-                <!-- Booking Card -->
-                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6">
-
-                    <!-- Gradient Header -->
-                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 class="text-white font-bold text-lg">{{ $t('Booking Details') }}</h2>
-                                <p class="text-blue-100 text-xs">Confirmation #{{ booking.id }}</p>
-                            </div>
-                        </div>
-                        <span :class="[status.bg, status.text, status.ring, 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ring-1 ring-inset uppercase tracking-wide']">
-                            <span :class="[status.dot, 'w-1.5 h-1.5 rounded-full']"></span>
-                            {{ status.label }}
+                        <span :class="[status.classes, 'inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-bold ring-1 ring-inset']">
+                            {{ statusLabel }}
                         </span>
                     </div>
 
-                    <div class="p-6 space-y-5">
-
-                        <!-- Service & Offering -->
-                        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
-                                </svg>
+                    <div class="p-5 sm:p-6">
+                        <div class="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-brand-700">{{ booking.shop?.name || tr('Provozovna', 'Shop') }}</p>
+                                <h3 class="mt-1 text-xl font-bold text-ink">{{ booking.service?.name || tr('Rezervovaná služba', 'Booked service') }}</h3>
+                                <p v-if="booking.service?.duration_minutes" class="mt-1 text-sm text-muted">{{ booking.service.duration_minutes }} min</p>
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-gray-900 text-base">{{ booking.shop?.name }}</h3>
-                                <p class="text-sm text-gray-500 mt-0.5">{{ booking.service?.name }}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-bold text-gray-900 text-base">{{ Number(booking.service?.price ?? 0).toFixed(2) }} {{ booking.shop?.currency || 'CZK' }}</p>
-                            </div>
+                            <strong class="text-xl text-ink">{{ formatMoney(price) }}</strong>
                         </div>
 
-                        <!-- Info Grid -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-4 bg-gray-50 rounded-xl">
-                                <div class="flex items-center gap-2 mb-1.5">
-                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('Date') }}</span>
-                                </div>
-                                <p class="font-semibold text-gray-900 text-sm">{{ formatDate(booking.booking_date) }}</p>
+                        <dl class="mt-5 grid gap-4 sm:grid-cols-2">
+                            <div class="rounded-xl bg-gray-50 p-4">
+                                <dt class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted">
+                                    <CalendarDays :size="17" class="text-brand-700" aria-hidden="true" />
+                                    {{ tr('Datum', 'Date') }}
+                                </dt>
+                                <dd class="mt-2 font-semibold text-ink">{{ formatDate(booking.booking_date) }}</dd>
                             </div>
-                            <div class="p-4 bg-gray-50 rounded-xl">
-                                <div class="flex items-center gap-2 mb-1.5">
-                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('Time') }}</span>
-                                </div>
-                                <p class="font-semibold text-gray-900 text-sm">{{ formatTime(booking.start_time) }} – {{ formatTime(booking.end_time) }}</p>
+                            <div class="rounded-xl bg-gray-50 p-4">
+                                <dt class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted">
+                                    <Clock3 :size="17" class="text-brand-700" aria-hidden="true" />
+                                    {{ tr('Čas', 'Time') }}
+                                </dt>
+                                <dd class="mt-2 font-semibold text-ink">{{ formatTime(booking.start_time) }}–{{ formatTime(booking.end_time) }}</dd>
+                                <dd class="mt-1 text-xs text-muted">{{ timezone }}</dd>
                             </div>
-                        </div>
+                            <div v-if="booking.shop?.address" class="rounded-xl bg-gray-50 p-4 sm:col-span-2">
+                                <dt class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted">
+                                    <MapPin :size="17" class="text-brand-700" aria-hidden="true" />
+                                    {{ tr('Místo', 'Location') }}
+                                </dt>
+                                <dd class="mt-2 font-semibold text-ink">
+                                    {{ booking.shop.address }}<span v-if="booking.shop.city">, {{ booking.shop.city }}</span>
+                                </dd>
+                            </div>
+                        </dl>
 
-                        <!-- Provider -->
-                        <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('Provider') }}</div>
-                                <div class="font-semibold text-gray-900 text-sm">{{ booking.provider?.name }}</div>
-                            </div>
+                        <div v-if="booking.customer_notes" class="mt-5 rounded-xl border border-line p-4">
+                            <h3 class="flex items-center gap-2 text-sm font-bold text-ink">
+                                <NotebookPen :size="18" class="text-brand-700" aria-hidden="true" />
+                                {{ tr('Vaše poznámka', 'Your note') }}
+                            </h3>
+                            <p class="mt-2 whitespace-pre-line text-sm leading-6 text-muted">{{ booking.customer_notes }}</p>
                         </div>
+                    </div>
+                </article>
+
+                <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                    <div class="flex items-start gap-3 rounded-2xl border border-line bg-white p-4">
+                        <Mail :size="20" class="mt-0.5 flex-none text-brand-700" aria-hidden="true" />
+                        <p class="text-sm leading-6 text-muted">
+                            {{ tr('Potvrzení a případné změny posíláme na e-mail uvedený u rezervace.', 'Confirmation and any updates are sent to the email attached to this booking.') }}
+                        </p>
+                    </div>
+                    <div class="flex items-start gap-3 rounded-2xl border border-line bg-white p-4">
+                        <ShieldCheck :size="20" class="mt-0.5 flex-none text-brand-700" aria-hidden="true" />
+                        <p class="text-sm leading-6 text-muted">
+                            {{ tr('Bezplatné zrušení je možné nejpozději 24 hodin před začátkem.', 'Free cancellation is available up to 24 hours before the appointment.') }}
+                        </p>
                     </div>
                 </div>
 
-                <!-- Notes Card -->
-                <div v-if="booking.customer_notes" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        <h3 class="font-semibold text-gray-900 text-sm">{{ $t('Your Notes') }}</h3>
-                    </div>
-                    <p class="text-gray-600 text-sm leading-relaxed">{{ booking.customer_notes }}</p>
+                <div class="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                    <Link :href="route('bookings.index')" class="ui-button ui-button-primary">
+                        <CalendarDays :size="18" aria-hidden="true" />
+                        {{ tr('Moje rezervace', 'My bookings') }}
+                    </Link>
+                    <Link :href="route('shops.index')" class="ui-button ui-button-secondary">
+                        {{ tr('Procházet služby', 'Browse services') }}
+                    </Link>
                 </div>
-
-                <!-- Action Buttons -->
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <Link
-                        :href="route('bookings.index')"
-                        class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl text-center transition-all shadow-lg shadow-blue-200/50 hover:shadow-xl flex items-center justify-center gap-2"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>{{ $t('View My Bookings') }}</Link>
-                    <Link
-                        href="/"
-                        class="flex-1 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3.5 px-6 rounded-xl text-center transition-all border border-gray-200 hover:border-gray-300 flex items-center justify-center gap-2"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>{{ $t('Back to Home') }}</Link>
-                </div>
-
-                <!-- Help Text -->
-                <p class="text-center text-xs text-gray-400 mt-6 leading-relaxed">{{ $t('A confirmation email has been sent to your email address.') }}<br />{{ $t('The vendor will contact you if they have any questions.') }}</p>
             </div>
         </div>
     </AppLayout>

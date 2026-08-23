@@ -1,5 +1,7 @@
 # Current Sprint Progress
 
+> **Historical snapshot — superseded 2026-08-23.** The March “production ready,” zero-critical-issues, and all-routes-tested claims below are not current verification. Active delivery state is tracked in [Domluveno relaunch progress](./domluveno-relaunch.md), with route evidence in [the route/flow matrix](../verification/route-flow-matrix.md).
+
 ## Sprint Goal: Audit and Complete Core Features
 
 ### Active Tasks

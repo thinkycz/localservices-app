@@ -1,119 +1,109 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { router, Link } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { ArrowLeft, Search, SlidersHorizontal } from '@lucide/vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import AppPagination from '@/Components/AppPagination.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import FilterSidebar from '@/Components/FilterSidebar.vue';
 import ShopCard from '@/Components/ShopCard.vue';
-import AppPagination from '@/Components/AppPagination.vue';
 
 const props = defineProps({
-    shops:   { type: Object, required: true },
-    categories: { type: Array,  default: () => [] },
-    filters:    { type: Object, default: () => ({}) },
+    shops: { type: Object, required: true },
+    categories: { type: Array, default: () => [] },
+    filters: { type: Object, default: () => ({}) },
 });
 
+const page = usePage();
+const isEnglish = computed(() => page.props.locale === 'en');
+const tr = (czech, english) => isEnglish.value ? english : czech;
 const currentSort = ref(props.filters.sort ?? 'recommended');
+const query = ref(props.filters.q ?? '');
+const title = computed(() => props.filters.q
+    ? tr(`Výsledky pro „${props.filters.q}“`, `Results for “${props.filters.q}”`)
+    : tr('Místní služby', 'Local services'));
 
-const sortOptions = [
-    { value: 'recommended', label: 'Recommended' },
-    { value: 'nearest',     label: 'Nearest' },
-    { value: 'cheapest',    label: 'Cheapest' },
-];
-
-function setSort(value) {
-    currentSort.value = value;
-    router.get(route('shops.index'), { ...props.filters, sort: value }, { preserveScroll: true });
+function search() {
+    const q = query.value.trim();
+    router.get(route('shops.index'), {
+        ...props.filters,
+        q: q || undefined,
+    }, { preserveState: true });
 }
 
-const searchTitle = computed(() => {
-    if (props.filters.q) return `"${props.filters.q}"`;
-    if (props.filters.categories) {
-        const cats = Array.isArray(props.filters.categories) ? props.filters.categories : [props.filters.categories];
-        return cats.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ');
-    }
-    return 'All Services';
-});
+function setSort(event) {
+    currentSort.value = event.target.value;
+    router.get(route('shops.index'), {
+        ...props.filters,
+        sort: currentSort.value,
+    }, { preserveScroll: true, preserveState: true });
+}
 </script>
 
 <template>
     <AppLayout>
-        <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <div class="border-b border-line bg-canvas">
+            <div class="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:px-8">
+                <Link :href="route('home')" class="mb-4 inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-bold text-brand-700 hover:text-brand-800">
+                    <ArrowLeft :size="17" aria-hidden="true" /> {{ tr('Zpět na úvod', 'Back to home') }}
+                </Link>
+                <div class="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+                    <div>
+                        <h1 class="text-3xl font-extrabold tracking-tight text-ink">{{ title }}</h1>
+                        <p class="mt-2 text-sm text-muted">{{ tr('Nalezeno', 'Found') }} {{ shops.total }} {{ shops.total === 1 ? tr('podnik', 'provider') : tr('podniků', 'providers') }}.</p>
+                    </div>
 
-            <!-- Page Header -->
-            <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-5">
-                    <h1 class="text-2xl font-bold text-white mb-1">{{ searchTitle }}</h1>
-                    <p class="text-sm text-blue-200 mb-5">{{ shops.total }} {{ shops.total === 1 ? 'service' : 'services' }} available</p>
-
-                    <!-- Filter + Sort row -->
-                    <div class="flex items-center justify-between gap-4 flex-wrap">
-                        <!-- Filters -->
-                        <FilterSidebar :categories="categories" :filters="filters" />
-
-                        <!-- Sort -->
-                        <div class="flex items-center gap-2 shrink-0">
-                            <span class="text-xs font-semibold text-blue-300 mr-0.5 hidden sm:block">{{ $t('Sort:') }}</span>
-                            <button
-                                v-for="opt in sortOptions"
-                                :key="opt.value"
-                                @click="setSort(opt.value)"
-                                class="px-4 py-2 text-sm font-semibold rounded-full border-2 transition-all"
-                                :class="currentSort === opt.value
-                                    ? 'bg-white border-white text-gray-900'
-                                    : 'bg-transparent border-white/30 text-blue-100 hover:border-white/50 hover:text-white'"
-                            >
-                                {{ opt.label }}
-                            </button>
+                    <form class="flex w-full max-w-xl gap-2" role="search" @submit.prevent="search">
+                        <label for="results-search" class="sr-only">{{ tr('Služba nebo místo', 'Service or place') }}</label>
+                        <div class="relative min-w-0 flex-1">
+                            <Search class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" :size="19" aria-hidden="true" />
+                            <input id="results-search" v-model="query" type="search" :placeholder="tr('Služba nebo místo', 'Service or place')" class="ui-field rounded-xl pl-11">
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Content -->
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-                <!-- Service Cards — 2-column grid -->
-                <div v-if="shops.data.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <ShopCard
-                        v-for="shop in shops.data"
-                        :key="shop.id"
-                        :shop="shop"
-                    />
-                </div>
-
-                <!-- Empty State -->
-                <div v-else class="bg-white rounded-2xl border border-gray-100 p-16 text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-5">
-                        <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $t('No services found') }}</h3>
-                    <p class="text-gray-500 text-sm max-w-sm mx-auto">{{ $t('Try adjusting your filters or search terms.') }}</p>
-                </div>
-
-                <!-- Pagination -->
-                <div v-if="shops.data.length > 0">
-                    <div v-if="shops.current_page < shops.last_page" class="flex justify-center mt-8">
-                        <Link
-                            :href="shops.next_page_url"
-                            class="px-8 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
-                        >{{ $t('Load More') }}</Link>
-                    </div>
-
-                    <AppPagination
-                        :meta="{
-                            current_page: shops.current_page,
-                            last_page: shops.last_page,
-                            from: shops.from,
-                            to: shops.to,
-                            total: shops.total,
-                        }"
-                        :links="shops.links"
-                    />
+                        <button type="submit" class="ui-button ui-button-primary flex-none">{{ tr('Hledat', 'Search') }}</button>
+                    </form>
                 </div>
             </div>
         </div>
+
+        <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div class="mb-7 flex flex-col justify-between gap-4 rounded-2xl border border-line bg-white p-4 shadow-sm sm:flex-row sm:items-center">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                        <SlidersHorizontal :size="19" aria-hidden="true" />
+                    </span>
+                    <FilterSidebar :categories="categories" :filters="filters" />
+                </div>
+
+                <div class="flex items-center gap-3 sm:flex-none">
+                    <label for="shop-sort" class="text-sm font-bold text-muted">{{ tr('Řazení', 'Sort') }}</label>
+                    <select id="shop-sort" :value="currentSort" class="ui-field min-w-40 rounded-xl" @change="setSort">
+                        <option value="recommended">{{ tr('Doporučené', 'Recommended') }}</option>
+                        <option value="cheapest">{{ tr('Nejnižší cenová úroveň', 'Lowest price level') }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div v-if="shops.data.length" class="grid gap-5 lg:grid-cols-2">
+                <ShopCard v-for="shop in shops.data" :key="shop.id" :shop="shop" />
+            </div>
+
+            <EmptyState v-else :title="tr('Nic jsme nenašli', 'No results found')" :description="tr('Zkuste upravit hledaný výraz nebo odebrat některý filtr.', 'Try changing the search or removing a filter.')">
+                <template #action>
+                    <Link :href="route('shops.index')" class="ui-button ui-button-secondary">{{ tr('Vymazat hledání a filtry', 'Clear search and filters') }}</Link>
+                </template>
+            </EmptyState>
+
+            <AppPagination
+                v-if="shops.data.length && shops.last_page > 1"
+                :meta="{
+                    current_page: shops.current_page,
+                    last_page: shops.last_page,
+                    from: shops.from,
+                    to: shops.to,
+                    total: shops.total,
+                }"
+                :links="shops.links"
+            />
+        </main>
     </AppLayout>
 </template>

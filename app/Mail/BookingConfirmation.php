@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\Booking;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -17,7 +18,8 @@ class BookingConfirmation extends Mailable
      * Create a new message instance.
      */
     public function __construct(
-        public Booking $booking
+        public Booking $booking,
+        public ?string $manageUrl = null,
     ) {}
 
     /**
@@ -26,7 +28,7 @@ class BookingConfirmation extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Booking Confirmation - '.$this->booking->service->name,
+            subject: 'Domluveno: přijali jsme rezervaci – '.$this->booking->service->name,
         );
     }
 
@@ -43,7 +45,7 @@ class BookingConfirmation extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

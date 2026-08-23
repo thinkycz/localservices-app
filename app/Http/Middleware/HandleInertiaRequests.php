@@ -40,6 +40,16 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'locale' => $locale,
+            'brand' => [
+                'name' => 'Domluveno',
+                'timezone' => config('app.timezone'),
+                'supported_locales' => ['cs', 'en'],
+            ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'info' => fn () => $request->session()->get('info'),
+            ],
             'translations' => $translations,
             'ziggy' => fn () => [
                 ...(new Ziggy)->toArray(),

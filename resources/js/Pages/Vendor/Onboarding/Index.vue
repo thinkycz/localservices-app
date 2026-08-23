@@ -1,83 +1,71 @@
-<template>
-  <AppLayout>
-    <div class="min-h-screen bg-gray-50 flex flex-col">
-      <!-- Gradient Hero -->
-      <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 pt-16 pb-20">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/20 text-blue-200 text-xs font-bold uppercase tracking-wider mb-6">
-            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>{{ $t('Provider Network') }}</div>
-          <h1 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">{{ $t('Grow your business with') }}<span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">{{ $t('Bookable') }}</span>
-          </h1>
-          <p class="text-lg text-blue-100 max-w-2xl mx-auto mb-8 leading-relaxed">{{ $t('Join our marketplace to connect with new customers and manage your bookings easily. Setup takes less than 5 minutes.') }}</p>
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              :href="route('vendor.onboarding.step1')"
-              class="w-full sm:w-auto px-8 py-3.5 bg-white text-blue-900 font-bold rounded-xl shadow-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-            >{{ $t('Get Started Now') }}<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <!-- Feature Section -->
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 pb-16">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition-shadow">
-            <div class="w-14 h-14 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-            </div>
-            <h3 class="font-bold text-gray-900 mb-2">{{ $t('Reach More Customers') }}</h3>
-            <p class="text-sm text-gray-500 leading-relaxed">{{ $t('List your shops on our platform and get discovered by clients in your area actively looking to book.') }}</p>
-          </div>
-
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition-shadow">
-            <div class="w-14 h-14 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            </div>
-            <h3 class="font-bold text-gray-900 mb-2">{{ $t('Easy Scheduling') }}</h3>
-            <p class="text-sm text-gray-500 leading-relaxed">{{ $t('Manage your availability, appointments, and customer communications all from one beautiful dashboard.') }}</p>
-          </div>
-
-        </div>
-
-        <!-- Requirements -->
-        <div class="mt-12 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
-            <h3 class="font-bold text-gray-900 flex items-center gap-2">
-              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>{{ $t('Setup Checklist') }}</h3>
-          </div>
-          <div class="p-6">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div class="flex items-start gap-3">
-                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
-                <div>
-                  <h4 class="text-sm font-bold text-gray-900">{{ $t('Business Details') }}</h4>
-                  <p class="text-xs text-gray-500 mt-1">{{ $t('Basic contact and profile information') }}</p>
-                </div>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
-                <div>
-                  <h4 class="text-sm font-bold text-gray-900">{{ $t('Shop Profile') }}</h4>
-                  <p class="text-xs text-gray-500 mt-1">{{ $t('Category, name, and description') }}</p>
-                </div>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
-                <div>
-                  <h4 class="text-sm font-bold text-gray-900">{{ $t('Offerings') }}</h4>
-                  <p class="text-xs text-gray-500 mt-1">{{ $t('Packages and duration') }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </AppLayout>
-</template>
-
 <script setup>
+import { Head } from '@inertiajs/vue3';
+import { ArrowRight, BriefcaseBusiness, CalendarClock, CircleCheck, Store } from '@lucide/vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Link } from '@inertiajs/vue3';
+import UiButton from '@/Components/UiButton.vue';
+import UiCard from '@/Components/UiCard.vue';
+import { useOnboardingCopy } from './onboardingCopy';
+
+const copy = useOnboardingCopy();
+
+const items = [
+    { key: 'businessContact', help: 'businessContactHelp', icon: BriefcaseBusiness },
+    { key: 'shopProfile', help: 'shopProfileHelp', icon: Store },
+    { key: 'initialServices', help: 'initialServicesHelp', icon: CalendarClock },
+];
 </script>
+
+<template>
+    <Head :title="copy('providerSetup')" />
+
+    <AppLayout>
+        <section class="border-b border-line bg-white">
+            <div class="ui-container py-12 sm:py-16 lg:py-20">
+                <div class="mx-auto max-w-3xl text-center">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">
+                        <CircleCheck :size="30" aria-hidden="true" />
+                    </div>
+                    <p class="mt-5 text-sm font-bold text-brand-700">{{ copy('providerSetup') }}</p>
+                    <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl lg:text-5xl">
+                        {{ copy('setupTitle') }}
+                    </h1>
+                    <p class="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted sm:text-lg">
+                        {{ copy('setupIntro') }}
+                    </p>
+                    <div class="mt-8 flex justify-center">
+                        <UiButton :href="route('vendor.onboarding.step1')" size="lg">
+                            {{ copy('startSetup') }}
+                            <ArrowRight :size="19" aria-hidden="true" />
+                        </UiButton>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="ui-container py-10 sm:py-14" :aria-labelledby="'setup-checklist'">
+            <div class="mx-auto max-w-5xl">
+                <h2 id="setup-checklist" class="text-center text-xl font-extrabold text-ink sm:text-2xl">
+                    {{ copy('alreadyPrepared') }}
+                </h2>
+                <div class="mt-6 grid gap-4 md:grid-cols-3">
+                    <UiCard v-for="(item, index) in items" :key="item.key" class="h-full">
+                        <div class="flex items-start gap-4 md:block">
+                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 md:mb-4">
+                                <component :is="item.icon" :size="22" aria-hidden="true" />
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-brand-700">{{ copy('step') }} {{ index + 1 }}</p>
+                                <h3 class="mt-1 text-base font-extrabold text-ink">{{ copy(item.key) }}</h3>
+                                <p class="mt-1.5 text-sm leading-6 text-muted">{{ copy(item.help) }}</p>
+                            </div>
+                        </div>
+                    </UiCard>
+                </div>
+
+                <p class="mx-auto mt-6 max-w-2xl rounded-xl border border-line bg-white px-4 py-3 text-center text-sm text-muted">
+                    {{ copy('honestNote') }}
+                </p>
+            </div>
+        </section>
+    </AppLayout>
+</template>

@@ -1,446 +1,121 @@
 <script setup>
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import Modal from '@/Components/Modal.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import UiButton from '@/Components/UiButton.vue';
+import UiCard from '@/Components/UiCard.vue';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, CalendarDays, Check, CircleAlert, Clock, Mail, MapPin, NotebookPen, Phone, UserRound, X } from '@lucide/vue';
+import { computed, ref } from 'vue';
 
-const props = defineProps({
-    booking: { type: Object, default: () => ({}) },
-    customerHistory: { type: Array, default: () => [] },
-});
+const props = defineProps({ booking: { type: Object, required: true }, customerHistory: { type: Array, default: () => [] } });
 
-const showCancelModal = ref(false);
-const cancellationReason = ref('');
-const showNotesModal = ref(false);
-const newNote = ref('');
-const showStatusDropdown = ref(false);
-const currentStatus = computed(() => props.booking.status);
+const showCancel = ref(false);
+const showNotes = ref(false);
+const actionError = ref('');
+const processingAction = ref(null);
+const cancellationForm = useForm({ cancellation_reason: '' });
+const notesForm = useForm({ notes: '' });
 
-function confirmBooking() {
-    router.post(route('vendor.bookings.confirm', props.booking.id));
+const statusMap = {
+    pending: { label: 'Čeká na potvrzení', tone: 'warning' },
+    confirmed: { label: 'Potvrzená', tone: 'brand' },
+    completed: { label: 'Dokončená', tone: 'success' },
+    cancelled: { label: 'Zrušená', tone: 'danger' },
+};
+
+const appointmentStart = computed(() => new Date(`${String(props.booking.booking_date).slice(0, 10)}T${String(props.booking.start_time).slice(0, 8)}`));
+const canComplete = computed(() => props.booking.status === 'confirmed' && appointmentStart.value.getTime() <= Date.now());
+const canCancel = computed(() => ['pending', 'confirmed'].includes(props.booking.status));
+
+function formatDate(value, long = true) {
+    if (!value) return '—';
+    return new Intl.DateTimeFormat('cs-CZ', long ? { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' } : { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${String(value).slice(0, 10)}T12:00:00`));
 }
 
-function completeBooking() {
-    router.post(route('vendor.bookings.complete', props.booking.id));
+function formatTime(value) { return String(value || '').slice(0, 5) || '—'; }
+function customerName() { return props.booking.customer_display_name || props.booking.customer_name || props.booking.customer?.name || 'Zákazník bez jména'; }
+function customerEmail() { return props.booking.customer_contact_email || props.booking.customer_email || props.booking.customer?.email || '—'; }
+function customerPhone() { return props.booking.customer_phone || props.booking.customer?.phone || 'Neuveden'; }
+function money(booking = props.booking) { return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: booking.currency || booking.shop?.currency || 'CZK' }).format(Number(booking.price_amount ?? booking.total_price ?? booking.service?.price ?? 0)); }
+
+function postAction(action, routeName) {
+    actionError.value = '';
+    processingAction.value = action;
+    router.post(route(routeName, props.booking.id), {}, {
+        preserveScroll: true,
+        onError: (errors) => { actionError.value = Object.values(errors || {})[0] || 'Akci se nepodařilo dokončit. Obnovte stránku a zkuste to znovu.'; },
+        onFinish: () => { processingAction.value = null; },
+    });
 }
 
 function cancelBooking() {
-    router.post(route('vendor.bookings.cancel', props.booking.id), {
-        cancellation_reason: cancellationReason.value,
-    }, {
-        onSuccess: () => {
-            showCancelModal.value = false;
-            cancellationReason.value = '';
-        },
+    actionError.value = '';
+    cancellationForm.post(route('vendor.bookings.cancel', props.booking.id), {
+        preserveScroll: true,
+        onSuccess: () => { showCancel.value = false; cancellationForm.reset(); },
+        onError: (errors) => { actionError.value = Object.values(errors || {})[0] || 'Rezervaci se nepodařilo zrušit.'; },
     });
 }
 
-function updateStatus(newStatus) {
-    router.post(route('vendor.bookings.update', props.booking.id), {
-        status: newStatus,
-    }, {
-        onSuccess: () => {
-            showStatusDropdown.value = false;
-        },
-    });
+function saveNotes() {
+    notesForm.post(route('vendor.bookings.notes', props.booking.id), { preserveScroll: true, onSuccess: () => { showNotes.value = false; notesForm.reset(); } });
 }
-
-function addNote() {
-    router.post(route('vendor.bookings.notes', props.booking.id), {
-        notes: newNote.value,
-    }, {
-        onSuccess: () => {
-            showNotesModal.value = false;
-            newNote.value = '';
-        },
-    });
-}
-
-function getStatusConfig(status) {
-    const config = {
-        pending: { label: 'Pending', bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-600/20', dot: 'bg-amber-500' },
-        confirmed: { label: 'Confirmed', bg: 'bg-blue-50', text: 'text-blue-700', ring: 'ring-blue-700/20', dot: 'bg-blue-500' },
-        completed: { label: 'Completed', bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-600/20', dot: 'bg-emerald-500' },
-        cancelled: { label: 'Cancelled', bg: 'bg-red-50', text: 'text-red-700', ring: 'ring-red-600/20', dot: 'bg-red-500' },
-    };
-    return config[status] || config.pending;
-}
-
-function formatDate(date) {
-    return new Date(date).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-}
-
-function formatShortDate(date) {
-    return new Date(date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
-
-function formatTime(time) {
-    if (!time) return '';
-    const s = String(time).trim();
-    if (!s) return '';
-    if (/[ap]m\b/.test(s) && !s.includes('T')) return s;
-
-    const asDate = new Date(s);
-    if (!Number.isNaN(asDate.getTime())) {
-        return asDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    }
-
-    const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/);
-    if (m) {
-        const h = Number(m[1]);
-        const min = Number(m[2]);
-        const d = new Date(1970, 0, 1, h, min, 0);
-        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    }
-
-    return s;
-}
-
-const currentStatusConfig = computed(() => getStatusConfig(currentStatus.value));
 </script>
 
 <template>
-    <Head ::title="$t('`Booking #${booking.id}`')" />
-
+    <Head :title="`Rezervace #${booking.id}`" />
     <VendorLayout activePage="bookings">
-        <div class="flex flex-col gap-6">
+        <div class="mx-auto max-w-6xl space-y-6">
+            <UiButton :href="route('vendor.bookings.index')" variant="ghost" size="sm"><ArrowLeft :size="17" /> Zpět na rezervace</UiButton>
 
-            <!-- Back link -->
-            <div>
-                <Link
-                    :href="route('vendor.bookings.index')"
-                    class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>{{ $t('Back to Bookings') }}</Link>
-            </div>
-
-            <!-- Booking Header Card -->
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div class="flex items-center gap-5">
-                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0">
-                        #{{ booking.id }}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3">
-                            <h1 class="text-xl font-bold text-gray-900">{{ booking.shop.name }}</h1>
-                            <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset', currentStatusConfig.bg, currentStatusConfig.text, currentStatusConfig.ring]">
-                                <span :class="['w-1.5 h-1.5 rounded-full', currentStatusConfig.dot]"></span>
-                                {{ currentStatusConfig.label }}
-                            </span>
-                        </div>
-                        <p class="text-sm text-gray-400 mt-0.5">{{ booking.service.name }} · {{ formatDate(booking.booking_date) }}</p>
-                    </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        <!-- Actions inline -->
-                        <div class="relative">
-                            <!-- Status Dropdown -->
-                            <div class="relative">
-                                <button
-                                    @click="showStatusDropdown = !showStatusDropdown.value"
-                                    class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-                                >
-                                    <span :class="['w-2 h-2 rounded-full', getStatusConfig(currentStatus).dot]"></span>
-                                    <span class="ml-2">{{ getStatusConfig(currentStatus).label }}</span>
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                    </svg>
-                                </button>
-
-                                <!-- Dropdown Menu -->
-                                <div v-if="showStatusDropdown" class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-10">
-                                    <button
-                                        v-for="status in ['pending', 'confirmed', 'completed', 'cancelled']"
-                                        :key="status"
-                                        @click="updateStatus(status)"
-                                        class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-                                    >
-                                        <span :class="['w-2 h-2 rounded-full', getStatusConfig(status).dot]"></span>
-                                        {{ getStatusConfig(status).label }}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div class="min-w-0"><div class="flex flex-wrap items-center gap-3"><h1 class="text-2xl font-extrabold tracking-tight text-ink">Rezervace #{{ booking.id }}</h1><StatusBadge :tone="statusMap[booking.status]?.tone || 'neutral'">{{ statusMap[booking.status]?.label || booking.status }}</StatusBadge></div><p class="mt-2 text-sm text-muted">{{ booking.service?.name || 'Služba' }} · {{ booking.shop?.name || 'Provozovna' }}</p></div>
+                <div class="flex flex-wrap gap-2">
+                    <UiButton v-if="booking.status === 'pending'" :loading="processingAction === 'confirm'" @click="postAction('confirm', 'vendor.bookings.confirm')"><Check :size="18" /> Potvrdit</UiButton>
+                    <UiButton v-if="booking.status === 'confirmed'" :disabled="!canComplete" :loading="processingAction === 'complete'" @click="postAction('complete', 'vendor.bookings.complete')"><Check :size="18" /> Označit jako dokončenou</UiButton>
+                    <UiButton v-if="canCancel" variant="danger" @click="showCancel = true"><X :size="18" /> Zrušit</UiButton>
                 </div>
             </div>
 
-            <!-- Info Cards Row -->
-            <div class="grid grid-cols-5 gap-4">
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">Date</div>
-                    <div class="text-sm font-bold text-gray-900">{{ formatShortDate(booking.booking_date) }}</div>
+            <div v-if="booking.status === 'confirmed' && !canComplete" class="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><CircleAlert :size="20" class="mt-0.5 flex-none" /><p>Rezervaci lze dokončit až po začátku termínu {{ formatDate(booking.booking_date) }} v {{ formatTime(booking.start_time) }}.</p></div>
+            <div v-if="actionError" role="alert" class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-danger"><CircleAlert :size="20" class="mt-0.5 flex-none" /><p>{{ actionError }}</p></div>
+
+            <div class="grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
+                <div class="space-y-5">
+                    <UiCard>
+                        <h2 class="text-base font-extrabold text-ink">Termín a služba</h2>
+                        <dl class="mt-5 grid gap-5 sm:grid-cols-2">
+                            <div><dt class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted"><CalendarDays :size="16" /> Datum</dt><dd class="mt-2 font-bold capitalize text-ink">{{ formatDate(booking.booking_date) }}</dd></div>
+                            <div><dt class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted"><Clock :size="16" /> Čas</dt><dd class="mt-2 font-bold text-ink">{{ formatTime(booking.start_time) }}–{{ formatTime(booking.end_time) }}</dd></div>
+                            <div><dt class="text-xs font-bold uppercase tracking-wide text-muted">Služba</dt><dd class="mt-2 font-bold text-ink">{{ booking.service?.name || 'Služba již není dostupná' }}</dd></div>
+                            <div><dt class="text-xs font-bold uppercase tracking-wide text-muted">Cena</dt><dd class="mt-2 font-bold text-ink">{{ money() }}</dd></div>
+                            <div class="sm:col-span-2"><dt class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted"><MapPin :size="16" /> Provozovna</dt><dd class="mt-2 font-bold text-ink">{{ booking.shop?.name || '—' }}</dd><dd class="mt-1 text-sm text-muted">{{ [booking.shop?.address, booking.shop?.city].filter(Boolean).join(', ') }}</dd></div>
+                        </dl>
+                    </UiCard>
+
+                    <UiCard>
+                        <div class="flex items-center justify-between gap-3"><div><h2 class="text-base font-extrabold text-ink">Poznámky</h2><p class="mt-1 text-sm text-muted">Informace od zákazníka a vaše interní poznámka.</p></div><UiButton variant="secondary" size="sm" @click="showNotes = true"><NotebookPen :size="17" /> Přidat</UiButton></div>
+                        <div class="mt-5 grid gap-4 sm:grid-cols-2"><div class="rounded-xl bg-gray-50 p-4"><p class="text-xs font-bold uppercase text-muted">Od zákazníka</p><p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-ink">{{ booking.customer_notes || 'Bez poznámky' }}</p></div><div class="rounded-xl bg-gray-50 p-4"><p class="text-xs font-bold uppercase text-muted">Interní</p><p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-ink">{{ booking.notes || 'Bez interní poznámky' }}</p></div></div>
+                    </UiCard>
+
+                    <UiCard v-if="customerHistory.length">
+                        <h2 class="text-base font-extrabold text-ink">Předchozí rezervace zákazníka</h2>
+                        <div class="mt-4 divide-y divide-line"><Link v-for="item in customerHistory" :key="item.id" :href="route('vendor.bookings.show', item.id)" class="flex min-h-14 items-center justify-between gap-4 py-3"><div class="min-w-0"><p class="truncate text-sm font-bold text-ink">{{ item.service?.name || 'Služba' }}</p><p class="mt-1 text-xs text-muted">{{ formatDate(item.booking_date, false) }} · {{ formatTime(item.start_time) }}</p></div><StatusBadge :tone="statusMap[item.status]?.tone || 'neutral'">{{ statusMap[item.status]?.label || item.status }}</StatusBadge></Link></div>
+                    </UiCard>
                 </div>
 
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-cyan-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">Time</div>
-                    <div class="text-sm font-bold text-gray-900">{{ formatTime(booking.start_time) }} – {{ formatTime(booking.end_time) }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">Duration</div>
-                    <div class="text-sm font-bold text-gray-900">{{ booking.service.duration_minutes }} min</div>
-                </div>
-
-
-
-                <!-- Customer mini-card -->
-                <Link :href="route('vendor.customers.show', booking.customer.id)" class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-colors group">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                            {{ booking.customer.name.charAt(0).toUpperCase() }}
-                        </div>
-                        <div class="text-xs text-gray-500">Customer</div>
-                    </div>
-                    <div class="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">{{ booking.customer.name }}</div>
-                </Link>
-            </div>
-
-            <!-- Customer Notes -->
-            <div v-if="booking.customer_notes" class="bg-amber-50 rounded-2xl p-5 border border-amber-200/60">
-                <div class="flex items-center gap-2 mb-2">
-                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
-                    </svg>
-                    <h2 class="text-sm font-semibold text-amber-800">Customer Notes</h2>
-                </div>
-                <p class="text-sm text-amber-700 leading-relaxed">{{ booking.customer_notes }}</p>
-            </div>
-
-            <!-- Two-column: Contact + Notes side by side -->
-            <div class="grid grid-cols-2 gap-6">
-                <!-- Contact Actions -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Contact Customer</h2>
-                    </div>
-                    <div class="p-6 flex items-center gap-3">
-                        <a
-                            v-if="booking.customer.email"
-                            :href="'mailto:' + booking.customer.email"
-                            class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                            {{ booking.customer.email }}
-                        </a>
-                        <a
-                            v-if="booking.customer.phone"
-                            :href="'tel:' + booking.customer.phone"
-                            class="inline-flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                            </svg>
-                            {{ booking.customer.phone }}
-                        </a>
-                        <span v-if="!booking.customer.phone" class="text-sm text-gray-400">No phone number</span>
-                    </div>
-                </div>
-
-                <!-- Internal Notes -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Internal Notes</h2>
-                        <button
-                            @click="showNotesModal = true"
-                            class="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            Add Note
-                        </button>
-                    </div>
-                    <div class="p-6">
-                        <div v-if="booking.notes" class="bg-gray-50 rounded-xl p-4">
-                            <pre class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-sans">{{ booking.notes }}</pre>
-                        </div>
-                        <div v-else class="text-center py-2">
-                            <div class="text-sm text-gray-400">No notes added yet</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Customer History -->
-            <div v-if="customerHistory.length > 0" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Other Bookings from {{ booking.customer.name }}</h2>
-                </div>
-                <table class="w-full">
-                    <thead>
-                        <tr class="bg-gray-50/30">
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr
-                            v-for="history in customerHistory"
-                            :key="history.id"
-                            class="group hover:bg-blue-50/30 transition-colors cursor-pointer"
-                            @click="router.visit(route('vendor.bookings.show', history.id))"
-                        >
-                            <td class="px-6 py-3.5">
-                                <span class="text-sm font-medium text-gray-900">{{ history.shop.name }}</span>
-                            </td>
-                            <td class="px-6 py-3.5">
-                                <span class="text-sm text-gray-600">{{ formatShortDate(history.booking_date) }}</span>
-                            </td>
-                            <td class="px-6 py-3.5">
-                                <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset',
-                                    getStatusConfig(history.status).bg,
-                                    getStatusConfig(history.status).text,
-                                    getStatusConfig(history.status).ring]">
-                                    <span :class="['w-1.5 h-1.5 rounded-full', getStatusConfig(history.status).dot]"></span>
-                                    {{ getStatusConfig(history.status).label }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-3.5">
-                                <Link
-                                    :href="route('vendor.bookings.show', history.id)"
-                                    class="text-gray-400 group-hover:text-blue-600 transition-colors"
-                                    @click.stop
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                    </svg>
-                                </Link>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <UiCard class="h-fit">
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 font-extrabold text-brand-800">{{ customerName().split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() }}</span>
+                    <h2 class="mt-4 break-words text-lg font-extrabold text-ink">{{ customerName() }}</h2>
+                    <dl class="mt-5 space-y-4"><div><dt class="flex items-center gap-3 text-xs font-bold uppercase text-muted"><Mail :size="18" class="flex-none text-muted" aria-hidden="true" />E-mail</dt><dd class="ml-[30px] mt-1 break-all text-sm text-ink">{{ customerEmail() }}</dd></div><div><dt class="flex items-center gap-3 text-xs font-bold uppercase text-muted"><Phone :size="18" class="flex-none text-muted" aria-hidden="true" />Telefon</dt><dd class="ml-[30px] mt-1 text-sm text-ink">{{ customerPhone() }}</dd></div><div><dt class="flex items-center gap-3 text-xs font-bold uppercase text-muted"><UserRound :size="18" class="flex-none text-muted" aria-hidden="true" />Typ</dt><dd class="ml-[30px] mt-1 text-sm text-ink">{{ booking.user_id ? 'Registrovaný zákazník' : 'Host bez účtu' }}</dd></div></dl>
+                </UiCard>
             </div>
         </div>
 
-        <!-- Cancel Modal -->
-        <teleport to="body">
-            <transition
-                enter-active-class="transition-opacity duration-200 ease-out"
-                enter-from-class="opacity-0"
-                enter-to-class="opacity-100"
-                leave-active-class="transition-opacity duration-150 ease-in"
-                leave-from-class="opacity-100"
-                leave-to-class="opacity-0"
-            >
-                <div v-if="showCancelModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" @click.self="showCancelModal = false">
-                    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Cancel Booking</h3>
-                                <p class="text-sm text-gray-500">This action cannot be undone.</p>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-5">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Cancellation Reason <span class="text-gray-400 font-normal">(Optional)</span></label>
-                            <textarea
-                                v-model="cancellationReason"
-                                rows="3"
-                                class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm resize-none"
-                                placeholder="Enter reason for cancellation..."
-                            ></textarea>
-                        </div>
-
-                        <div class="flex gap-3">
-                            <button
-                                @click="showCancelModal = false"
-                                class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 rounded-xl transition-colors"
-                            >
-                                Keep Booking
-                            </button>
-                            <button
-                                @click="cancelBooking"
-                                class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition-colors shadow-sm"
-                            >
-                                Cancel Booking
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </transition>
-        </teleport>
-
-        <!-- Add Note Modal -->
-        <teleport to="body">
-            <transition
-                enter-active-class="transition-opacity duration-200 ease-out"
-                enter-from-class="opacity-0"
-                enter-to-class="opacity-100"
-                leave-active-class="transition-opacity duration-150 ease-in"
-                leave-from-class="opacity-100"
-                leave-to-class="opacity-0"
-            >
-                <div v-if="showNotesModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" @click.self="showNotesModal = false">
-                    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-900">Add Note</h3>
-                        </div>
-                        
-                        <div class="mb-5">
-                            <textarea
-                                v-model="newNote"
-                                rows="4"
-                                class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
-                                placeholder="Enter your note..."
-                            ></textarea>
-                        </div>
-
-                        <div class="flex gap-3">
-                            <button
-                                @click="showNotesModal = false"
-                                class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 rounded-xl transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                @click="addNote"
-                                class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white font-semibold py-2.5 rounded-xl transition-all duration-200"
-                            >
-                                Add Note
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </transition>
-        </teleport>
+        <Modal :show="showCancel" max-width="md" @close="showCancel = false"><form @submit.prevent="cancelBooking"><div class="p-5 sm:p-6"><h2 class="text-lg font-extrabold text-ink">Zrušit rezervaci?</h2><p class="mt-2 text-sm leading-6 text-muted">Zákazník dostane oznámení. Zrušenou rezervaci už nelze obnovit.</p><div class="mt-5"><InputLabel for="cancel-reason" value="Důvod pro zákazníka" /><textarea id="cancel-reason" v-model="cancellationForm.cancellation_reason" rows="4" maxlength="500" required class="ui-field mt-2 resize-y" placeholder="Například nemoc nebo provozní důvody" /><InputError class="mt-2" :message="cancellationForm.errors.cancellation_reason" /></div></div><div class="flex flex-col-reverse gap-2 border-t border-line p-4 sm:flex-row sm:justify-end"><UiButton variant="secondary" @click="showCancel = false">Ponechat rezervaci</UiButton><UiButton type="submit" variant="danger" :loading="cancellationForm.processing">Zrušit rezervaci</UiButton></div></form></Modal>
+        <Modal :show="showNotes" max-width="md" @close="showNotes = false"><form @submit.prevent="saveNotes"><div class="p-5 sm:p-6"><h2 class="text-lg font-extrabold text-ink">Přidat interní poznámku</h2><p class="mt-2 text-sm text-muted">Poznámka je viditelná pouze v účtu poskytovatele.</p><textarea v-model="notesForm.notes" rows="5" maxlength="1000" class="ui-field mt-5 resize-y" required /><InputError class="mt-2" :message="notesForm.errors.notes" /></div><div class="flex flex-col-reverse gap-2 border-t border-line p-4 sm:flex-row sm:justify-end"><UiButton variant="secondary" @click="showNotes = false">Zrušit</UiButton><UiButton type="submit" :loading="notesForm.processing">Uložit poznámku</UiButton></div></form></Modal>
     </VendorLayout>
 </template>

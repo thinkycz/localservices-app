@@ -1,331 +1,171 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
+import InputError from '@/Components/InputError.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { ref, nextTick } from 'vue';
+import { nextTick, ref } from 'vue';
+import { Check, KeyRound, ShieldAlert, Trash2, UserRound } from '@lucide/vue';
 
-defineProps({
-    mustVerifyEmail: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
-});
+defineProps({ mustVerifyEmail: Boolean, status: String });
 
 const page = usePage();
 const user = page.props.auth.user;
+const copy = (cs, en) => page.props.locale === 'cs' ? cs : en;
+const userInitials = user.name ? user.name.split(' ').map((part) => part[0]).join('').toUpperCase().slice(0, 2) : 'U';
 
-const userInitials = user.name
-    ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
-    : 'U';
-
-// ── Profile Form ──────────────────────────────────────────────────────────
-const profileForm = useForm({
-    name: user.name,
-    email: user.email,
-});
-
-// ── Password Form ─────────────────────────────────────────────────────────
-const passwordInput = ref(null);
+const profileForm = useForm({ name: user.name, email: user.email });
 const currentPasswordInput = ref(null);
+const passwordInput = ref(null);
+const passwordForm = useForm({ current_password: '', password: '', password_confirmation: '' });
 
-const passwordForm = useForm({
-    current_password: '',
-    password: '',
-    password_confirmation: '',
+const updatePassword = () => passwordForm.put(route('password.update'), {
+    preserveScroll: true,
+    onSuccess: () => passwordForm.reset(),
+    onError: () => {
+        if (passwordForm.errors.password) {
+            passwordForm.reset('password', 'password_confirmation');
+            passwordInput.value?.focus();
+        }
+        if (passwordForm.errors.current_password) {
+            passwordForm.reset('current_password');
+            currentPasswordInput.value?.focus();
+        }
+    },
 });
 
-const updatePassword = () => {
-    passwordForm.put(route('password.update'), {
-        preserveScroll: true,
-        onSuccess: () => passwordForm.reset(),
-        onError: () => {
-            if (passwordForm.errors.password) {
-                passwordForm.reset('password', 'password_confirmation');
-                passwordInput.value?.focus();
-            }
-            if (passwordForm.errors.current_password) {
-                passwordForm.reset('current_password');
-                currentPasswordInput.value?.focus();
-            }
-        },
-    });
-};
-
-// ── Delete Account Form ───────────────────────────────────────────────────
 const confirmingDeletion = ref(false);
 const deletePasswordInput = ref(null);
-
-const deleteForm = useForm({
-    password: '',
-});
-
+const deleteForm = useForm({ password: '' });
 const confirmDeletion = () => {
     confirmingDeletion.value = true;
     nextTick(() => deletePasswordInput.value?.focus());
 };
-
-const deleteAccount = () => {
-    deleteForm.delete(route('profile.destroy'), {
-        preserveScroll: true,
-        onSuccess: () => { confirmingDeletion.value = false; },
-        onError: () => deletePasswordInput.value?.focus(),
-        onFinish: () => deleteForm.reset(),
-    });
+const cancelDeletion = () => {
+    confirmingDeletion.value = false;
+    deleteForm.clearErrors();
+    deleteForm.reset();
 };
+const deleteAccount = () => deleteForm.delete(route('profile.destroy'), {
+    preserveScroll: true,
+    onError: () => deletePasswordInput.value?.focus(),
+    onFinish: () => deleteForm.reset(),
+});
 </script>
 
 <template>
-    <Head :title="$t('My Profile')" />
+    <Head :title="copy('Můj profil', 'My profile')" />
 
     <AppLayout>
-        <!-- Gradient Header -->
-        <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <div class="flex items-center gap-5">
-                    <div class="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center text-2xl font-bold text-white shrink-0">
-                        {{ userInitials }}
-                    </div>
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">{{ user.name }}</h1>
-                        <p class="text-sm text-blue-200 mt-0.5">{{ user.email }}</p>
+        <section class="border-b border-line bg-white">
+            <div class="ui-container py-8 sm:py-10">
+                <div class="flex items-center gap-4">
+                    <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-lg font-extrabold text-brand-800" aria-hidden="true">{{ userInitials }}</span>
+                    <div class="min-w-0">
+                        <p class="text-sm font-bold text-brand-700">{{ copy('Nastavení účtu', 'Account settings') }}</p>
+                        <h1 class="truncate text-2xl font-extrabold tracking-tight text-ink">{{ user.name }}</h1>
+                        <p class="truncate text-sm text-muted">{{ user.email }}</p>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <!-- ── Profile Information ──────────────────────────────── -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
+        <main id="main-content" class="ui-container py-8 sm:py-10">
+            <div class="grid gap-6 lg:grid-cols-2">
+                <section class="ui-card overflow-hidden" aria-labelledby="profile-heading">
+                    <header class="flex items-center gap-3 border-b border-line px-5 py-4 sm:px-6">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700" aria-hidden="true"><UserRound :size="20" /></span>
+                        <div>
+                            <h2 id="profile-heading" class="font-bold text-ink">{{ copy('Osobní údaje', 'Personal details') }}</h2>
+                            <p class="text-sm text-muted">{{ copy('Jméno a e-mail používaný u rezervací.', 'Your name and booking email.') }}</p>
+                        </div>
+                    </header>
+
+                    <form class="space-y-5 p-5 sm:p-6" @submit.prevent="profileForm.patch(route('profile.update'), { preserveScroll: true })">
+                        <div>
+                            <label for="name" class="mb-1.5 block text-sm font-semibold text-ink">{{ copy('Jméno a příjmení', 'Full name') }}</label>
+                            <input id="name" v-model="profileForm.name" type="text" required autocomplete="name" class="ui-field" :class="{ 'border-danger': profileForm.errors.name }" />
+                            <InputError class="mt-1.5" :message="profileForm.errors.name" />
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-gray-900">{{ $t('Profile Information') }}</h3>
-                            <p class="text-[11px] text-gray-400">{{ $t('Update your name and email address') }}</p>
-                        </div>
-                    </div>
-
-                    <form @submit.prevent="profileForm.patch(route('profile.update'))" class="p-6 space-y-4">
-                        <div>
-                            <label for="name" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Full Name') }}</label>
-                            <input
-                                id="name"
-                                v-model="profileForm.name"
-                                type="text"
-                                required
-                                autofocus
-                                autocomplete="name"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
-                                :placeholder="$t('Your full name')"
-                            />
-                            <p v-if="profileForm.errors.name" class="mt-1 text-xs text-red-500">
-                                {{ profileForm.errors.name }}
-                            </p>
+                            <label for="email" class="mb-1.5 block text-sm font-semibold text-ink">E-mail</label>
+                            <input id="email" v-model="profileForm.email" type="email" required autocomplete="username" inputmode="email" class="ui-field" :class="{ 'border-danger': profileForm.errors.email }" />
+                            <InputError class="mt-1.5" :message="profileForm.errors.email" />
                         </div>
 
-                        <div>
-                            <label for="email" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Email Address') }}</label>
-                            <input
-                                id="email"
-                                v-model="profileForm.email"
-                                type="email"
-                                required
-                                autocomplete="username"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
-                                :placeholder="$t('your@email.com')"
-                            />
-                            <p v-if="profileForm.errors.email" class="mt-1 text-xs text-red-500">
-                                {{ profileForm.errors.email }}
-                            </p>
+                        <div v-if="mustVerifyEmail && user.email_verified_at === null" class="rounded-xl border border-accent/30 bg-accent/10 p-4 text-sm text-ink">
+                            <p>{{ copy('Tento e-mail ještě není ověřený. Pro zákaznické rezervace to nevadí, poskytovatelský profil ale vyžaduje ověření.', 'This email is not verified. Customer booking remains available, but provider setup requires verification.') }}</p>
+                            <Link :href="route('verification.send')" method="post" as="button" class="mt-2 min-h-11 rounded-lg font-bold text-brand-700 hover:text-brand-800">{{ copy('Poslat ověřovací odkaz', 'Send verification link') }}</Link>
                         </div>
 
-                        <!-- Email verification notice -->
-                        <div v-if="mustVerifyEmail && user.email_verified_at === null" class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
-                            <svg class="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                            </svg>
-                            <div>
-                                <p class="text-xs text-amber-700">{{ $t('Your email is unverified.') }}<Link :href="route('verification.send')" method="post" as="button" class="font-bold underline hover:text-amber-900">{{ $t('Resend verification.') }}</Link>
-                                </p>
-                                <p v-if="status === 'verification-link-sent'" class="mt-1 text-xs font-medium text-green-600">{{ $t('Verification link sent!') }}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-3 pt-2">
-                            <button
-                                type="submit"
-                                :disabled="profileForm.processing"
-                                class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-all shadow-sm"
-                            >{{ $t('Save Changes') }}</button>
-                            <Transition
-                                enter-active-class="transition ease-out duration-200"
-                                enter-from-class="opacity-0 translate-y-1"
-                                leave-active-class="transition ease-in duration-150"
-                                leave-to-class="opacity-0"
-                            >
-                                <span v-if="profileForm.recentlySuccessful" class="text-xs font-semibold text-green-600 flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                                    </svg>{{ $t('Saved') }}</span>
-                            </Transition>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button type="submit" :disabled="profileForm.processing" class="ui-button ui-button-primary">{{ copy('Uložit údaje', 'Save details') }}</button>
+                            <span v-if="profileForm.recentlySuccessful" role="status" class="flex items-center gap-1.5 text-sm font-semibold text-success"><Check :size="17" aria-hidden="true" />{{ copy('Uloženo', 'Saved') }}</span>
                         </div>
                     </form>
-                </div>
+                </section>
 
-                <!-- ── Update Password ──────────────────────────────────── -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
-                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
+                <section class="ui-card overflow-hidden" aria-labelledby="password-heading">
+                    <header class="flex items-center gap-3 border-b border-line px-5 py-4 sm:px-6">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700" aria-hidden="true"><KeyRound :size="20" /></span>
+                        <div>
+                            <h2 id="password-heading" class="font-bold text-ink">{{ copy('Změna hesla', 'Change password') }}</h2>
+                            <p class="text-sm text-muted">{{ copy('Použijte jedinečné heslo alespoň o 8 znacích.', 'Use a unique password with at least 8 characters.') }}</p>
+                        </div>
+                    </header>
+
+                    <form class="space-y-5 p-5 sm:p-6" @submit.prevent="updatePassword">
+                        <div>
+                            <label for="current_password" class="mb-1.5 block text-sm font-semibold text-ink">{{ copy('Současné heslo', 'Current password') }}</label>
+                            <input id="current_password" ref="currentPasswordInput" v-model="passwordForm.current_password" type="password" required autocomplete="current-password" class="ui-field" :class="{ 'border-danger': passwordForm.errors.current_password }" />
+                            <InputError class="mt-1.5" :message="passwordForm.errors.current_password" />
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-gray-900">{{ $t('Update Password') }}</h3>
-                            <p class="text-[11px] text-gray-400">{{ $t('Use a strong password to stay secure') }}</p>
+                            <label for="password" class="mb-1.5 block text-sm font-semibold text-ink">{{ copy('Nové heslo', 'New password') }}</label>
+                            <input id="password" ref="passwordInput" v-model="passwordForm.password" type="password" required autocomplete="new-password" class="ui-field" :class="{ 'border-danger': passwordForm.errors.password }" />
+                            <InputError class="mt-1.5" :message="passwordForm.errors.password" />
                         </div>
-                    </div>
-
-                    <form @submit.prevent="updatePassword" class="p-6 space-y-4">
                         <div>
-                            <label for="current_password" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Current Password') }}</label>
-                            <input
-                                id="current_password"
-                                ref="currentPasswordInput"
-                                v-model="passwordForm.current_password"
-                                type="password"
-                                autocomplete="current-password"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
-                                :placeholder="$t('Enter current password')"
-                            />
-                            <p v-if="passwordForm.errors.current_password" class="mt-1 text-xs text-red-500">
-                                {{ passwordForm.errors.current_password }}
-                            </p>
+                            <label for="password_confirmation" class="mb-1.5 block text-sm font-semibold text-ink">{{ copy('Nové heslo znovu', 'Confirm new password') }}</label>
+                            <input id="password_confirmation" v-model="passwordForm.password_confirmation" type="password" required autocomplete="new-password" class="ui-field" :class="{ 'border-danger': passwordForm.errors.password_confirmation }" />
+                            <InputError class="mt-1.5" :message="passwordForm.errors.password_confirmation" />
                         </div>
-
-                        <div>
-                            <label for="password" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('New Password') }}</label>
-                            <input
-                                id="password"
-                                ref="passwordInput"
-                                v-model="passwordForm.password"
-                                type="password"
-                                autocomplete="new-password"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
-                                :placeholder="$t('Enter new password')"
-                            />
-                            <p v-if="passwordForm.errors.password" class="mt-1 text-xs text-red-500">
-                                {{ passwordForm.errors.password }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label for="password_confirmation" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Confirm Password') }}</label>
-                            <input
-                                id="password_confirmation"
-                                v-model="passwordForm.password_confirmation"
-                                type="password"
-                                autocomplete="new-password"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
-                                :placeholder="$t('Confirm new password')"
-                            />
-                            <p v-if="passwordForm.errors.password_confirmation" class="mt-1 text-xs text-red-500">
-                                {{ passwordForm.errors.password_confirmation }}
-                            </p>
-                        </div>
-
-                        <div class="flex items-center gap-3 pt-2">
-                            <button
-                                type="submit"
-                                :disabled="passwordForm.processing"
-                                class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-all shadow-sm"
-                            >{{ $t('Update Password') }}</button>
-                            <Transition
-                                enter-active-class="transition ease-out duration-200"
-                                enter-from-class="opacity-0 translate-y-1"
-                                leave-active-class="transition ease-in duration-150"
-                                leave-to-class="opacity-0"
-                            >
-                                <span v-if="passwordForm.recentlySuccessful" class="text-xs font-semibold text-green-600 flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                                    </svg>{{ $t('Updated') }}</span>
-                            </Transition>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button type="submit" :disabled="passwordForm.processing" class="ui-button ui-button-primary">{{ copy('Změnit heslo', 'Update password') }}</button>
+                            <span v-if="passwordForm.recentlySuccessful" role="status" class="flex items-center gap-1.5 text-sm font-semibold text-success"><Check :size="17" aria-hidden="true" />{{ copy('Heslo změněno', 'Password updated') }}</span>
                         </div>
                     </form>
-                </div>
+                </section>
             </div>
 
-            <!-- ── Delete Account ───────────────────────────────── -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-5">
-                <div class="px-6 py-4 border-b border-red-50 flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
-                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                    </div>
+            <section class="ui-card mt-6 overflow-hidden border-danger/20" aria-labelledby="delete-heading">
+                <header class="flex items-center gap-3 border-b border-danger/10 px-5 py-4 sm:px-6">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-danger/10 text-danger" aria-hidden="true"><Trash2 :size="20" /></span>
                     <div>
-                        <h3 class="text-sm font-bold text-gray-900">{{ $t('Delete Account') }}</h3>
-                        <p class="text-[11px] text-gray-400">{{ $t('Permanently remove your account and all data') }}</p>
+                        <h2 id="delete-heading" class="font-bold text-ink">{{ copy('Smazání účtu', 'Delete account') }}</h2>
+                        <p class="text-sm text-muted">{{ copy('Tento krok je nevratný.', 'This action cannot be undone.') }}</p>
                     </div>
-                </div>
+                </header>
 
-                <div class="p-6">
-                    <div class="bg-red-50/50 border border-red-100 rounded-xl p-4 mb-5 flex items-start gap-3">
-                        <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                        <p class="text-xs text-red-600 leading-relaxed">{{ $t('Once deleted, all data will be permanently removed. Please download any data you wish to retain before proceeding.') }}</p>
+                <div class="p-5 sm:p-6">
+                    <div class="flex items-start gap-3 rounded-xl bg-danger/5 p-4 text-sm leading-6 text-ink">
+                        <ShieldAlert :size="20" class="mt-0.5 shrink-0 text-danger" aria-hidden="true" />
+                        <p>{{ copy('Smazáním odstraníte přístup k účtu a jeho datům. Než budete pokračovat, uložte si informace, které potřebujete.', 'Deleting your account removes access and account data. Save any information you need before continuing.') }}</p>
                     </div>
 
-                    <div v-if="!confirmingDeletion">
-                        <button
-                            @click="confirmDeletion"
-                            class="bg-red-500 hover:bg-red-600 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-sm"
-                        >{{ $t('Delete My Account') }}</button>
-                    </div>
+                    <button v-if="!confirmingDeletion" type="button" class="ui-button ui-button-danger mt-5" @click="confirmDeletion">{{ copy('Smazat můj účet', 'Delete my account') }}</button>
 
-                    <div v-else class="space-y-4">
-                        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                            <p class="text-sm font-semibold text-gray-800 mb-0.5">{{ $t('Confirm account deletion') }}</p>
-                            <p class="text-xs text-gray-500">{{ $t('Enter your password to permanently delete your account.') }}</p>
-                        </div>
-
-                        <div>
-                            <label for="delete_password" class="block text-xs font-semibold text-gray-500 mb-1.5">{{ $t('Your Password') }}</label>
-                            <input
-                                id="delete_password"
-                                ref="deletePasswordInput"
-                                v-model="deleteForm.password"
-                                type="password"
-                                :placeholder="$t('Enter your password')"
-                                @keyup.enter="deleteAccount"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent focus:bg-white transition"
-                            />
-                            <p v-if="deleteForm.errors.password" class="mt-1 text-xs text-red-500">
-                                {{ deleteForm.errors.password }}
-                            </p>
-                        </div>
-
-                        <div class="flex items-center gap-3">
-                            <button
-                                @click="deleteAccount"
-                                :disabled="deleteForm.processing"
-                                class="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-sm"
-                            >{{ $t('Confirm Delete') }}</button>
-                            <button
-                                @click="confirmingDeletion = false; deleteForm.reset()"
-                                class="border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors"
-                            >{{ $t('Cancel') }}</button>
+                    <div v-else class="mt-5 max-w-lg rounded-2xl border border-danger/20 p-5" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-heading">
+                        <h3 id="confirm-delete-heading" class="font-bold text-ink">{{ copy('Opravdu účet smazat?', 'Delete this account?') }}</h3>
+                        <p class="mt-1 text-sm leading-6 text-muted">{{ copy('Pro potvrzení zadejte své heslo.', 'Enter your password to confirm.') }}</p>
+                        <label for="delete_password" class="mb-1.5 mt-4 block text-sm font-semibold text-ink">{{ copy('Heslo', 'Password') }}</label>
+                        <input id="delete_password" ref="deletePasswordInput" v-model="deleteForm.password" type="password" autocomplete="current-password" class="ui-field" :class="{ 'border-danger': deleteForm.errors.password }" @keyup.enter="deleteAccount" />
+                        <InputError class="mt-1.5" :message="deleteForm.errors.password" />
+                        <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row">
+                            <button type="button" class="ui-button ui-button-secondary" @click="cancelDeletion">{{ copy('Zpět', 'Go back') }}</button>
+                            <button type="button" :disabled="deleteForm.processing" class="ui-button ui-button-danger" @click="deleteAccount">{{ copy('Trvale smazat účet', 'Permanently delete account') }}</button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
+        </main>
     </AppLayout>
 </template>

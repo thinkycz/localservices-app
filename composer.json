@@ -6,6 +6,7 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
+        "ext-intl": "*",
         "php": "^8.2",
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image": "^3.11",
@@ -37,7 +38,9 @@
         }
     },
     "scripts": {
+        "security:audit": "composer audit --locked",
         "lint": "pint",
+        "lint:test": "pint --test",
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",

@@ -1,5 +1,7 @@
 # Release Readiness Assessment
 
+> **Historical assessment — superseded 2026-08-23.** The March production approval, route-count, coverage, and zero-critical-issue claims were invalidated by the Domluveno audit. Use the [fresh Domluveno readiness decision](./domluveno-release-readiness.md) and [current route/flow matrix](./route-flow-matrix.md) instead.
+
 ## Executive Summary
 **Status**: ✅ **READY FOR PRODUCTION**
 

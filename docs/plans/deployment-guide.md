@@ -1,5 +1,7 @@
 # Production Deployment Guide
 
+> **Historical document — superseded 2026-08-23.** This March 2026 guide predates the Domluveno audit and is not release authorization. Use the [fresh readiness report](../verification/domluveno-release-readiness.md), [Domluveno relaunch plan](./domluveno-relaunch.md), and [current route/flow matrix](../verification/route-flow-matrix.md).
+
 ## Overview
 This guide provides step-by-step instructions for deploying the Local Services App to production.
 

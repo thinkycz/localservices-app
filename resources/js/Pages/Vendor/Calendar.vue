@@ -1,7 +1,20 @@
 <script setup>
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 import { Head, router, Link, useRemember } from '@inertiajs/vue3';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import {
+    CalendarDays,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    Clock3,
+    Eye,
+    Mail,
+    Phone,
+    Tag,
+    X,
+} from '@lucide/vue';
+import { layoutBookingsForDay } from '@/lib/calendarLayout';
 
 const props = defineProps({
     bookings: { type: Array, default: () => [] },
@@ -27,12 +40,27 @@ const showStatusDropdown = ref(false);
 
 function getStatusConfig(status) {
     const config = {
-        pending: { label: 'Pending', bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-600/20', dot: 'bg-amber-500' },
-        confirmed: { label: 'Confirmed', bg: 'bg-blue-50', text: 'text-blue-700', ring: 'ring-blue-700/20', dot: 'bg-blue-500' },
-        completed: { label: 'Completed', bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-600/20', dot: 'bg-emerald-500' },
-        cancelled: { label: 'Cancelled', bg: 'bg-red-50', text: 'text-red-700', ring: 'ring-red-600/20', dot: 'bg-red-500' },
+        pending: { label: 'Čeká na potvrzení', bg: 'bg-amber-50', text: 'text-amber-800', ring: 'ring-amber-600/20', dot: 'bg-amber-500' },
+        confirmed: { label: 'Potvrzeno', bg: 'bg-brand-50', text: 'text-brand-800', ring: 'ring-brand-700/20', dot: 'bg-brand-600' },
+        completed: { label: 'Dokončeno', bg: 'bg-green-50', text: 'text-green-800', ring: 'ring-green-600/20', dot: 'bg-success' },
+        cancelled: { label: 'Zrušeno', bg: 'bg-red-50', text: 'text-red-800', ring: 'ring-red-600/20', dot: 'bg-danger' },
     };
     return config[status] || config.pending;
+}
+
+function availableStatusActions(booking) {
+    if (booking.status === 'pending') return ['confirmed'];
+    if (booking.status !== 'confirmed') return [];
+
+    const startsAt = new Date(
+        Number(booking.fullDate.slice(0, 4)),
+        Number(booking.fullDate.slice(5, 7)) - 1,
+        Number(booking.fullDate.slice(8, 10)),
+        booking.startHour,
+        booking.startMin,
+    );
+
+    return startsAt <= new Date() ? ['completed'] : [];
 }
 
 function updateStatus(newStatus) {
@@ -65,9 +93,7 @@ const endHour = computed(() => {
 const timeSlots = computed(() => {
     const slots = [];
     for (let h = startHour.value; h <= endHour.value; h++) {
-        const period = h < 12 ? 'AM' : 'PM';
-        const display = h > 12 ? h - 12 : h === 0 ? 12 : h;
-        slots.push(`${String(display).padStart(2, '0')}:00 ${period}`);
+        slots.push(`${String(h).padStart(2, '0')}:00`);
     }
     return slots;
 });
@@ -98,7 +124,7 @@ watch(selectedBooking, (booking) => {
 });
 
 function getBookingsForDay(day) {
-    return bookings.value.filter((b) => b.fullDate === day.fullDate);
+    return layoutBookingsForDay(bookings.value, day.fullDate);
 }
 
 function parseISODate(iso) {
@@ -211,6 +237,26 @@ function getBookingHeight(booking) {
     return (booking.duration / 60) * hourHeight;
 }
 
+function getBookingHorizontalStyle(booking) {
+    if (booking.colorType === 'blocked' || !booking.columnCount || booking.columnCount <= 1) {
+        return {
+            left: '4px',
+            right: '4px',
+            zIndex: 1,
+        };
+    }
+
+    const gap = 6;
+    const width = `calc((100% - ${(booking.columnCount + 1) * gap}px) / ${booking.columnCount})`;
+    const left = `calc(${gap}px + ${booking.columnIndex} * (${width} + ${gap}px))`;
+
+    return {
+        left,
+        width,
+        zIndex: booking.columnIndex + 1,
+    };
+}
+
 const currentTimeTop = computed(() => {
     const now = new Date();
     const currentHour = now.getHours();
@@ -220,31 +266,29 @@ const currentTimeTop = computed(() => {
 
 const currentTimeLabel = computed(() => {
     const now = new Date();
-    return now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    return now.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
 });
-
-const lunchBreakTop = computed(() => (12 - startHour.value) * hourHeight);
 
 const cardStyles = {
     blue: {
-        wrapper: 'bg-blue-50 border-l-4 border-blue-500',
-        name: 'text-blue-800 font-semibold',
-        shop: 'text-blue-500',
+        wrapper: 'bg-brand-50 border-l-4 border-brand-600',
+        name: 'text-brand-900 font-semibold',
+        shop: 'text-brand-700',
     },
     yellow: {
-        wrapper: 'bg-yellow-50 border-l-4 border-yellow-400',
-        name: 'text-yellow-800 font-semibold',
-        shop: 'text-yellow-600',
+        wrapper: 'bg-amber-50 border-l-4 border-amber-500',
+        name: 'text-amber-900 font-semibold',
+        shop: 'text-amber-700',
     },
     green: {
         wrapper: 'bg-green-50 border-l-4 border-green-500',
         name: 'text-green-800 font-semibold',
-        shop: 'text-green-600',
+        shop: 'text-green-700',
     },
     red: {
         wrapper: 'bg-red-50 border-l-4 border-red-500',
         name: 'text-red-800 font-semibold',
-        shop: 'text-red-500',
+        shop: 'text-red-700',
     },
     blocked: {
         wrapper: 'border-l-4 border-gray-300',
@@ -259,63 +303,74 @@ function getCardStyle(colorType) {
 
 const dayColumnClass = computed(() => (currentView.value === 'month' ? 'flex-none w-44' : 'flex-1'));
 const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-w-max' : 'min-w-full'));
+
+onMounted(() => {
+    const hasExplicitView = new URLSearchParams(window.location.search).has('view');
+    if (window.innerWidth < 768 && currentView.value === 'week' && !hasExplicitView) {
+        const today = toISODate(new Date());
+        router.get(
+            route('vendor.calendar'),
+            { start_date: today, end_date: today, view: 'day' },
+            { preserveState: true, replace: true },
+        );
+    }
+});
 </script>
 
 <template>
     <Head :title="$t('Calendar')" />
 
     <VendorLayout activePage="calendar">
-        <div class="flex flex-col h-full gap-4">
+        <div class="flex min-h-[calc(100dvh-8rem)] flex-col gap-4">
 
             <!-- Toolbar -->
-            <div class="flex items-center justify-between flex-shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                        <button @click="navigate('prev')" class="px-3 py-2 text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-200">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                            </svg>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex min-w-0 items-center gap-3">
+                    <div class="flex flex-none items-center overflow-hidden rounded-xl border border-line bg-white shadow-sm">
+                        <button type="button" aria-label="Předchozí období" @click="navigate('prev')" class="flex min-h-11 min-w-11 items-center justify-center border-r border-line text-muted transition hover:bg-gray-50 hover:text-ink">
+                            <ChevronLeft :size="18" aria-hidden="true" />
                         </button>
-                        <button @click="navigate('next')" class="px-3 py-2 text-gray-500 hover:bg-gray-50 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
+                        <button type="button" aria-label="Následující období" @click="navigate('next')" class="flex min-h-11 min-w-11 items-center justify-center text-muted transition hover:bg-gray-50 hover:text-ink">
+                            <ChevronRight :size="18" aria-hidden="true" />
                         </button>
                     </div>
-                    <h2 class="text-lg font-bold text-gray-900">{{ weekRange }}</h2>
+                    <div class="min-w-0">
+                        <p class="text-xs font-extrabold uppercase tracking-[0.12em] text-brand-700">Kalendář</p>
+                        <h1 class="truncate text-lg font-extrabold text-ink">{{ weekRange }}</h1>
+                    </div>
                 </div>
 
-                <div class="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div class="flex max-w-full items-center overflow-x-auto rounded-xl border border-line bg-white p-1 shadow-sm">
                     <button
-                        class="px-4 py-2 text-sm font-semibold transition-colors"
-                        :class="currentView === 'today' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
+                        class="min-h-10 flex-none rounded-lg px-3 text-sm font-bold transition-colors"
+                        :class="currentView === 'today' ? 'bg-brand-50 text-brand-800' : 'text-muted hover:bg-gray-50'"
                         @click="changeView('today')"
-                    >{{ $t('TODAY') }}</button>
+                    >Dnes</button>
                     <button
-                        class="px-4 py-2 text-sm font-semibold border-l border-gray-200 transition-colors"
-                        :class="currentView === 'day' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
+                        class="min-h-10 flex-none rounded-lg px-3 text-sm font-bold transition-colors"
+                        :class="currentView === 'day' ? 'bg-brand-50 text-brand-800' : 'text-muted hover:bg-gray-50'"
                         @click="changeView('day')"
-                    >{{ $t('Day') }}</button>
+                    >Den</button>
                     <button
-                        class="px-4 py-2 text-sm font-semibold border-l border-gray-200 transition-colors"
-                        :class="currentView === 'week' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
+                        class="min-h-10 flex-none rounded-lg px-3 text-sm font-bold transition-colors"
+                        :class="currentView === 'week' ? 'bg-brand-50 text-brand-800' : 'text-muted hover:bg-gray-50'"
                         @click="changeView('week')"
-                    >{{ $t('Week') }}</button>
+                    >Týden</button>
                     <button
-                        class="px-4 py-2 text-sm font-semibold border-l border-gray-200 transition-colors"
-                        :class="currentView === 'month' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
+                        class="min-h-10 flex-none rounded-lg px-3 text-sm font-bold transition-colors"
+                        :class="currentView === 'month' ? 'bg-brand-50 text-brand-800' : 'text-muted hover:bg-gray-50'"
                         @click="changeView('month')"
-                    >{{ $t('Month') }}</button>
+                    >Měsíc</button>
                 </div>
             </div>
 
             <!-- Calendar + Details Panel -->
-            <div class="flex flex-1 gap-4 overflow-hidden min-h-0">
+            <div class="flex min-h-0 flex-1 gap-4 overflow-hidden">
 
                 <!-- Calendar Grid -->
-                <div class="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-w-0">
+                <div class="flex min-h-[38rem] min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
 
-                    <div class="flex-1 overflow-x-auto min-w-0">
+                    <div class="min-w-0 flex-1 overflow-x-auto" tabindex="0" aria-label="Vodorovné posouvání kalendáře">
                         <div :class="[calendarInnerClass, 'h-full flex flex-col']">
 
                             <!-- Day Header Row -->
@@ -325,18 +380,18 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                     v-for="day in weekDays"
                                     :key="day.dayIndex"
                                     class="text-center py-3 border-r border-gray-100 last:border-r-0"
-                                    :class="[dayColumnClass, day.isToday ? 'bg-blue-50' : '']"
+                                    :class="[dayColumnClass, day.isToday ? 'bg-brand-50' : '']"
                                 >
-                                    <div class="text-xs font-semibold text-gray-400 tracking-widest uppercase">{{ day.day }}</div>
+                                    <div class="text-xs font-semibold uppercase tracking-widest" :class="day.isToday ? 'text-brand-800' : 'text-muted'">{{ day.day }}</div>
                                     <div
                                         class="mt-1 text-xl font-bold w-9 h-9 rounded-full mx-auto flex items-center justify-center"
-                                        :class="day.isToday ? 'bg-blue-600 text-white' : 'text-gray-800'"
+                                        :class="day.isToday ? 'bg-brand-700 text-white' : 'text-ink'"
                                     >{{ day.date }}</div>
                                 </div>
                             </div>
 
                             <!-- Scrollable Time Grid -->
-                            <div class="flex-1 overflow-y-auto min-h-0">
+                            <div class="min-h-0 flex-1 overflow-y-auto" tabindex="0" aria-label="Časová osa kalendáře">
                                 <div class="flex relative" :style="{ height: gridHeight + 'px' }">
 
                                     <!-- Time Labels -->
@@ -344,7 +399,7 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                         <div
                                             v-for="(slot, idx) in timeSlots"
                                             :key="idx"
-                                            class="absolute right-3 text-xs text-gray-400 font-medium whitespace-nowrap"
+                                            class="absolute right-3 whitespace-nowrap text-xs font-medium text-muted"
                                             :style="{ top: (idx * hourHeight - 8) + 'px' }"
                                         >{{ slot }}</div>
                                     </div>
@@ -355,7 +410,7 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                             v-for="day in weekDays"
                                             :key="day.dayIndex"
                                             class="relative border-r border-gray-100 last:border-r-0"
-                                            :class="[dayColumnClass, day.isToday ? 'bg-blue-50/20' : '']"
+                                            :class="[dayColumnClass, day.isToday ? 'bg-brand-50/40' : '']"
                                         >
                                             <!-- Hour lines -->
                                             <div
@@ -377,12 +432,11 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                                 <!-- Blocked -->
                                                 <div
                                                     v-if="booking.colorType === 'blocked'"
-                                                    class="absolute left-1 right-1 rounded-lg overflow-hidden border-l-4 border-gray-300 cursor-default"
-                                                    :style="{ top: (getBookingTop(booking) + 4) + 'px', height: (getBookingHeight(booking) - 8) + 'px' }"
+                                                    class="absolute cursor-default overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-100"
+                                                    :style="{ ...getBookingHorizontalStyle(booking), top: (getBookingTop(booking) + 4) + 'px', height: (getBookingHeight(booking) - 8) + 'px' }"
                                                 >
                                                     <div
-                                                        class="w-full h-full flex items-center justify-center"
-                                                        style="background-color:#f3f4f6;background-image:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(0,0,0,0.06) 6px,rgba(0,0,0,0.06) 12px);"
+                                                        class="flex h-full w-full items-center justify-center"
                                                     >
                                                         <span class="text-xs font-semibold text-gray-500 bg-white/80 px-2 py-0.5 rounded">
                                                             {{ booking.customer }}
@@ -391,26 +445,30 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                                 </div>
 
                                                 <!-- Regular -->
-                                                <div
+                                                <button
                                                     v-else
-                                                    class="absolute left-1 right-1 rounded-lg px-2 py-1.5 cursor-pointer transition-all duration-150 hover:shadow-md"
+                                                    type="button"
+                                                    class="group absolute min-h-11 cursor-pointer rounded-lg px-2 py-1.5 text-left transition-all duration-150 hover:z-30 hover:min-w-[12rem] hover:scale-[1.02] hover:shadow-md focus-visible:z-30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
                                                     :class="[
                                                         getCardStyle(booking.colorType).wrapper,
-                                                        selectedBooking && selectedBooking.id === booking.id ? 'ring-2 ring-blue-400 ring-offset-1' : '',
+                                                        selectedBooking && selectedBooking.id === booking.id ? 'ring-2 ring-brand-500 ring-offset-1' : '',
                                                     ]"
-                                                    :style="{ top: (getBookingTop(booking) + 4) + 'px', height: (getBookingHeight(booking) - 8) + 'px' }"
+                                                    :style="{ ...getBookingHorizontalStyle(booking), top: (getBookingTop(booking) + 4) + 'px', height: (getBookingHeight(booking) - 8) + 'px' }"
                                                     @click="selectBooking(booking)"
                                                 >
+                                                    <div class="h-full overflow-hidden">
                                                     <div class="flex items-start justify-between gap-1">
-                                                        <span class="text-xs leading-tight truncate" :class="getCardStyle(booking.colorType).name">
+                                                        <span class="min-w-0 text-xs leading-tight truncate group-hover:whitespace-normal group-hover:break-words" :class="getCardStyle(booking.colorType).name">
                                                             {{ booking.customer }}
                                                         </span>
-                                                        <span v-if="booking.status === 'pending'" class="text-amber-400 text-xs flex-shrink-0">★</span>
+                                                        <span v-if="booking.status === 'pending'" class="h-2 w-2 flex-none rounded-full bg-amber-500" aria-hidden="true"></span>
+                                                        <span v-if="booking.status === 'pending'" class="sr-only">Čeká na potvrzení</span>
                                                     </div>
-                                                    <div class="text-xs mt-0.5 leading-tight truncate" :class="getCardStyle(booking.colorType).service">
+                                                    <div class="min-w-0 text-xs mt-0.5 leading-tight truncate group-hover:whitespace-normal group-hover:break-words" :class="getCardStyle(booking.colorType).service">
                                                         {{ booking.shop }}
                                                     </div>
-                                                </div>
+                                                    </div>
+                                                </button>
                                             </template>
 
                                             <!-- Current time line (today only) -->
@@ -419,24 +477,11 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                                 class="absolute left-0 right-0 flex items-center pointer-events-none z-10"
                                                 :style="{ top: currentTimeTop + 'px' }"
                                             >
-                                                <div class="w-2.5 h-2.5 bg-blue-600 rounded-full -ml-1.5 flex-shrink-0"></div>
-                                                <div class="flex-1 h-px bg-blue-500"></div>
+                                                <div class="-ml-1.5 h-2.5 w-2.5 flex-none rounded-full bg-brand-700"></div>
+                                                <div class="h-px flex-1 bg-brand-600"></div>
                                             </div>
                                         </div>
 
-                                        <!-- Lunch break overlay -->
-                                        <div
-                                            class="absolute left-0 right-0 flex items-center pointer-events-none z-20"
-                                            :style="{ top: lunchBreakTop + 'px' }"
-                                        >
-                                            <div class="flex items-center gap-2 w-full px-2">
-                                                <div class="h-px bg-gray-300 w-4 flex-shrink-0"></div>
-                                                <span class="text-xs font-bold text-gray-400 tracking-widest uppercase whitespace-nowrap bg-white/90 px-1">
-                                                    LUNCH BREAK
-                                                </span>
-                                                <div class="h-px bg-gray-300 flex-1"></div>
-                                            </div>
-                                        </div>
                                     </div>
 
                                     <!-- Current time label in gutter -->
@@ -445,7 +490,7 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                         class="absolute left-1 pointer-events-none z-20"
                                         :style="{ top: (currentTimeTop - 8) + 'px' }"
                                     >
-                                        <span class="text-xs font-bold text-blue-600">{{ currentTimeLabel }}</span>
+                                        <span class="text-xs font-bold text-brand-700">{{ currentTimeLabel }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -464,23 +509,23 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                 >
                     <div
                         v-if="selectedBooking"
-                        class="w-72 flex-shrink-0 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden"
+                        class="fixed inset-x-4 bottom-20 top-24 z-50 flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-lift lg:static lg:inset-auto lg:z-auto lg:w-80 lg:flex-none lg:shadow-sm"
                     >
                         <!-- Header -->
                         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-                            <h3 class="font-bold text-gray-900 text-base">Booking Details</h3>
+                            <h2 class="text-base font-extrabold text-ink">Detail rezervace</h2>
                             <button
+                                type="button"
                                 @click="closeDetails"
-                                class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                class="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-muted transition-colors hover:bg-gray-100 hover:text-ink"
+                                aria-label="Zavřít detail"
                             >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
+                                <X :size="19" aria-hidden="true" />
                             </button>
                         </div>
 
                         <!-- Scrollable body -->
-                        <div class="flex-1 overflow-y-auto">
+                        <div class="flex-1 overflow-y-auto" tabindex="0" aria-label="Detail rezervace">
 
                             <!-- Customer -->
                             <div class="px-5 py-4 border-b border-gray-100">
@@ -491,7 +536,7 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                     >{{ selectedBooking.initials }}</div>
                                     <div>
                                         <div class="font-bold text-gray-900 text-sm">{{ selectedBooking.customer }}</div>
-                                        <div class="text-xs text-gray-400 mt-0.5">{{ selectedBooking.customerType }}</div>
+                                        <div class="mt-0.5 text-xs text-muted">{{ selectedBooking.customerType === 'Regular Customer' ? 'Vracející se zákazník' : 'Nový zákazník' }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -501,37 +546,31 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                                 <!-- Date & Time -->
                                 <div class="flex items-start gap-3">
                                     <div class="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                        </svg>
+                                        <CalendarDays :size="17" class="text-muted" aria-hidden="true" />
                                     </div>
                                     <div>
-                                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">Date &amp; Time</div>
+                                        <div class="mb-0.5 text-xs font-bold uppercase tracking-wide text-muted">Datum a čas</div>
                                         <div class="text-sm font-medium text-gray-800 leading-snug">{{ selectedBooking.dateStr }} • {{ selectedBooking.timeStr }}</div>
                                     </div>
                                 </div>
                                 <!-- Shop Type -->
                                 <div class="flex items-start gap-3">
                                     <div class="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                                        </svg>
+                                        <Tag :size="17" class="text-muted" aria-hidden="true" />
                                     </div>
                                     <div>
-                                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">Shop Type</div>
-                                        <div class="text-sm font-medium text-gray-800">{{ selectedBooking.shopDetail }}</div>
+                                        <div class="mb-0.5 text-xs font-bold uppercase tracking-wide text-muted">Služba</div>
+                                        <div class="text-sm font-medium text-gray-800">{{ selectedBooking.serviceDetail }}</div>
                                     </div>
                                 </div>
                                 <!-- Duration -->
                                 <div class="flex items-start gap-3">
                                     <div class="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
+                                        <Clock3 :size="17" class="text-muted" aria-hidden="true" />
                                     </div>
                                     <div>
-                                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">Duration</div>
-                                        <div class="text-sm font-medium text-gray-800">{{ selectedBooking.duration }} Minutes</div>
+                                        <div class="mb-0.5 text-xs font-bold uppercase tracking-wide text-muted">Délka</div>
+                                        <div class="text-sm font-medium text-gray-800">{{ selectedBooking.duration }} minut</div>
                                     </div>
                                 </div>
 
@@ -539,7 +578,7 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
 
                             <!-- Notes -->
                             <div v-if="selectedBooking.notes" class="px-5 py-4 border-b border-gray-100">
-                                <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Customer Notes</div>
+                                <div class="mb-2 text-xs font-bold uppercase tracking-wide text-muted">Poznámka zákazníka</div>
                                 <div class="bg-gray-50 rounded-xl p-3 text-sm text-gray-600 leading-relaxed">
                                     {{ selectedBooking.notes }}
                                 </div>
@@ -549,58 +588,50 @@ const calendarInnerClass = computed(() => (currentView.value === 'month' ? 'min-
                             <div class="px-5 py-4 space-y-2 border-b border-gray-100">
                                 <Link
                                     :href="route('vendor.bookings.show', selectedBooking.id)"
-                                    class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white font-semibold text-sm py-2.5 rounded-xl transition-all duration-200"
+                                    class="ui-button ui-button-primary w-full"
                                 >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                    View Booking
+                                    <Eye :size="18" aria-hidden="true" />
+                                    Otevřít rezervaci
                                 </Link>
                                 <a
                                     v-if="selectedBooking.customerEmail"
                                     :href="'mailto:' + selectedBooking.customerEmail"
-                                    class="w-full flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                    class="ui-button ui-button-secondary w-full"
                                 >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                    </svg>
-                                    Send Email
+                                    <Mail :size="18" aria-hidden="true" />
+                                    Napsat e-mail
                                 </a>
                                 <a
                                     v-if="selectedBooking.customerPhone"
                                     :href="'tel:' + selectedBooking.customerPhone"
-                                    class="w-full flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm py-2.5 rounded-xl transition-colors"
+                                    class="ui-button ui-button-secondary w-full"
                                 >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                                    </svg>
-                                    Call Customer
+                                    <Phone :size="18" aria-hidden="true" />
+                                    Zavolat zákazníkovi
                                 </a>
                             </div>
 
                             <!-- Status actions -->
-                            <div class="px-5 py-4">
+                            <div v-if="availableStatusActions(selectedBooking).length" class="px-5 py-4">
                                 <!-- Status dropdown -->
                                 <div class="relative">
                                     <button
-                                        @click="showStatusDropdown = !showStatusDropdown.value"
-                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                                        type="button"
+                                        @click="showStatusDropdown = !showStatusDropdown"
+                                        class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-line px-4 text-sm font-bold text-muted transition-colors hover:bg-gray-50 hover:text-ink"
                                     >
                                         <span :class="['w-2 h-2 rounded-full', getStatusConfig(selectedBooking.status).dot]"></span>
                                         <span class="ml-2">{{ getStatusConfig(selectedBooking.status).label }}</span>
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                        </svg>
+                                        <ChevronDown :size="16" aria-hidden="true" />
                                     </button>
 
                                     <!-- Dropdown Menu -->
                                     <div v-if="showStatusDropdown" class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-10">
                                         <button
-                                            v-for="status in ['pending', 'confirmed', 'completed', 'cancelled']"
+                                            v-for="status in availableStatusActions(selectedBooking)"
                                             :key="status"
                                             @click="updateStatus(status)"
-                                            class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                            class="flex min-h-11 w-full items-center gap-2 px-4 text-left text-sm font-bold transition-colors hover:bg-gray-50"
                                         >
                                             <span :class="['w-2 h-2 rounded-full', getStatusConfig(status).dot]"></span>
                                             {{ getStatusConfig(status).label }}

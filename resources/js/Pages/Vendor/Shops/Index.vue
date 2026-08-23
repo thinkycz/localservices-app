@@ -1,7 +1,14 @@
 <script setup>
-import { ref } from 'vue';
-import { router, Link, Head } from '@inertiajs/vue3';
+import AppPagination from '@/Components/AppPagination.vue';
+import EmptyState from '@/Components/EmptyState.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import UiButton from '@/Components/UiButton.vue';
+import UiCard from '@/Components/UiCard.vue';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { CircleDollarSign, MapPin, Plus, Search, Store, Wrench } from '@lucide/vue';
+import { ref } from 'vue';
 
 const props = defineProps({
     shops: { type: Object, required: true },
@@ -9,283 +16,112 @@ const props = defineProps({
     stats: { type: Object, required: true },
 });
 
-const searchQuery = ref(props.filters.q || '');
-const activeStatus = ref(props.filters.status || 'all');
+const search = ref(props.filters.q || '');
+const status = ref(props.filters.status || '');
+const sort = ref(props.filters.sort || 'newest');
 
-function handleSearch() {
-    router.get(route('vendor.shops.index'), {
-        q: searchQuery.value,
-        status: activeStatus.value,
-        sort: props.filters.sort,
-    }, { preserveState: true, replace: true });
+function applyFilters() {
+    router.get(route('vendor.shops.index'), { q: search.value, status: status.value, sort: sort.value }, { preserveState: true, replace: true });
 }
 
-function setStatus(status) {
-    activeStatus.value = status;
-    router.get(route('vendor.shops.index'), {
-        q: searchQuery.value,
-        status: status,
-        sort: props.filters.sort,
-    }, { preserveState: true, replace: true });
+function toggleAvailability(shop) {
+    router.post(route('vendor.shops.toggle', shop.id), {}, { preserveScroll: true });
 }
 
-function setSort(sort) {
-    router.get(route('vendor.shops.index'), {
-        q: searchQuery.value,
-        status: activeStatus.value,
-        sort: sort,
-    }, { preserveState: true, replace: true });
+function removeShop(shop) {
+    if (window.confirm(`Opravdu chcete smazat provozovnu „${shop.name}“ včetně jejích služeb? Tuto akci nelze vrátit.`)) {
+        router.delete(route('vendor.shops.destroy', shop.id));
+    }
 }
 
-function toggleAvailability(serviceId) {
-    router.post(route('vendor.shops.toggle', serviceId));
-}
-
-function deleteService(serviceId) {
-    if (!confirm('Are you sure you want to delete this shop? This will also delete all associated services.')) return;
-    router.delete(route('vendor.shops.destroy', serviceId));
-}
-
-
-
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function getBadgeClasses(color) {
-    const colors = {
-        blue: 'bg-blue-50 text-blue-700 ring-blue-700/10',
-        gray: 'bg-gray-50 text-gray-700 ring-gray-700/10',
-        green: 'bg-green-50 text-green-700 ring-green-700/10',
-    };
-    return colors[color] || 'bg-gray-50 text-gray-700 ring-gray-700/10';
+function location(shop) {
+    if (shop.is_online_only) return 'Pouze online';
+    return [shop.address, shop.city].filter(Boolean).join(', ') || 'Adresa není doplněna';
 }
 </script>
 
 <template>
-    <Head :title="$t('My Shops')" />
-
+    <Head title="Provozovny" />
     <VendorLayout activePage="shops">
-        <div class="flex flex-col gap-6">
+        <div class="space-y-6">
+            <PageHeader title="Provozovny a služby" description="Spravujte místa, jejich dostupnost a nabídku služeb.">
+                <template #actions><UiButton :href="route('vendor.shops.create')"><Plus :size="18" /> Přidat provozovnu</UiButton></template>
+            </PageHeader>
 
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-4 gap-4">
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
+            <div class="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <UiCard v-for="item in [
+                    { label: 'Provozovny', value: stats.total_shops ?? 0, icon: Store },
+                    { label: 'Aktivní', value: stats.available_shops ?? 0, icon: MapPin },
+                    { label: 'Služby', value: stats.total_services ?? 0, icon: Wrench },
+                    { label: 'Součet ceníkových cen', value: stats.potential_revenue ?? '0,00 CZK', icon: CircleDollarSign },
+                ]" :key="item.label" padding="sm" class="min-w-0">
+                    <div class="flex items-start gap-3">
+                        <span class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-50 text-brand-700"><component :is="item.icon" :size="19" /></span>
+                        <div class="min-w-0"><p class="text-xs font-bold uppercase tracking-wide text-muted">{{ item.label }}</p><p class="mt-1 break-words text-xl font-extrabold text-ink">{{ item.value }}</p></div>
                     </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Shops') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.total_shops }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Services') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.total_services }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Active Shops') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.available_shops }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Inactive Shops') }}</div>
-                    <div class="text-2xl font-bold text-red-600">{{ stats.inactive_shops }}</div>
-                </div>
-
-
+                </UiCard>
             </div>
 
-            <!-- Search, Filter, and Add -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                <div class="flex items-center gap-4">
-                    <div class="flex-1 relative">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        <input
-                            v-model="searchQuery"
-                            type="text"
-                            :placeholder="$t('Search services by name...')"
-                            class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            @keyup.enter="handleSearch"
-                        />
+            <UiCard padding="sm">
+                <form class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto_auto]" @submit.prevent="applyFilters">
+                    <label class="relative min-w-0">
+                        <span class="sr-only">Hledat provozovnu</span>
+                        <Search class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" :size="18" />
+                        <input v-model="search" class="ui-field pl-11" type="search" placeholder="Název provozovny…" />
+                    </label>
+                    <select v-model="status" class="ui-field md:w-40" aria-label="Filtrovat podle stavu" @change="applyFilters">
+                        <option value="">Všechny stavy</option><option value="available">Aktivní</option><option value="unavailable">Neaktivní</option>
+                    </select>
+                    <select v-model="sort" class="ui-field md:w-44" aria-label="Řazení" @change="applyFilters">
+                        <option value="newest">Nejnovější</option><option value="oldest">Nejstarší</option><option value="name_asc">Název A–Z</option><option value="name_desc">Název Z–A</option>
+                    </select>
+                    <UiButton type="submit" variant="secondary">Použít</UiButton>
+                </form>
+            </UiCard>
+
+            <EmptyState v-if="!shops.data?.length" title="Zatím tu není žádná provozovna" description="Přidejte první provozovnu, otevírací dobu a služby. Zákazníci ji pak najdou ve vyhledávání.">
+                <template #icon><Store :size="23" /></template>
+                <template #actions><UiButton :href="route('vendor.shops.create')"><Plus :size="18" /> Přidat provozovnu</UiButton></template>
+            </EmptyState>
+
+            <template v-else>
+                <div class="grid gap-4 md:hidden">
+                    <UiCard v-for="shop in shops.data" :key="shop.id" padding="sm">
+                        <div class="flex items-start gap-3">
+                            <img v-if="shop.cover_image_url" :src="shop.cover_image_url" alt="" class="h-16 w-20 flex-none rounded-xl object-cover" />
+                            <span v-else class="flex h-16 w-20 flex-none items-center justify-center rounded-xl bg-brand-50 text-brand-700"><Store :size="24" /></span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2"><Link :href="route('vendor.shops.show', shop.id)" class="break-words font-extrabold text-ink hover:text-brand-700">{{ shop.name }}</Link><StatusBadge :tone="shop.is_available ? 'success' : 'neutral'">{{ shop.is_available ? 'Aktivní' : 'Neaktivní' }}</StatusBadge></div>
+                                <p class="mt-1 text-sm text-muted">{{ shop.category?.name || 'Bez kategorie' }}</p>
+                                <p class="mt-1 break-words text-xs text-muted">{{ location(shop) }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-2 border-t border-line pt-4">
+                            <UiButton :href="route('vendor.shops.show', shop.id)" variant="secondary" size="sm">Spravovat</UiButton>
+                            <UiButton variant="ghost" size="sm" @click="toggleAvailability(shop)">{{ shop.is_available ? 'Skrýt' : 'Aktivovat' }}</UiButton>
+                            <UiButton variant="ghost" size="sm" class="text-danger" @click="removeShop(shop)">Smazat</UiButton>
+                        </div>
+                    </UiCard>
+                </div>
+
+                <div class="hidden overflow-hidden rounded-2xl border border-line bg-white md:block">
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[760px] text-left">
+                            <thead class="border-b border-line bg-gray-50 text-xs font-bold uppercase tracking-wide text-muted"><tr><th class="px-5 py-3">Provozovna</th><th class="px-5 py-3">Místo</th><th class="px-5 py-3">Služby</th><th class="px-5 py-3">Stav</th><th class="px-5 py-3 text-right">Akce</th></tr></thead>
+                            <tbody class="divide-y divide-line">
+                                <tr v-for="shop in shops.data" :key="shop.id" class="hover:bg-brand-50/30">
+                                    <td class="px-5 py-4"><Link :href="route('vendor.shops.show', shop.id)" class="font-extrabold text-ink hover:text-brand-700">{{ shop.name }}</Link><p class="mt-1 text-xs text-muted">{{ shop.category?.name || 'Bez kategorie' }} · {{ shop.currency }}</p></td>
+                                    <td class="max-w-xs px-5 py-4 text-sm text-muted">{{ location(shop) }}</td>
+                                    <td class="px-5 py-4 text-sm font-bold text-ink">{{ shop.services?.length || 0 }}</td>
+                                    <td class="px-5 py-4"><StatusBadge :tone="shop.is_available ? 'success' : 'neutral'">{{ shop.is_available ? 'Aktivní' : 'Neaktivní' }}</StatusBadge></td>
+                                    <td class="px-5 py-4"><div class="flex justify-end gap-2"><UiButton :href="route('vendor.shops.show', shop.id)" variant="secondary" size="sm">Spravovat</UiButton><button class="ui-icon-button text-muted" :aria-label="shop.is_available ? 'Skrýt provozovnu' : 'Aktivovat provozovnu'" @click="toggleAvailability(shop)"><MapPin :size="17" /></button></div></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-
-                    <div class="flex items-center gap-1">
-                        <button
-                            @click="setStatus('all')"
-                            :class="['px-4 py-2 text-sm font-medium rounded-xl transition-colors', activeStatus === 'all' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700']"
-                        >{{ $t('All') }}</button>
-                        <button
-                            @click="setStatus('available')"
-                            :class="['px-4 py-2 text-sm font-medium rounded-xl transition-colors', activeStatus === 'available' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700']"
-                        >{{ $t('Active') }}</button>
-                        <button
-                            @click="setStatus('unavailable')"
-                            :class="['px-4 py-2 text-sm font-medium rounded-xl transition-colors', activeStatus === 'unavailable' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700']"
-                        >{{ $t('Inactive') }}</button>
-                    </div>
-
-                    <Link
-                        :href="route('vendor.shops.create')"
-                        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 transition-all duration-200 flex-shrink-0"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>{{ $t('Add Shop') }}</Link>
                 </div>
-            </div>
-
-            <!-- Services Table -->
-            <div v-if="shops.data.length > 0" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table class="w-full">
-                    <thead>
-                        <tr class="bg-gray-50/80">
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Shop') }}</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Category') }}</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Services') }}</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Status') }}</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Created') }}</th>
-                            <th class="px-6 py-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr
-                            v-for="shop in shops.data"
-                            :key="shop.id"
-                            class="group hover:bg-blue-50/30 transition-colors cursor-pointer"
-                            @click="router.visit(route('vendor.shops.show', shop.id))"
-                        >
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-sm font-bold shadow-sm flex-shrink-0">
-                                        {{ shop.name.charAt(0).toUpperCase() }}
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="font-semibold text-gray-900 text-sm truncate max-w-[200px]">{{ shop.name }}</div>
-                                        <div v-if="shop.computed_badge" class="mt-0.5">
-                                            <span :class="[getBadgeClasses(shop.computed_badge.color), 'text-[10px] font-bold px-1.5 py-0.5 rounded ring-1 ring-inset uppercase tracking-wider']">{{ shop.computed_badge.text }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="text-sm text-gray-600">{{ shop.category?.name || 'Uncategorized' }}</span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="text-sm font-medium text-gray-900">{{ shop.services?.length || 0 }}</span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <button
-                                    @click.stop="toggleAvailability(shop.id)"
-                                    :class="[
-                                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset transition-colors',
-                                        shop.is_available
-                                            ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 hover:bg-emerald-100'
-                                            : 'bg-gray-50 text-gray-500 ring-gray-500/10 hover:bg-gray-100'
-                                    ]"
-                                >
-                                    <span :class="['w-1.5 h-1.5 rounded-full', shop.is_available ? 'bg-emerald-500' : 'bg-gray-400']"></span>
-                                    {{ shop.is_available ? 'Active' : 'Inactive' }}
-                                </button>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="text-sm text-gray-500">{{ formatDate(shop.created_at) }}</span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-1">
-                                    <Link
-                                        :href="route('vendor.shops.show', shop.id)"
-                                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                        @click.stop
-                                        :title="$t('Manage')"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                        </svg>
-                                    </Link>
-                                    <button
-                                        @click.stop="deleteService(shop.id)"
-                                        class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                        :title="$t('Delete')"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Empty State -->
-            <div v-else class="py-16 text-center bg-white rounded-2xl shadow-sm border border-gray-100">
-                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                    </svg>
-                </div>
-                <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No services yet') }}</h3>
-                <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">{{ $t('Start by adding your first service to attract customers.') }}</p>
-                <Link
-                    :href="route('vendor.shops.create')"
-                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium text-sm rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md transform hover:-translate-y-0.5"
-                >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>{{ $t('Add Your First Service') }}</Link>
-            </div>
-
-            <!-- Pagination -->
-            <div v-if="shops.last_page > 1" class="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-4 flex items-center justify-between">
-                <div class="text-sm text-gray-500">{{ $t('Showing') }}<span class="font-medium text-gray-700">{{ shops.from }}</span>{{ $t('to') }}<span class="font-medium text-gray-700">{{ shops.to }}</span>{{ $t('of') }}<span class="font-medium text-gray-700">{{ shops.total }}</span>
-                </div>
-                <div class="flex items-center gap-1">
-                    <Link
-                        v-if="shops.prev_page_url"
-                        :href="shops.prev_page_url"
-                        class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >{{ $t('Previous') }}</Link>
-                    
-                    <template v-for="page in shops.last_page" :key="page">
-                        <Link
-                            v-if="page >= shops.current_page - 2 && page <= shops.current_page + 2"
-                            :href="`?page=${page}`"
-                            :class="[
-                                'w-9 h-9 rounded-lg text-sm font-medium transition-colors flex items-center justify-center',
-                                page === shops.current_page ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
-                            ]"
-                        >{{ page }}</Link>
-                    </template>
-
-                    <Link
-                        v-if="shops.next_page_url"
-                        :href="shops.next_page_url"
-                        class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >Next</Link>
-                </div>
-            </div>
+                <AppPagination :meta="shops" :links="shops.links || []" />
+            </template>
         </div>
     </VendorLayout>
 </template>

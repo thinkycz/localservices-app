@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreReviewRequest;
 use App\Models\Booking;
 use App\Models\Review;
-use App\Models\Service;
-use App\Models\Shop;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,6 +23,7 @@ class ReviewController extends Controller
             ->where('user_id', $request->user()->id)
             ->where('status', 'completed')
             ->findOrFail($bookingId);
+        $this->authorize('review', $booking);
 
         // Check if already reviewed
         $existingReview = Review::where('booking_id', $bookingId)->first();
@@ -38,21 +40,16 @@ class ReviewController extends Controller
     /**
      * Store a new review.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreReviewRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'booking_id' => 'required|exists:bookings,id',
-            'shop_id' => 'required|exists:shops,id',
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'required|string|min:10|max:1000',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
-        ]);
+        $validated = $request->validated();
 
-        $booking = Booking::where('user_id', $request->user()->id)
+        $booking = Booking::with('shop')
+            ->where('user_id', $request->user()->id)
             ->where('id', $validated['booking_id'])
             ->where('status', 'completed')
             ->firstOrFail();
+        $this->authorize('review', $booking);
 
         // Check if already reviewed
         $existingReview = Review::where('booking_id', $validated['booking_id'])->first();
@@ -60,20 +57,21 @@ class ReviewController extends Controller
             return back()->with('error', __('You have already reviewed this booking.'));
         }
 
-        $review = Review::create([
-            'user_id' => $request->user()->id,
-            'shop_id' => $validated['shop_id'],
-            'booking_id' => $validated['booking_id'],
-            'rating' => $validated['rating'],
-            'comment' => $validated['comment'],
-            'tags' => $validated['tags'] ?? [],
-            'is_approved' => true, // Auto-approve for now, can add moderation later
-            'reviewed_at' => now(),
-        ]);
+        DB::transaction(function () use ($booking, $request, $validated): void {
+            $review = Review::create([
+                'user_id' => $request->user()->id,
+                'shop_id' => $booking->shop_id,
+                'booking_id' => $validated['booking_id'],
+                'rating' => $validated['rating'],
+                'comment' => $validated['comment'],
+                'tags' => $validated['tags'] ?? [],
+                'is_approved' => true,
+                'reviewed_at' => now(),
+            ]);
 
-        // Update service rating stats
-        $shop = Shop::find($validated['shop_id']);
-        $shop->updateRatingStats();
+            $booking->shop->updateRatingStats();
+            DB::afterCommit(fn () => NotificationService::reviewReceived($review->load(['booking.service', 'user'])));
+        });
 
         return redirect()->route('bookings.index')
             ->with('success', __('Thank you for your review!'));

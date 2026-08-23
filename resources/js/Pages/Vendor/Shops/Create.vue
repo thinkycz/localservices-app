@@ -1,215 +1,58 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { router, Link, Head, usePage } from '@inertiajs/vue3';
+import PageHeader from '@/Components/PageHeader.vue';
+import UiButton from '@/Components/UiButton.vue';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
+import ShopForm from './ShopForm.vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, Save } from '@lucide/vue';
 
-const props = defineProps({
-    categories: { type: Array, required: true },
+defineProps({ categories: { type: Array, required: true } });
+
+const dayNames = ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota'];
+const hours = dayNames.map((label, day_of_week) => ({
+    day_of_week,
+    label,
+    enabled: day_of_week >= 1 && day_of_week <= 5,
+    time_from: '09:00',
+    time_to: '17:00',
+}));
+
+const form = useForm({
+    name: '',
+    category_id: '',
+    currency: 'CZK',
+    description: '',
+    address: '',
+    city: '',
+    state: '',
+    is_available: true,
+    is_online_only: false,
+    image: null,
+    remove_image: false,
+    business_hours: [],
 });
 
-const page = usePage();
-const errors = computed(() => page.props.errors || {});
-
-const form = ref({
-    name: '', category_id: '', currency: 'CZK', description: '',
-    address: '', city: '', state: '',
-    is_available: true, is_online_only: false,
-});
-
-
-
-
-
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-const businessHours = ref(
-    DAY_NAMES.map((name, index) => ({
-        day_of_week: index, label: name, short: DAY_SHORT[index],
-        enabled: index >= 1 && index <= 5, // Mon-Fri on by default
-        time_from: '09:00', time_to: '17:00',
-    }))
-);
-
-const isSubmitting = ref(false);
-
-function handleSubmit() {
-    isSubmitting.value = true;
-    const hours = businessHours.value.filter(h => h.enabled).map(h => ({ day_of_week: h.day_of_week, time_from: h.time_from, time_to: h.time_to }));
-    router.post(route('vendor.shops.store'), { ...form.value, business_hours: hours }, { onFinish: () => { isSubmitting.value = false; } });
+function submit() {
+    form.transform((data) => ({
+        ...data,
+        business_hours: hours
+            .filter((hour) => hour.enabled)
+            .map(({ day_of_week, time_from, time_to }) => ({ day_of_week, time_from, time_to })),
+    })).post(route('vendor.shops.store'), { forceFormData: true });
 }
 </script>
 
 <template>
-    <Head :title="$t('Add Shop')" />
-
+    <Head title="Nová provozovna" />
     <VendorLayout activePage="shops">
-        <div class="flex flex-col gap-6">
-
-            <!-- Back link -->
-            <div>
-                <Link :href="route('vendor.shops.index')" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>{{ $t('Back to Shops') }}</Link>
-            </div>
-
-            <!-- Header Card -->
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div class="flex items-center gap-5">
-                    <div class="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md flex-shrink-0">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h1 class="text-xl font-bold text-gray-900">{{ $t('Add New Shop') }}</h1>
-                        <p class="text-sm text-gray-400 mt-0.5">{{ $t('Create a new service to offer to customers') }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <form @submit.prevent="handleSubmit" class="flex flex-col gap-6">
-
-                <!-- Basic Information -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Basic Information') }}</h2>
-                    </div>
-                    <div class="p-6 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Shop Name *') }}</label>
-                            <input v-model="form.name" type="text" :placeholder="$t('e.g., Precision Plumbing & Drain')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" :class="{ 'border-red-300 focus:ring-red-500': errors.name }" />
-                            <p v-if="errors.name" class="mt-1 text-xs text-red-500">{{ errors.name }}</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Category *') }}</label>
-                            <select v-model="form.category_id" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" :class="{ 'border-red-300': errors.category_id }">
-                                <option value="" disabled>{{ $t('Select a category') }}</option>
-                                <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
-                            </select>
-                            <p v-if="errors.category_id" class="mt-1 text-xs text-red-500">{{ errors.category_id }}</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Currency *') }}</label>
-                            <select v-model="form.currency" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" :class="{ 'border-red-300': errors.currency }">
-                                <option value="CZK">CZK</option>
-                                <option value="EUR">EUR</option>
-                            </select>
-                            <p v-if="errors.currency" class="mt-1 text-xs text-red-500">{{ errors.currency }}</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Description') }}</label>
-                            <textarea v-model="form.description" rows="3" :placeholder="$t('Describe your service...')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Location -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Location') }}</h2>
-                    </div>
-                    <div class="p-6 space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-sm font-medium text-gray-700">{{ $t('Online Only') }}</div>
-                                <div class="text-xs text-gray-500 mt-0.5">{{ $t('This shop is provided remotely / online') }}</div>
-                            </div>
-                            <button
-                                type="button"
-                                @click="form.is_online_only = !form.is_online_only"
-                                :class="['relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2', form.is_online_only ? 'bg-blue-600' : 'bg-gray-200']"
-                            >
-                                <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', form.is_online_only ? 'translate-x-5' : 'translate-x-0']" />
-                            </button>
-                        </div>
-                        <template v-if="!form.is_online_only">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('Address') }}</label>
-                                <input v-model="form.address" type="text" :placeholder="$t('e.g., 45 Water St, Suite 101')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('City') }}</label>
-                                    <input v-model="form.city" type="text" :placeholder="$t('e.g., New York')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('State') }}</label>
-                                    <input v-model="form.state" type="text" :placeholder="$t('e.g., NY')" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- Business Hours -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Business Hours</h2>
-                    </div>
-                    <div class="divide-y divide-gray-100">
-                        <div
-                            v-for="day in businessHours"
-                            :key="day.day_of_week"
-                            class="flex items-center gap-4 px-6 py-3"
-                        >
-                            <button
-                                type="button"
-                                @click="day.enabled = !day.enabled"
-                                :class="['relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out', day.enabled ? 'bg-blue-600' : 'bg-gray-300']"
-                            >
-                                <span :class="['pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', day.enabled ? 'translate-x-4' : 'translate-x-0']" />
-                            </button>
-                            <span class="w-24 text-sm font-medium" :class="day.enabled ? 'text-gray-900' : 'text-gray-400'">{{ day.label }}</span>
-                            <template v-if="day.enabled">
-                                <input v-model="day.time_from" type="time" class="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-32" />
-                                <span class="text-xs text-gray-400">to</span>
-                                <input v-model="day.time_to" type="time" class="px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-32" />
-                            </template>
-                            <span v-else class="text-sm text-gray-400 italic">Closed</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Status -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Status</h2>
-                    </div>
-                    <div class="p-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-sm font-medium text-gray-700">Available</div>
-                                <div class="text-xs text-gray-500 mt-0.5">Customers can book this shop</div>
-                            </div>
-                            <button
-                                type="button"
-                                @click="form.is_available = !form.is_available"
-                                :class="['relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2', form.is_available ? 'bg-blue-600' : 'bg-gray-200']"
-                            >
-                                <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', form.is_available ? 'translate-x-5' : 'translate-x-0']" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="flex items-center gap-3 justify-end">
-                    <Link :href="route('vendor.shops.index')" class="px-5 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-sm rounded-xl transition-colors">Cancel</Link>
-                    <button
-                        type="submit"
-                        :disabled="isSubmitting"
-                        class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-white font-semibold text-sm rounded-xl transition-all duration-200 flex items-center gap-2"
-                    >
-                        <svg v-if="isSubmitting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        {{ isSubmitting ? 'Creating...' : 'Create Shop' }}
-                    </button>
+        <div class="mx-auto max-w-4xl space-y-6">
+            <UiButton :href="route('vendor.shops.index')" variant="ghost" size="sm"><ArrowLeft :size="17" /> Zpět na provozovny</UiButton>
+            <PageHeader title="Přidat provozovnu" description="Vyplňte údaje, nastavte otevírací dobu a provozovnu pak doplňte službami." />
+            <form class="space-y-5" @submit.prevent="submit">
+                <ShopForm :form="form" :categories="categories" :hours="hours" />
+                <div class="sticky bottom-20 z-20 flex flex-col-reverse gap-2 rounded-2xl border border-line bg-white/95 p-4 shadow-lift backdrop-blur sm:static sm:flex-row sm:justify-end sm:shadow-none lg:bottom-4">
+                    <UiButton :href="route('vendor.shops.index')" variant="secondary">Zrušit</UiButton>
+                    <UiButton type="submit" :loading="form.processing"><Save :size="18" /> Uložit provozovnu</UiButton>
                 </div>
             </form>
         </div>

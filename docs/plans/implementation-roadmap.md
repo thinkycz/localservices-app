@@ -1,5 +1,7 @@
 # Local Services App - Implementation Roadmap
 
+> **Historical document — superseded 2026-08-23.** The completion and production-readiness claims below were not supported by full flow evidence. Use [the Domluveno relaunch plan](./domluveno-relaunch.md) and [the current route/flow matrix](../verification/route-flow-matrix.md) as the active sources of truth.
+
 ## Project Overview
 Marketplace-style app for discovering local services, booking providers, messaging, reviews, and payments.
 

@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\Booking;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -28,10 +29,10 @@ class BookingStatusUpdated extends Mailable
     public function envelope(): Envelope
     {
         $subject = match ($this->newStatus) {
-            'confirmed' => 'Your Booking Has Been Confirmed',
-            'completed' => 'Your Service Has Been Completed',
-            'cancelled' => 'Your Booking Has Been Cancelled',
-            default => 'Booking Status Update',
+            'confirmed' => 'Rezervace byla potvrzena',
+            'completed' => 'Rezervace byla dokončena',
+            'cancelled' => 'Rezervace byla zrušena',
+            default => 'Stav rezervace se změnil',
         };
 
         return new Envelope(
@@ -52,7 +53,7 @@ class BookingStatusUpdated extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

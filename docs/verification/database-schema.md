@@ -1,5 +1,7 @@
 # Database Schema Verification
 
+> **Historical verification — superseded 2026-08-23.** This March schema summary predates the Domluveno hardening migrations and contains unverified completeness claims. Use current migrations/models plus [the route/flow matrix](./route-flow-matrix.md) and active relaunch tracker.
+
 ## Models and Relationships Status
 
 ### ✅ User Model

@@ -1,7 +1,17 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { router, Link, Head, usePage } from '@inertiajs/vue3';
+import EmptyState from '@/Components/EmptyState.vue';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import Modal from '@/Components/Modal.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import TextInput from '@/Components/TextInput.vue';
+import UiButton from '@/Components/UiButton.vue';
+import UiCard from '@/Components/UiCard.vue';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, CalendarDays, Clock, MapPin, Pencil, Plus, Store, Trash2, Wrench } from '@lucide/vue';
+import { ref } from 'vue';
 
 const props = defineProps({
     shop: { type: Object, required: true },
@@ -9,307 +19,122 @@ const props = defineProps({
     stats: { type: Object, required: true },
 });
 
-const page = usePage();
-const errors = computed(() => page.props.errors || {});
-
 const showServiceModal = ref(false);
 const editingService = ref(null);
-const serviceForm = ref({
-    name: '', description: '', duration_minutes: '', price: '', is_popular: false, category_tag: '', staff_level: '',
-});
+const serviceForm = useForm({ name: '', description: '', duration_minutes: 60, price: '', is_popular: false, category_tag: '', staff_level: '' });
 
+function money(value) {
+    return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: props.shop.currency || 'CZK', maximumFractionDigits: 2 }).format(Number(value || 0));
+}
 
 function toggleAvailability() {
-    router.post(route('vendor.shops.toggle', props.shop.id));
+    router.post(route('vendor.shops.toggle', props.shop.id), {}, { preserveScroll: true });
 }
 
-function openAddService() {
-    editingService.value = null;
-    serviceForm.value = { name: '', description: '', duration_minutes: '', price: '', is_popular: false, category_tag: '', staff_level: '' };
+function openService(service = null) {
+    editingService.value = service;
+    serviceForm.clearErrors();
+    serviceForm.defaults({
+        name: service?.name || '',
+        description: service?.description || '',
+        duration_minutes: service?.duration_minutes || 60,
+        price: service?.price || '',
+        is_popular: Boolean(service?.is_popular),
+        category_tag: service?.category_tag || '',
+        staff_level: service?.staff_level || '',
+    });
+    serviceForm.reset();
     showServiceModal.value = true;
 }
 
-function openEditService(svc) {
-    editingService.value = svc;
-    serviceForm.value = {
-        name: svc.name, description: svc.description || '',
-        duration_minutes: svc.duration_minutes, price: svc.price, is_popular: svc.is_popular,
-        category_tag: svc.category_tag || '', staff_level: svc.staff_level || '',
-    };
-    showServiceModal.value = true;
-}
-
-function closeServiceModal() {
+function closeService() {
     showServiceModal.value = false;
     editingService.value = null;
+    serviceForm.clearErrors();
 }
 
 function saveService() {
-    const data = { ...serviceForm.value, duration_minutes: parseInt(serviceForm.value.duration_minutes) };
+    const options = { preserveScroll: true, onSuccess: closeService };
     if (editingService.value) {
-        router.put(route('vendor.shops.services.update', { shopId: props.shop.id, serviceId: editingService.value.id }), data, { onSuccess: closeServiceModal });
+        serviceForm.put(route('vendor.shops.services.update', { shopId: props.shop.id, serviceId: editingService.value.id }), options);
     } else {
-        router.post(route('vendor.shops.services.store', { shopId: props.shop.id }), data, { onSuccess: closeServiceModal });
+        serviceForm.post(route('vendor.shops.services.store', props.shop.id), options);
     }
 }
 
-function deleteService(serviceId) {
-    if (!confirm('Are you sure you want to delete this service?')) return;
-    router.delete(route('vendor.shops.services.destroy', { shopId: props.shop.id, serviceId }));
-}
-
-
-
-function getBadgeClasses(color) {
-    const c = { blue: 'bg-blue-50 text-blue-700 ring-blue-700/10', gray: 'bg-gray-50 text-gray-700 ring-gray-700/10', green: 'bg-green-50 text-green-700 ring-green-700/10' };
-    return c[color] || c.gray;
+function removeService(service) {
+    if (window.confirm(`Opravdu chcete smazat službu „${service.name}“?`)) {
+        router.delete(route('vendor.shops.services.destroy', { shopId: props.shop.id, serviceId: service.id }), { preserveScroll: true });
+    }
 }
 </script>
 
 <template>
-    <Head :title="$t('Manage Service')" />
-
+    <Head :title="shop.name" />
     <VendorLayout activePage="shops">
-        <div class="flex flex-col gap-6">
+        <div class="space-y-6">
+            <UiButton :href="route('vendor.shops.index')" variant="ghost" size="sm"><ArrowLeft :size="17" /> Zpět na provozovny</UiButton>
 
-            <!-- Back link -->
-            <div>
-                <Link :href="route('vendor.shops.index')" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>{{ $t('Back to Shops') }}</Link>
-            </div>
-
-            <!-- Header Card -->
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div class="flex items-center gap-5">
-                    <div class="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md flex-shrink-0">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3">
-                            <h1 class="text-xl font-bold text-gray-900 truncate">{{ shop.name }}</h1>
-                            <span v-if="shop.computed_badge" :class="[getBadgeClasses(shop.computed_badge.color), 'text-xs font-medium px-2.5 py-1 rounded-full ring-1 ring-inset']">{{ shop.computed_badge.text }}</span>
+            <UiCard padding="none" class="overflow-hidden">
+                <div class="grid md:grid-cols-[18rem_minmax(0,1fr)]">
+                    <img v-if="shop.cover_image_url" :src="shop.cover_image_url" :alt="`Úvodní fotografie ${shop.name}`" class="aspect-video h-full w-full object-cover md:aspect-auto" />
+                    <div v-else class="flex min-h-44 items-center justify-center bg-brand-50 text-brand-700"><Store :size="44" stroke-width="1.5" /></div>
+                    <div class="min-w-0 p-5 sm:p-6">
+                        <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2"><h1 class="break-words text-2xl font-extrabold tracking-tight text-ink">{{ shop.name }}</h1><StatusBadge :tone="shop.is_available ? 'success' : 'neutral'">{{ shop.is_available ? 'Aktivní' : 'Neaktivní' }}</StatusBadge></div>
+                                <p class="mt-2 text-sm font-semibold text-muted">{{ shop.category?.name || 'Bez kategorie' }}</p>
+                                <p class="mt-3 flex items-start gap-2 text-sm text-muted"><MapPin :size="17" class="mt-0.5 flex-none" /><span>{{ shop.is_online_only ? 'Pouze online' : ([shop.address, shop.city].filter(Boolean).join(', ') || 'Adresa není doplněna') }}</span></p>
+                            </div>
+                            <div class="flex flex-wrap gap-2 sm:flex-none"><UiButton :href="route('vendor.shops.edit', shop.id)" variant="secondary"><Pencil :size="17" /> Upravit</UiButton><UiButton variant="ghost" @click="toggleAvailability">{{ shop.is_available ? 'Skrýt' : 'Aktivovat' }}</UiButton></div>
                         </div>
-                        <p class="text-sm text-gray-400 mt-0.5">{{ shop.category?.name || 'Uncategorized' }} · {{ shop.services?.length || 0 }} services</p>
-                    </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        <button
-                            @click="toggleAvailability"
-                            :class="['px-4 py-2.5 text-sm font-medium rounded-xl transition-colors', shop.is_available ? 'bg-green-50 text-green-600 hover:bg-green-100 ring-1 ring-inset ring-green-600/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100 ring-1 ring-inset ring-gray-500/10']"
-                        >{{ shop.is_available ? '✓ Active' : '○ Inactive' }}</button>
-                        <Link
-                            :href="route('vendor.shops.edit', shop.id)"
-                            class="px-4 py-2.5 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
-                        >{{ $t('Edit Details') }}</Link>
+                        <p v-if="shop.description" class="mt-5 max-w-3xl text-sm leading-6 text-muted">{{ shop.description }}</p>
                     </div>
                 </div>
+            </UiCard>
+
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <UiCard v-for="item in [
+                    { label: 'Všechny rezervace', value: stats.total_bookings ?? 0, icon: CalendarDays },
+                    { label: 'Dokončené', value: stats.completed_bookings ?? 0, icon: Wrench },
+                    { label: 'Zrušené', value: stats.cancelled_bookings ?? 0, icon: Clock },
+                    { label: 'Hodnota nezrušených rezervací', value: money(stats.total_revenue), icon: Store },
+                ]" :key="item.label" padding="sm" class="min-w-0"><div class="flex gap-3"><span class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-50 text-brand-700"><component :is="item.icon" :size="19" /></span><div class="min-w-0"><p class="text-xs font-bold uppercase tracking-wide text-muted">{{ item.label }}</p><p class="mt-1 break-words text-xl font-extrabold text-ink">{{ item.value }}</p></div></div></UiCard>
             </div>
 
-            <!-- Stats Row -->
-            <div class="grid grid-cols-4 gap-4">
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Bookings') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.total_bookings }}</div>
-                </div>
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Completed') }}</div>
-                    <div class="text-2xl font-bold text-emerald-600">{{ stats.completed_bookings }}</div>
-                </div>
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Cancelled') }}</div>
-                    <div class="text-2xl font-bold text-red-600">{{ stats.cancelled_bookings }}</div>
-                </div>
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Revenue') }}</div>
-                    <div class="text-2xl font-bold text-purple-600">${{ Number(stats.total_revenue).toLocaleString() }}</div>
-                </div>
+            <section aria-labelledby="services-title" class="space-y-4">
+                <PageHeader title="Služby" :description="`${shop.services?.length || 0} služeb v měně ${shop.currency || 'CZK'}`">
+                    <template #actions><UiButton @click="openService()"><Plus :size="18" /> Přidat službu</UiButton></template>
+                </PageHeader>
 
-            </div>
+                <EmptyState v-if="!shop.services?.length" title="Zatím nenabízíte žádnou službu" description="Přidejte název, délku a cenu první služby. Bez služby nelze vytvořit rezervaci.">
+                    <template #icon><Wrench :size="23" /></template><template #actions><UiButton @click="openService()"><Plus :size="18" /> Přidat službu</UiButton></template>
+                </EmptyState>
 
-            <!-- Offerings Table -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Services') }}</h2>
-                    <button @click="openAddService" class="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>{{ $t('Add Service') }}</button>
-                </div>
-
-                <div v-if="shop.services?.length">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-50/50">
-                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Service') }}</th>
-                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Duration') }}</th>
-                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Price') }}</th>
-                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Category') }}</th>
-                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Staff Level') }}</th>
-                                <th class="px-6 py-3"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr
-                                v-for="service in shop.services"
-                                :key="service.id"
-                                class="group hover:bg-blue-50/30 transition-colors"
-                            >
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-semibold text-gray-900 text-sm">{{ service.name }}</span>
-                                        <span v-if="service.is_popular" class="text-[10px] text-blue-600 font-bold uppercase tracking-wide bg-blue-100 px-1.5 py-0.5 rounded">{{ $t('Popular') }}</span>
-                                    </div>
-                                    <p v-if="service.description" class="text-xs text-gray-500 mt-0.5 max-w-xs truncate">{{ service.description }}</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="text-sm text-gray-600">{{ service.duration_minutes }} mins</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="text-sm text-gray-600">{{ Number(service.price).toFixed(2) }} {{ shop.currency }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="text-sm text-gray-600">{{ service.category_tag || '—' }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="text-sm text-gray-600">{{ service.staff_level || '—' }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-1">
-                                        <button @click="openEditService(service)" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" :title="$t('Edit')">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </button>
-                                        <button @click="deleteService(service.id)" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" :title="$t('Delete')">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div v-else class="text-center py-12 px-6">
-                    <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <template v-else>
+                    <div class="grid gap-3 md:hidden">
+                        <UiCard v-for="service in shop.services" :key="service.id" padding="sm">
+                            <div class="flex items-start justify-between gap-3"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><h3 class="break-words font-extrabold text-ink">{{ service.name }}</h3><StatusBadge v-if="service.is_popular" tone="warning">Oblíbená</StatusBadge></div><p v-if="service.description" class="mt-1 text-sm leading-5 text-muted">{{ service.description }}</p></div><strong class="flex-none text-sm text-ink">{{ money(service.price) }}</strong></div>
+                            <div class="mt-4 flex items-center justify-between border-t border-line pt-4"><span class="flex items-center gap-2 text-sm text-muted"><Clock :size="16" /> {{ service.duration_minutes }} min</span><div class="flex gap-1"><button class="ui-icon-button" aria-label="Upravit službu" @click="openService(service)"><Pencil :size="17" /></button><button class="ui-icon-button text-danger" aria-label="Smazat službu" @click="removeService(service)"><Trash2 :size="17" /></button></div></div>
+                        </UiCard>
                     </div>
-                    <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No services yet') }}</h3>
-                    <p class="text-sm text-gray-500 mb-4">{{ $t('Add services to let customers book specific jobs.') }}</p>
-                    <button @click="openAddService" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>{{ $t('Add Your First Service') }}</button>
-                </div>
-            </div>
+                    <div class="hidden overflow-hidden rounded-2xl border border-line bg-white md:block"><div class="overflow-x-auto"><table class="w-full min-w-[720px] text-left"><thead class="border-b border-line bg-gray-50 text-xs font-bold uppercase tracking-wide text-muted"><tr><th class="px-5 py-3">Služba</th><th class="px-5 py-3">Délka</th><th class="px-5 py-3">Cena</th><th class="px-5 py-3">Štítek</th><th class="px-5 py-3 text-right">Akce</th></tr></thead><tbody class="divide-y divide-line"><tr v-for="service in shop.services" :key="service.id"><td class="px-5 py-4"><p class="font-extrabold text-ink">{{ service.name }}</p><p v-if="service.description" class="mt-1 max-w-md truncate text-xs text-muted">{{ service.description }}</p></td><td class="px-5 py-4 text-sm text-muted">{{ service.duration_minutes }} min</td><td class="px-5 py-4 text-sm font-bold text-ink">{{ money(service.price) }}</td><td class="px-5 py-4"><StatusBadge v-if="service.is_popular" tone="warning">Oblíbená</StatusBadge><span v-else class="text-sm text-muted">—</span></td><td class="px-5 py-4"><div class="flex justify-end gap-1"><button class="ui-icon-button" aria-label="Upravit službu" @click="openService(service)"><Pencil :size="17" /></button><button class="ui-icon-button text-danger" aria-label="Smazat službu" @click="removeService(service)"><Trash2 :size="17" /></button></div></td></tr></tbody></table></div></div>
+                </template>
+            </section>
         </div>
 
-        <!-- Offering Modal -->
-        <teleport to="body">
-            <transition
-                enter-active-class="transition-opacity duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100"
-                leave-active-class="transition-opacity duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0"
-            >
-                <div v-if="showServiceModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="closeServiceModal">
-                    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-                        <!-- Modal Header -->
-                        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-bold text-white">{{ editingService ? 'Edit Service' : 'New Service' }}</h3>
-                                    <p class="text-xs text-blue-100">{{ editingService ? 'Update the details below' : 'Add a new service' }}</p>
-                                </div>
-                            </div>
-                            <button @click="closeServiceModal" class="text-white/70 hover:text-white transition-colors p-1">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            </button>
-                        </div>
-
-                        <!-- Modal Body -->
-                        <form @submit.prevent="saveService" class="p-6 space-y-5">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Service Name') }}<span class="text-red-400">*</span></label>
-                                <input v-model="serviceForm.name" type="text" :placeholder="$t('e.g., Basic Drain Cleaning')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Description') }}</label>
-                                <textarea v-model="serviceForm.description" rows="2" :placeholder="$t('Describe what\'s included in this service...')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none focus:bg-white transition-colors"></textarea>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <!-- Duration -->
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Duration') }}<span class="text-red-400">*</span></label>
-                                    <div class="relative">
-                                        <input v-model="serviceForm.duration_minutes" type="number" min="1" placeholder="60" class="w-full pl-4 pr-14 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
-                                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">{{ $t('mins') }}</span>
-                                    </div>
-                                </div>
-
-                                <!-- Price -->
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Price') }}<span class="text-red-400">*</span></label>
-                                    <div class="relative">
-                                        <input v-model="serviceForm.price" type="number" min="0" step="0.01" placeholder="50.00" class="w-full pl-4 pr-14 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" required />
-                                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">{{ shop.currency || 'CZK' }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Tags -->
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Category Tag') }}</label>
-                                    <input v-model="serviceForm.category_tag" type="text" :placeholder="$t('e.g., Repair')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">{{ $t('Staff Level') }}</label>
-                                    <input v-model="serviceForm.staff_level" type="text" :placeholder="$t('e.g., Senior')" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm focus:bg-white transition-colors" />
-                                </div>
-                            </div>
-
-                            <!-- Popular Toggle -->
-                            <div class="flex items-center justify-between p-3 bg-amber-50/50 border border-amber-100 rounded-xl">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                                        <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    </div>
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-800">{{ $t('Mark as Popular') }}</div>
-                                        <div class="text-xs text-gray-500">{{ $t('Highlight this service for customers') }}</div>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    @click="serviceForm.is_popular = !serviceForm.is_popular"
-                                    :class="['relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out', serviceForm.is_popular ? 'bg-amber-500' : 'bg-gray-200']"
-                                >
-                                    <span :class="['pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out', serviceForm.is_popular ? 'translate-x-5' : 'translate-x-0']" />
-                                </button>
-                            </div>
-
-                            <!-- Actions -->
-                            <div class="flex gap-3 pt-1">
-                                <button type="button" @click="closeServiceModal" class="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-2.5 rounded-xl transition-colors text-sm">{{ $t('Cancel') }}</button>
-                                <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg text-sm">
-                                    {{ editingService ? 'Save Changes' : 'Add Service' }}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+        <Modal :show="showServiceModal" max-width="lg" @close="closeService">
+            <form @submit.prevent="saveService">
+                <div class="border-b border-line px-5 py-5 sm:px-6"><h2 class="text-lg font-extrabold text-ink">{{ editingService ? 'Upravit službu' : 'Přidat službu' }}</h2><p class="mt-1 text-sm text-muted">Zákazník uvidí název, délku a přesnou cenu.</p></div>
+                <div class="grid gap-5 px-5 py-6 sm:grid-cols-2 sm:px-6">
+                    <div class="sm:col-span-2"><InputLabel for="service-name" value="Název" /><TextInput id="service-name" v-model="serviceForm.name" class="mt-2 block w-full" required /><InputError class="mt-2" :message="serviceForm.errors.name" /></div>
+                    <div><InputLabel for="service-duration" value="Délka (minuty)" /><TextInput id="service-duration" v-model="serviceForm.duration_minutes" type="number" min="1" class="mt-2 block w-full" required /><InputError class="mt-2" :message="serviceForm.errors.duration_minutes" /></div>
+                    <div><InputLabel for="service-price" :value="`Cena (${shop.currency || 'CZK'})`" /><TextInput id="service-price" v-model="serviceForm.price" type="number" min="0" step="0.01" class="mt-2 block w-full" required /><InputError class="mt-2" :message="serviceForm.errors.price" /></div>
+                    <div class="sm:col-span-2"><InputLabel for="service-description" value="Popis" /><textarea id="service-description" v-model="serviceForm.description" rows="4" class="ui-field mt-2 resize-y" /><InputError class="mt-2" :message="serviceForm.errors.description" /></div>
+                    <label class="sm:col-span-2 flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-line px-4 py-3 text-sm font-bold text-ink"><input v-model="serviceForm.is_popular" type="checkbox" class="rounded border-line text-brand-600 focus:ring-brand-600" /> Označit jako oblíbenou</label>
                 </div>
-            </transition>
-        </teleport>
+                <div class="flex flex-col-reverse gap-2 border-t border-line px-5 py-4 sm:flex-row sm:justify-end sm:px-6"><UiButton variant="secondary" @click="closeService">Zrušit</UiButton><UiButton type="submit" :loading="serviceForm.processing">{{ editingService ? 'Uložit změny' : 'Přidat službu' }}</UiButton></div>
+            </form>
+        </Modal>
     </VendorLayout>
 </template>

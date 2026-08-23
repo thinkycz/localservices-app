@@ -2,178 +2,105 @@
 
 namespace Database\Seeders;
 
+use App\Enums\BookingStatus;
 use App\Models\Booking;
-use App\Models\Service;
 use App\Models\Shop;
 use App\Models\User;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 
 class BookingSeeder extends Seeder
 {
     public function run(): void
     {
-        $shops = Shop::with('services')->get();
-        $customers = User::where('is_vendor', false)->get();
+        $shops = Shop::with('services')->orderBy('id')->get();
+        $customers = User::where('is_vendor', false)->orderBy('id')->get();
 
         if ($shops->isEmpty() || $customers->isEmpty()) {
             return;
         }
 
-        $statuses = ['pending', 'confirmed', 'completed', 'cancelled'];
-        $statusWeights = [15, 25, 50, 10]; // Weighted probabilities
+        $today = CarbonImmutable::today('Europe/Prague');
+        $scenarios = [
+            [-12, '09:00', BookingStatus::Completed, 'Děkuji, všechno proběhlo skvěle.'],
+            [-7, '11:00', BookingStatus::Completed, null],
+            [-3, '14:00', BookingStatus::Cancelled, 'Termín jsme po domluvě zrušili.'],
+            [1, '09:00', BookingStatus::Confirmed, 'Prosím zavolejte pět minut předem.'],
+            [2, '11:00', BookingStatus::Pending, null],
+            [4, '14:00', BookingStatus::Confirmed, 'Vchod je z ulice, zvonek Novák.'],
+            [7, '09:00', BookingStatus::Pending, null],
+        ];
 
-        // Create bookings for the past 3 months and next 2 weeks
-        $startDate = Carbon::now()->subMonths(3);
-        $endDate = Carbon::now()->addWeeks(2);
-
-        $bookingCount = 0;
-        $maxBookings = 150;
-
-        // Generate bookings across the date range
-        for ($date = $startDate->copy(); $date <= $endDate && $bookingCount < $maxBookings; $date->addDay()) {
-            // Skip some days randomly to make it realistic
-            if (rand(1, 100) > 70) {
-                continue;
-            }
-
-            // Number of bookings for this day (0-5)
-            $dailyBookings = rand(0, 5);
-
-            for ($i = 0; $i < $dailyBookings && $bookingCount < $maxBookings; $i++) {
-                $shop = $shops->random();
-
-                // Skip if service has no services
-                if ($shop->services->isEmpty()) {
-                    continue;
-                }
-
-                $service = $shop->services->random();
-                $customer = $customers->random();
-
-                // Determine status based on date
-                if ($date->isPast()) {
-                    // Past bookings are mostly completed or cancelled
-                    $status = $this->weightedRandomChoice(
-                        ['completed', 'cancelled', 'confirmed'],
-                        [70, 15, 15]
-                    );
-                } elseif ($date->isToday()) {
-                    // Today's bookings can be any status
-                    $status = $this->weightedRandomChoice($statuses, $statusWeights);
-                } else {
-                    // Future bookings are pending or confirmed
-                    $status = $this->weightedRandomChoice(
-                        ['pending', 'confirmed'],
-                        [40, 60]
-                    );
-                }
-
-                // Generate random time between 8 AM and 6 PM
-                $hour = rand(8, 17);
-                $minute = rand(0, 1) * 30; // 00 or 30
-                $startTime = sprintf('%02d:%02d', $hour, $minute);
-                $endTime = Carbon::createFromFormat('H:i', $startTime)
-                    ->addMinutes($service->duration_minutes)
-                    ->format('H:i');
-
-                // Create the booking
-                Booking::create([
-                    'user_id' => $customer->id,
-                    'shop_id' => $shop->id,
-                    'service_id' => $service->id,
-                    'provider_id' => $shop->user_id,
-                    'status' => $status,
-                    'booking_date' => $date->copy(),
-                    'start_time' => $startTime,
-                    'end_time' => $endTime,
-                    'customer_notes' => $this->getRandomNote(),
-                    'created_at' => $date->copy()->subDays(rand(1, 7)),
-                    'updated_at' => $date->copy(),
-                ]);
-
-                $bookingCount++;
-            }
-        }
-
-        // Ensure we have some bookings for today specifically
-        $today = Carbon::today();
-        $todayServices = $shops->take(3);
-
-        foreach ($todayServices as $index => $shop) {
+        foreach ($shops as $shopIndex => $shop) {
             if ($shop->services->isEmpty()) {
                 continue;
             }
 
-            $service = $shop->services->first();
-            $customer = $customers[$index % $customers->count()];
-
-            $times = ['09:00', '11:00', '14:00', '16:00'];
-
-            foreach (array_slice($times, 0, rand(2, 4)) as $time) {
-                $endTime = Carbon::createFromFormat('H:i', $time)
+            foreach ($scenarios as $scenarioIndex => [$dayOffset, $startTime, $status, $notes]) {
+                $service = $shop->services[$scenarioIndex % $shop->services->count()];
+                $customer = $customers[($shopIndex + $scenarioIndex) % $customers->count()];
+                $bookingDate = $today->addDays($dayOffset);
+                $endTime = CarbonImmutable::createFromFormat('H:i', $startTime, 'Europe/Prague')
                     ->addMinutes($service->duration_minutes)
                     ->format('H:i');
 
-                Booking::create([
-                    'user_id' => $customer->id,
-                    'shop_id' => $shop->id,
-                    'service_id' => $service->id,
-                    'provider_id' => $shop->user_id,
-                    'status' => $this->weightedRandomChoice(
-                        ['pending', 'confirmed', 'completed'],
-                        [30, 50, 20]
-                    ),
-                    'booking_date' => $today,
-                    'start_time' => $time,
-                    'end_time' => $endTime,
-                    'customer_notes' => $this->getRandomNote(),
-                    'created_at' => $today->copy()->subDays(rand(1, 3)),
-                    'updated_at' => now(),
-                ]);
-            }
-        }
-    }
-
-    /**
-     * Get a random customer note
-     */
-    private function getRandomNote(): ?string
-    {
-        $notes = [
-            'Please call before arriving',
-            'I have pets, please be careful',
-            'Parking is available in the driveway',
-            'Please wear masks inside',
-            'Gate code is 1234',
-            'I prefer morning appointments',
-            'Please bring your own tools',
-            'The issue is in the upstairs bathroom',
-            'Please be quiet, baby is sleeping',
-            null,
-            null,
-            null, // 50% chance of no note
-        ];
-
-        return $notes[array_rand($notes)];
-    }
-
-    /**
-     * Weighted random choice from array
-     */
-    private function weightedRandomChoice(array $choices, array $weights): string
-    {
-        $totalWeight = array_sum($weights);
-        $random = rand(1, $totalWeight);
-
-        $currentWeight = 0;
-        foreach ($choices as $index => $choice) {
-            $currentWeight += $weights[$index];
-            if ($random <= $currentWeight) {
-                return $choice;
+                Booking::updateOrCreate(
+                    [
+                        'shop_id' => $shop->id,
+                        'booking_date' => $bookingDate->format('Y-m-d'),
+                        'start_time' => $startTime,
+                    ],
+                    [
+                        'user_id' => $customer->id,
+                        'service_id' => $service->id,
+                        'provider_id' => $shop->user_id,
+                        'customer_name' => $customer->name,
+                        'customer_email' => $customer->email,
+                        'customer_phone' => $customer->phone,
+                        'price_amount' => $service->price,
+                        'currency' => $shop->currency,
+                        'timezone' => $shop->timezone ?: 'Europe/Prague',
+                        'status' => $status->value,
+                        'end_time' => $endTime,
+                        'customer_notes' => $notes,
+                        'cancellation_reason' => $status === BookingStatus::Cancelled
+                            ? 'Zrušeno po dohodě se zákazníkem.'
+                            : null,
+                    ]
+                );
             }
         }
 
-        return $choices[0];
+        $guestShop = $shops->first(fn (Shop $shop) => $shop->services->isNotEmpty());
+
+        if ($guestShop) {
+            $guestService = $guestShop->services->first();
+            $startTime = '16:00';
+
+            Booking::updateOrCreate(
+                [
+                    'shop_id' => $guestShop->id,
+                    'booking_date' => $today->addDays(3)->format('Y-m-d'),
+                    'start_time' => $startTime,
+                ],
+                [
+                    'user_id' => null,
+                    'service_id' => $guestService->id,
+                    'provider_id' => $guestShop->user_id,
+                    'customer_name' => 'Host Domluveno',
+                    'customer_email' => 'host@example.cz',
+                    'customer_phone' => '+420 777 123 456',
+                    'guest_token_hash' => hash('sha256', 'domluveno-demo-guest-token'),
+                    'price_amount' => $guestService->price,
+                    'currency' => $guestShop->currency,
+                    'timezone' => $guestShop->timezone ?: 'Europe/Prague',
+                    'status' => BookingStatus::Confirmed->value,
+                    'end_time' => CarbonImmutable::createFromFormat('H:i', $startTime, 'Europe/Prague')
+                        ->addMinutes($guestService->duration_minutes)
+                        ->format('H:i'),
+                    'customer_notes' => 'Ukázková rezervace bez účtu.',
+                ]
+            );
+        }
     }
 }

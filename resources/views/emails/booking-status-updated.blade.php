@@ -1,220 +1,33 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('Booking Status Update') }}</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            border-radius: 10px 10px 0 0;
-        }
-
-        .content {
-            background: #f9fafb;
-            padding: 30px;
-            border-radius: 0 0 10px 10px;
-        }
-
-        .booking-details {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .detail-row:last-child {
-            border-bottom: none;
-        }
-
-        .label {
-            color: #6b7280;
-            font-weight: 500;
-        }
-
-        .value {
-            color: #111827;
-            font-weight: 600;
-        }
-
-        .status {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-confirmed {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-completed {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .status-cancelled {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        .button {
-            display: inline-block;
-            background: #4f46e5;
-            color: white;
-            padding: 12px 30px;
-            text-decoration: none;
-            border-radius: 6px;
-            margin-top: 20px;
-        }
-
-        .message-box {
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
-        .message-confirmed {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .message-completed {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .message-cancelled {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="header">
-        <h1>{{ __('Booking Status Update') }}</h1>
-        <p>{{ __('Your booking status has changed') }}</p>
-    </div>
-
-    <div class="content">
-        <p>Hi {{ $booking->customer->name }},</p>
-
-        @php
-        $statusClass = match($newStatus) {
-        'confirmed' => 'message-confirmed',
-        'completed' => 'message-completed',
-        'cancelled' => 'message-cancelled',
-        default => 'message-confirmed',
+<!doctype html>
+<html lang="cs">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Změna rezervace</title></head>
+<body style="margin:0;background:#F7F6F2;color:#17211F;font-family:Arial,sans-serif;line-height:1.6">
+    @php
+        $status = match($newStatus) {
+            'confirmed' => ['Rezervace je potvrzená', 'Poskytovatel potvrdil váš termín.'],
+            'completed' => ['Rezervace je dokončená', 'Služba byla označena jako dokončená. Ve svém účtu nyní můžete přidat hodnocení.'],
+            'cancelled' => ['Rezervace byla zrušena', 'Termín už není aktivní. Důvod zrušení najdete níže, pokud ho poskytovatel uvedl.'],
+            default => ['Stav rezervace se změnil', 'Podívejte se na aktuální informace k rezervaci.'],
         };
-        $statusMessage = match($newStatus) {
-        'confirmed' => 'Great news! Your booking has been confirmed by the vendor. We look forward to seeing you!',
-        'completed' => 'Your service has been completed. Thank you for choosing us!',
-        'cancelled' => 'We regret to inform you that your booking has been cancelled.',
-        default => 'Your booking status has been updated.',
-        };
-        @endphp
-
-        <div class="message-box {{ $statusClass }}">
-            <p style="margin: 0; font-weight: 500;">{{ $statusMessage }}</p>
+    @endphp
+    <div style="max-width:620px;margin:0 auto;padding:24px">
+        <div style="border-radius:16px 16px 0 0;background:#0F766E;padding:24px;color:#fff"><strong style="font-size:22px">Domluveno</strong><h1 style="margin:16px 0 0;font-size:26px">{{ $status[0] }}</h1></div>
+        <div style="border:1px solid #DDE3DF;border-top:0;border-radius:0 0 16px 16px;background:#fff;padding:24px">
+            <p>Dobrý den, {{ $booking->customer_display_name }},</p>
+            <p>{{ $status[1] }}</p>
+            <div style="margin:20px 0;border-radius:12px;background:#F7F6F2;padding:16px">
+                <strong>{{ $booking->service->name }}</strong><br>
+                {{ $booking->shop->name }}<br>
+                {{ $booking->booking_date->locale('cs')->translatedFormat('j. F Y') }}, {{ substr($booking->start_time, 0, 5) }} · {{ number_format((float) $booking->total_price, 2, ',', ' ') }} {{ $booking->currency }}
+            </div>
+            @if($newStatus === 'cancelled' && $booking->cancellation_reason)
+                <p><strong>Důvod zrušení:</strong> {{ $booking->cancellation_reason }}</p>
+            @endif
+            @if($booking->user_id)
+                <p style="text-align:center;margin:24px 0 8px"><a href="{{ route('bookings.index') }}" style="display:inline-block;border-radius:12px;background:#0F766E;padding:12px 20px;color:#fff;text-decoration:none;font-weight:700">Otevřít moje rezervace</a></p>
+            @endif
         </div>
-
-        <p>{{ __('Your booking is now:') }}
-            <span class="status status-{{ $newStatus }}">
-                {{ ucfirst($newStatus) }}
-            </span>
-        </p>
-
-        <div class="booking-details">
-            <h3 style="margin-top: 0; color: #111827;">{{ __('Booking Details') }}</h3>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Service') }}</span>
-                <span class="value">{{ $booking->service->name }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Offering') }}</span>
-                <span class="value">{{ $booking->service->name }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Date') }}</span>
-                <span class="value">{{ $booking->booking_date->format('l, F j, Y') }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Time') }}</span>
-                <span class="value">{{ \Carbon\Carbon::parse($booking->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('g:i A') }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Vendor') }}</span>
-                <span class="value">{{ $booking->provider->name }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Booking ID') }}</span>
-                <span class="value">#{{ $booking->id }}</span>
-            </div>
-        </div>
-
-        @if($newStatus === 'confirmed')
-        <p><strong>{{ __('What\'s next?') }}</strong></p>
-        <ul>
-            <li>{{ __('Please arrive 5-10 minutes before your scheduled time') }}</li>
-            <li>{{ __('If you need to reschedule, please contact us at least 24 hours in advance') }}</li>
-            <li>{{ __('Bring any relevant documents or information related to your service') }}</li>
-        </ul>
-        @endif
-
-        @if($newStatus === 'completed')
-        <div style="text-align: center; margin: 30px 0;">
-            <p>{{ __('We hope you enjoyed your experience!') }}</p>
-            <a href="{{ route('shops.show', $booking->shop->slug) }}" class="button">{{ __('Leave a Review') }}</a>
-        </div>
-        @endif
-
-        <div style="text-align: center;">
-            <a href="{{ route('bookings.index') }}" class="button">{{ __('View My Bookings') }}</a>
-        </div>
-
-        <div class="footer">
-            <p>{{ __('If you have any questions, please don\'t hesitate to contact us.') }}</p>
-            <p>&copy; {{ date('Y') }} LocalServices. All rights reserved.</p>
-        </div>
+        <p style="text-align:center;font-size:12px;color:#66736F">© {{ date('Y') }} Domluveno</p>
     </div>
 </body>
-
 </html>

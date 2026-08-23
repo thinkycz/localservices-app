@@ -1,7 +1,12 @@
 <script setup>
+import EmptyState from '@/Components/EmptyState.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import UiButton from '@/Components/UiButton.vue';
+import UiCard from '@/Components/UiCard.vue';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ChevronLeft, ChevronRight, CircleDollarSign, Search, UserPlus, Users } from '@lucide/vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     customers: { type: Array, required: true },
@@ -10,285 +15,56 @@ const props = defineProps({
     stats: { type: Object, required: true },
 });
 
-const searchQuery = ref(props.filters.search || '');
-const activeFilter = ref(props.filters.filter || 'all');
+const search = ref(props.filters.search || '');
+const filter = ref(props.filters.filter || 'all');
+const lastPage = computed(() => Math.max(1, Math.ceil(Number(props.meta.total || 0) / Number(props.meta.per_page || 10))));
 
-function handleSearch() {
-    router.get(route('vendor.customers.index'), {
-        search: searchQuery.value,
-        filter: activeFilter.value,
-    }, { preserveState: true, replace: true });
+function visit(page = 1) {
+    router.get(route('vendor.customers.index'), { page, search: search.value, filter: filter.value }, { preserveState: true, replace: true });
 }
 
-function setFilter(filter) {
-    activeFilter.value = filter;
-    router.get(route('vendor.customers.index'), {
-        search: searchQuery.value,
-        filter: filter,
-    }, { preserveState: true, replace: true });
-}
-
-function changePage(page) {
-    router.get(route('vendor.customers.index'), {
-        page: page,
-        search: searchQuery.value,
-        filter: activeFilter.value,
-    }, { preserveState: true });
-}
-
-function formatPrice(amount) {
-    // Return string directly since we formatted it in the backend
-    if (typeof amount === 'string') return amount;
-    return amount || 0;
-}
-
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
+function resetFilters() { search.value = ''; filter.value = 'all'; visit(); }
+function formatDate(value) { return value ? new Intl.DateTimeFormat('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${String(value).slice(0, 10)}T12:00:00`)) : '—'; }
 </script>
 
 <template>
-    <Head :title="$t('Customers')" />
-
+    <Head title="Zákazníci" />
     <VendorLayout activePage="customers">
-        <div class="flex flex-col gap-6">
+        <div class="space-y-6">
+            <PageHeader title="Zákazníci" description="Přehled registrovaných zákazníků, kteří si u vás už rezervovali službu. Hosté zůstávají u jednotlivých rezervací." />
 
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-4 gap-4">
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-1">{{ $t('Total Customers') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.total_customers }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-11 h-11 rounded-xl bg-green-50 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-1">{{ $t('New Customers') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.new_customers }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-11 h-11 rounded-xl bg-purple-50 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-1">{{ $t('Returning') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.returning_customers }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-11 h-11 rounded-xl bg-purple-50 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-1">{{ $t('Total Revenue') }}</div>
-                    <div class="text-2xl font-bold text-purple-600">{{ formatPrice(stats.total_revenue) }}</div>
-                    <div class="text-xs text-gray-400 mt-1 truncate" :title="stats.total_revenue">
-                        {{ stats.total_revenue }}
-                    </div>
-                </div>
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <UiCard v-for="item in [
+                    { label: 'Zákazníci ve výběru', value: stats.total_customers ?? 0, icon: Users },
+                    { label: 'První rezervace', value: stats.new_customers ?? 0, icon: UserPlus },
+                    { label: 'Vracející se', value: stats.returning_customers ?? 0, icon: Users },
+                    { label: 'Hodnota nezrušených rezervací', value: stats.total_revenue ?? '0,00 CZK', icon: CircleDollarSign },
+                ]" :key="item.label" padding="sm" class="min-w-0"><div class="flex gap-3"><span class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-50 text-brand-700"><component :is="item.icon" :size="19" /></span><div class="min-w-0"><p class="text-xs font-bold uppercase tracking-wide text-muted">{{ item.label }}</p><p class="mt-1 break-words text-xl font-extrabold text-ink">{{ item.value }}</p></div></div></UiCard>
             </div>
 
-            <!-- Search and Filter Bar -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                <div class="flex items-center gap-4">
-                    <div class="flex-1 relative">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        <input
-                            v-model="searchQuery"
-                            type="text"
-                            :placeholder="$t('Search customers by name or email...')"
-                            class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            @keyup.enter="handleSearch"
-                        />
-                    </div>
-                    
-                    <div class="flex items-center gap-1">
-                        <button
-                            @click="setFilter('all')"
-                            :class="[
-                                'px-4 py-2 text-sm font-medium rounded-xl transition-colors',
-                                activeFilter === 'all'
-                                    ? 'bg-gray-900 text-white'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                            ]"
-                        >{{ $t('All') }}</button>
-                        <button
-                            @click="setFilter('new')"
-                            :class="[
-                                'px-4 py-2 text-sm font-medium rounded-xl transition-colors',
-                                activeFilter === 'new'
-                                    ? 'bg-gray-900 text-white'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                            ]"
-                        >{{ $t('New') }}</button>
-                        <button
-                            @click="setFilter('returning')"
-                            :class="[
-                                'px-4 py-2 text-sm font-medium rounded-xl transition-colors',
-                                activeFilter === 'returning'
-                                    ? 'bg-gray-900 text-white'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                            ]"
-                        >{{ $t('Returning') }}</button>
-                    </div>
+            <UiCard padding="sm">
+                <form class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]" @submit.prevent="visit()">
+                    <label class="relative"><span class="sr-only">Hledat zákazníka</span><Search class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" :size="18" /><input v-model="search" type="search" class="ui-field pl-11" placeholder="Jméno nebo e-mail…" /></label>
+                    <select v-model="filter" class="ui-field sm:w-48" aria-label="Typ zákazníka" @change="visit()"><option value="all">Všichni</option><option value="new">První rezervace</option><option value="returning">Vracející se</option></select>
+                    <UiButton type="submit" variant="secondary">Hledat</UiButton>
+                </form>
+            </UiCard>
+
+            <EmptyState v-if="!customers.length" title="Žádní odpovídající zákazníci" description="Změňte hledání, nebo vyčkejte, až první registrovaný zákazník vytvoří rezervaci.">
+                <template #icon><Users :size="23" /></template><template #actions><UiButton variant="secondary" @click="resetFilters">Vymazat filtry</UiButton></template>
+            </EmptyState>
+
+            <template v-else>
+                <div class="grid gap-3 md:hidden">
+                    <Link v-for="customer in customers" :key="customer.id" :href="route('vendor.customers.show', customer.id)" class="rounded-2xl border border-line bg-white p-4 transition hover:border-brand-300 hover:shadow-soft">
+                        <div class="flex gap-3"><span class="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-brand-50 text-sm font-extrabold text-brand-800">{{ customer.avatar_initials }}</span><div class="min-w-0"><p class="break-words font-extrabold text-ink">{{ customer.name }}</p><p class="mt-1 break-all text-sm text-muted">{{ customer.email }}</p></div></div>
+                        <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-4 text-sm"><div><dt class="text-xs font-bold uppercase text-muted">Rezervace</dt><dd class="mt-1 font-bold text-ink">{{ customer.total_bookings }}</dd></div><div><dt class="text-xs font-bold uppercase text-muted">Nezrušené</dt><dd class="mt-1 break-words font-bold text-ink">{{ customer.total_spent }}</dd></div><div class="col-span-2"><dt class="text-xs font-bold uppercase text-muted">Naposledy</dt><dd class="mt-1 text-ink">{{ formatDate(customer.last_booking_date) }}</dd></div></dl>
+                    </Link>
                 </div>
-            </div>
+                <div class="hidden overflow-hidden rounded-2xl border border-line bg-white md:block"><div class="overflow-x-auto"><table class="w-full min-w-[760px] text-left"><thead class="border-b border-line bg-gray-50 text-xs font-bold uppercase tracking-wide text-muted"><tr><th class="px-5 py-3">Zákazník</th><th class="px-5 py-3">Kontakt</th><th class="px-5 py-3">Rezervace</th><th class="px-5 py-3">Nezrušené</th><th class="px-5 py-3">Naposledy</th><th class="px-5 py-3"></th></tr></thead><tbody class="divide-y divide-line"><tr v-for="customer in customers" :key="customer.id" class="hover:bg-brand-50/30"><td class="px-5 py-4"><div class="flex items-center gap-3"><span class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-50 text-xs font-extrabold text-brand-800">{{ customer.avatar_initials }}</span><p class="font-extrabold text-ink">{{ customer.name }}</p></div></td><td class="px-5 py-4"><p class="text-sm text-ink">{{ customer.email }}</p><p class="mt-1 text-xs text-muted">{{ customer.phone === 'N/A' ? 'Telefon neuveden' : customer.phone }}</p></td><td class="px-5 py-4 text-sm font-bold text-ink">{{ customer.total_bookings }}</td><td class="px-5 py-4 text-sm font-bold text-ink">{{ customer.total_spent }}</td><td class="px-5 py-4 text-sm text-muted">{{ formatDate(customer.last_booking_date) }}</td><td class="px-5 py-4 text-right"><UiButton :href="route('vendor.customers.show', customer.id)" variant="secondary" size="sm">Detail</UiButton></td></tr></tbody></table></div></div>
 
-            <!-- Customers Table -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table class="w-full">
-                    <thead>
-                        <tr class="bg-gray-50/50">
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Customer') }}</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Contact') }}</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Bookings') }}</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Total Spent') }}</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Last Booking') }}</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Services') }}</th>
-                            <th class="px-6 py-3.5"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr
-                            v-for="customer in customers"
-                            :key="customer.id"
-                            class="group hover:bg-blue-50/30 transition-colors cursor-pointer"
-                            @click="router.visit(route('vendor.customers.show', customer.id))"
-                        >
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 shadow-sm">
-                                        {{ customer.avatar_initials }}
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="font-semibold text-gray-900 text-sm truncate">{{ customer.name }}</div>
-                                        <div class="text-xs text-gray-400 truncate">Since {{ formatDate(customer.first_booking_date) }}</div>
-                                    </div>
-                                </div>
-                            </td>
-
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-600 truncate">{{ customer.email }}</div>
-                                <div class="text-xs text-gray-400 mt-0.5">{{ customer.phone || '—' }}</div>
-                            </td>
-
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm font-semibold text-gray-900">{{ customer.total_bookings }}</span>
-                                    <span v-if="customer.cancelled_bookings > 0" class="text-xs text-red-500">({{ customer.cancelled_bookings }} cancelled)</span>
-                                </div>
-                                <div class="text-xs text-gray-400 mt-0.5">
-                                    {{ customer.completed_bookings }} completed
-                                </div>
-                            </td>
-
-                            <td class="px-6 py-4">
-                                <div>
-                                    <span class="text-sm font-bold text-gray-900">{{ formatPrice(customer.total_spent) }}</span>
-                                    <div v-if="customer.total_spent_details" class="text-xs text-gray-400 mt-0.5 truncate" :title="customer.total_spent_details">
-                                        {{ customer.total_spent_details }}
-                                    </div>
-                                </div>
-                            </td>
-
-                            <td class="px-6 py-4">
-                                <span class="text-sm text-gray-600">{{ formatDate(customer.last_booking_date) }}</span>
-                            </td>
-
-                            <td class="px-6 py-4">
-                                <div class="flex flex-wrap gap-1">
-                                    <span
-                                        v-for="(service, idx) in customer.services_used.slice(0, 2)"
-                                        :key="idx"
-                                        class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-md ring-1 ring-inset ring-blue-700/10"
-                                    >
-                                        {{ service }}
-                                    </span>
-                                    <span
-                                        v-if="customer.services_used.length > 2"
-                                        class="px-2 py-0.5 bg-gray-50 text-gray-500 text-xs font-medium rounded-md ring-1 ring-inset ring-gray-500/10"
-                                    >
-                                        +{{ customer.services_used.length - 2 }}
-                                    </span>
-                                </div>
-                            </td>
-
-                            <td class="px-6 py-4">
-                                <Link
-                                    :href="route('vendor.customers.show', customer.id)"
-                                    class="inline-flex items-center text-gray-400 group-hover:text-blue-600 transition-colors"
-                                    @click.stop
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                    </svg>
-                                </Link>
-                            </td>
-                        </tr>
-
-                        <!-- Empty State -->
-                        <tr v-if="customers.length === 0">
-                            <td colspan="7" class="px-6 py-16 text-center">
-                                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    </svg>
-                                </div>
-                                <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No customers found') }}</h3>
-                                <p class="text-sm text-gray-500">{{ $t('Customers will appear here once they book your shops.') }}</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Pagination -->
-                <div v-if="meta.total > meta.per_page" class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30">
-                    <div class="text-sm text-gray-500">{{ $t('Showing') }}<span class="font-medium text-gray-700">{{ meta.from }}</span>{{ $t('to') }}<span class="font-medium text-gray-700">{{ meta.to }}</span>{{ $t('of') }}<span class="font-medium text-gray-700">{{ meta.total }}</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <button
-                            v-for="page in Math.ceil(meta.total / meta.per_page)"
-                            :key="page"
-                            @click="changePage(page)"
-                            :class="[
-                                'w-9 h-9 rounded-lg text-sm font-medium transition-colors',
-                                page === meta.current_page
-                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                                    : 'text-gray-600 hover:bg-white hover:shadow-sm'
-                            ]"
-                        >
-                            {{ page }}
-                        </button>
-                    </div>
-                </div>
-            </div>
+                <nav v-if="lastPage > 1" class="flex flex-col items-center justify-between gap-3 sm:flex-row" aria-label="Stránkování zákazníků"><p class="text-sm text-muted">{{ meta.from }}–{{ meta.to }} z {{ meta.total }}</p><div class="flex gap-2"><UiButton variant="secondary" size="sm" :disabled="meta.current_page <= 1" @click="visit(meta.current_page - 1)"><ChevronLeft :size="17" /> Předchozí</UiButton><span class="flex min-h-9 items-center px-3 text-sm font-bold text-ink">{{ meta.current_page }} / {{ lastPage }}</span><UiButton variant="secondary" size="sm" :disabled="meta.current_page >= lastPage" @click="visit(meta.current_page + 1)">Další <ChevronRight :size="17" /></UiButton></div></nav>
+            </template>
         </div>
     </VendorLayout>
 </template>

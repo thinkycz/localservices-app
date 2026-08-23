@@ -1,3 +1,75 @@
+@import '@fontsource-variable/manrope';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        color-scheme: light;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+    }
+
+    html {
+        @apply bg-canvas scroll-smooth;
+    }
+
+    body {
+        @apply min-w-0 bg-canvas font-sans text-ink antialiased;
+    }
+
+    ::selection {
+        @apply bg-brand-100 text-brand-950;
+    }
+
+    :focus-visible {
+        outline: 3px solid rgba(15, 118, 110, 0.32);
+        outline-offset: 2px;
+    }
+}
+
+@layer components {
+    .ui-container {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .ui-card {
+        @apply rounded-2xl border border-line bg-white shadow-soft;
+    }
+
+    .ui-field {
+        @apply min-h-11 w-full rounded-xl border-line bg-white px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted/70 hover:border-brand-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-muted;
+    }
+
+    .ui-button {
+        @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .ui-button-primary {
+        @apply bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800;
+    }
+
+    .ui-button-secondary {
+        @apply border border-line bg-white text-ink shadow-sm hover:border-brand-300 hover:bg-brand-50;
+    }
+
+    .ui-button-danger {
+        @apply bg-danger text-white shadow-sm hover:bg-[#A93631] active:bg-[#8E2D29];
+    }
+
+    .ui-icon-button {
+        @apply inline-flex h-11 w-11 flex-none items-center justify-center rounded-xl text-muted transition hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

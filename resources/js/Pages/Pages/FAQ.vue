@@ -1,120 +1,92 @@
-<template>
-  <AppLayout>
-    <Head ::title="$t('title')" />
-    
-    <!-- Gradient Header -->
-    <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 text-center">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-3">{{ title }}</h1>
-        <p class="text-lg text-blue-200 max-w-2xl mx-auto">{{ $t('Find answers to commonly asked questions about our services, booking process, and platform.') }}</p>
-      </div>
-    </div>
-
-    <div class="bg-gray-50 min-h-screen py-10 md:py-16">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div class="max-w-4xl mx-auto">
-          <!-- Category Tabs -->
-          <div class="flex flex-wrap justify-center gap-3 mb-10">
-            <button
-              v-for="category in faqs"
-              :key="category.category"
-              @click="activeCategory = category.category; openFAQ = null;"
-              class="px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200"
-              :class="
-                activeCategory === category.category 
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md transform -translate-y-0.5' 
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600 shadow-sm hover:shadow'
-              "
-            >
-              {{ category.category }}
-            </button>
-          </div>
-
-          <!-- FAQ Accordion -->
-          <div class="space-y-4">
-            <div
-              v-for="(faq, index) in activeFAQs"
-              :key="index"
-              class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md hover:border-blue-100"
-            >
-              <button
-                @click="toggleFAQ(index)"
-                class="w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none focus-visible:bg-gray-50 group"
-              >
-                <span class="font-bold text-gray-900 pr-6 group-hover:text-blue-600 transition-colors">{{ faq.question }}</span>
-                <div 
-                  class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 transition-colors group-hover:bg-blue-50"
-                  :class="{ 'bg-blue-600 text-white group-hover:bg-blue-700': openFAQ === index }"
-                >
-                  <svg
-                    class="w-5 h-5 transition-transform duration-300"
-                    :class="[
-                      openFAQ === index ? 'rotate-180 text-white' : 'text-gray-500 group-hover:text-blue-600'
-                    ]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </button>
-              
-              <div
-                v-show="openFAQ === index"
-                class="px-6 pb-6 text-gray-600 leading-relaxed text-sm sm:text-base border-t border-gray-50"
-              >
-                <div class="pt-4">
-                  {{ faq.answer }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Still Need Help -->
-          <div class="mt-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 md:p-10 text-center border border-blue-100/50 relative overflow-hidden">
-            <!-- Decorative circle -->
-            <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/5 rounded-full blur-3xl"></div>
-            <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-600/5 rounded-full blur-3xl"></div>
-            
-            <div class="relative z-10 mx-auto max-w-xl">
-              <div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-6">
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-              </div>
-              <h2 class="text-2xl font-bold text-gray-900 mb-3">{{ $t('Still have questions?') }}</h2>
-              <p class="text-gray-600 mb-8">{{ $t('Can\'t find the answer you\'re looking for? Our support team is always here to help you out.') }}</p>
-              <Link
-                href="/contact"
-                class="inline-flex items-center px-8 py-3.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all shadow-sm transform hover:-translate-y-0.5"
-              >{{ $t('Contact Support') }}</Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </AppLayout>
-</template>
-
 <script setup>
-import { ref, computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { ChevronDown, MessageSquareText } from '@lucide/vue';
 
-const props = defineProps({
-  title: String,
-  faqs: Array,
-});
+const props = defineProps({ title: String, faqs: { type: Array, default: () => [] } });
+const page = usePage();
+const isCzech = computed(() => page.props.locale === 'cs');
 
-const activeCategory = ref('General');
-const openFAQ = ref(null);
-
-const activeFAQs = computed(() => {
-  const category = props.faqs.find(f => f.category === activeCategory.value);
-  return category ? category.questions : [];
-});
-
-const toggleFAQ = (index) => {
-  openFAQ.value = openFAQ.value === index ? null : index;
+const categoryCopy = { General: 'Základní informace', Booking: 'Rezervace', Vendors: 'Poskytovatelé', Support: 'Podpora' };
+const questionCopy = {
+    'What is Domluveno?': 'Co je Domluveno?',
+    'How do I create an account?': 'Jak si vytvořím účet?',
+    'Which locations are supported?': 'Ve kterých městech služba funguje?',
+    'How do I book a service?': 'Jak si rezervuji službu?',
+    'Can I cancel or reschedule a booking?': 'Mohu rezervaci zrušit nebo přesunout?',
+    'Does Domluveno process payments?': 'Zpracovává Domluveno platby?',
+    'How do I become a vendor?': 'Jak se stanu poskytovatelem?',
+    'Does Domluveno verify provider qualifications?': 'Ověřuje Domluveno kvalifikaci poskytovatelů?',
+    'How are payments handled?': 'Jak probíhají platby?',
+    'How do I contact customer support?': 'Jak kontaktuji podporu?',
+    'What if I have an issue with a service?': 'Co když mám problém se službou?',
+    'Does Domluveno offer a satisfaction guarantee?': 'Nabízí Domluveno záruku spokojenosti?',
 };
+const answerCopy = {
+    'Domluveno helps customers find local providers, compare services, and request an appointment in one place.': 'Domluveno pomáhá najít místní poskytovatele, porovnat jejich služby a rezervovat si termín na jednom místě.',
+    'An account is optional for booking. Create one if you want all bookings and reviews in one place, or verify your email before setting up a provider profile.': 'K rezervaci účet nepotřebujete. Vytvořte si ho, pokud chcete mít rezervace a recenze pohromadě. Pro založení poskytovatelského profilu je nutné ověřit e-mail.',
+    'The shop list shows the cities currently represented by active providers. Domluveno does not yet use live proximity or location tracking.': 'V přehledu jsou města, ve kterých aktuálně působí aktivní poskytovatelé. Domluveno zatím nevyužívá živou polohu ani řazení podle skutečné vzdálenosti.',
+    'Browse services, select one you like, choose your preferred date and time, and complete the booking process. You will receive a confirmation email.': 'Vyberte službu, datum a volný čas, doplňte kontaktní údaje a zkontrolujte shrnutí. Potvrzení dostanete e-mailem.',
+    'You can cancel a pending or confirmed booking at least 24 hours before it starts. Guests use the secure link sent by email; account customers use My bookings.': 'Čekající nebo potvrzenou rezervaci můžete zrušit nejpozději 24 hodin před začátkem. Hosté použijí bezpečný odkaz z e-mailu, přihlášení zákazníci sekci Moje rezervace.',
+    'No. The displayed price is booking information; payment arrangements are handled directly with the provider.': 'Ne. Uvedená cena slouží jako informace k rezervaci. Platbu si domluvíte přímo s poskytovatelem.',
+    'Verify your email, choose Become a provider, and complete the three setup steps for your shop, hours, and services.': 'Ověřte svůj e-mail, zvolte Stát se poskytovatelem a projděte tři kroky nastavení provozovny, otevírací doby a služeb.',
+    'Domluveno verifies the provider email address but does not currently conduct background or professional-license checks. Providers are responsible for truthful profile information.': 'Domluveno ověřuje e-mail poskytovatele, ale v tuto chvíli neprovádí prověrky ani kontrolu profesních oprávnění. Za pravdivost profilu odpovídá poskytovatel.',
+    'Domluveno does not process provider payouts. Agree payment details directly with the customer.': 'Domluveno nezpracovává platby ani výplaty poskytovatelům. Platební podmínky si domluvte přímo se zákazníkem.',
+    'Use the Contact page. Your request is stored for the support team and a copy is sent to the configured support mailbox.': 'Použijte kontaktní formulář. Požadavek se uloží pro tým podpory a odešle do nastavené schránky.',
+    'Contact the vendor first. If unresolved, reach out to our support team within 48 hours and we will help mediate.': 'Nejprve kontaktujte poskytovatele. Pokud se problém nepodaří vyřešit, popište situaci podpoře prostřednictvím kontaktního formuláře.',
+    'No automatic refund or satisfaction guarantee is offered. Contact the provider first and use the Contact page if you need to report a platform issue.': 'Automatické vrácení peněz ani záruku spokojenosti nenabízíme. Nejprve kontaktujte poskytovatele; problém s platformou nám pošlete přes kontaktní formulář.',
+};
+
+const localizedFaqs = computed(() => props.faqs.map((group) => ({
+    ...group,
+    label: isCzech.value ? (categoryCopy[group.category] ?? group.category) : group.category,
+    questions: group.questions.map((item) => ({
+        question: isCzech.value ? (questionCopy[item.question] ?? item.question) : item.question,
+        answer: isCzech.value ? (answerCopy[item.answer] ?? item.answer) : item.answer,
+    })),
+})));
+const activeCategory = ref(props.faqs[0]?.category ?? null);
+const openFAQ = ref(null);
+const activeGroup = computed(() => localizedFaqs.value.find((group) => group.category === activeCategory.value));
+const selectCategory = (category) => { activeCategory.value = category; openFAQ.value = null; };
+const toggleFAQ = (index) => { openFAQ.value = openFAQ.value === index ? null : index; };
 </script>
+
+<template>
+    <AppLayout>
+        <Head :title="isCzech ? 'Časté dotazy' : 'Frequently asked questions'" />
+
+        <section class="border-b border-line bg-white">
+            <div class="ui-container py-10 sm:py-14">
+                <p class="text-sm font-bold text-brand-700">{{ isCzech ? 'Nápověda' : 'Help centre' }}</p>
+                <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{{ isCzech ? 'Časté dotazy' : 'Frequently asked questions' }}</h1>
+                <p class="mt-3 max-w-2xl text-base leading-7 text-muted">{{ isCzech ? 'Stručné odpovědi k rezervacím, účtům a poskytovatelskému profilu.' : 'Clear answers about bookings, accounts, and provider profiles.' }}</p>
+            </div>
+        </section>
+
+        <main id="main-content" class="ui-container py-8 sm:py-10">
+            <div class="mx-auto max-w-4xl">
+                <div class="mb-6 flex gap-2 overflow-x-auto pb-2" role="tablist" :aria-label="isCzech ? 'Kategorie dotazů' : 'Question categories'">
+                    <button v-for="group in localizedFaqs" :key="group.category" type="button" role="tab" :aria-selected="activeCategory === group.category" class="ui-button shrink-0" :class="activeCategory === group.category ? 'ui-button-primary' : 'ui-button-secondary'" @click="selectCategory(group.category)">{{ group.label }}</button>
+                </div>
+
+                <div class="space-y-3">
+                    <section v-for="(faq, index) in activeGroup?.questions ?? []" :key="faq.question" class="ui-card overflow-hidden">
+                        <h2>
+                            <button type="button" class="flex min-h-14 w-full items-center justify-between gap-5 px-5 py-4 text-left font-bold text-ink hover:bg-brand-50 sm:px-6" :aria-expanded="openFAQ === index" :aria-controls="`faq-${index}`" @click="toggleFAQ(index)">
+                                <span>{{ faq.question }}</span><ChevronDown :size="20" class="shrink-0 text-muted transition-transform" :class="{ 'rotate-180': openFAQ === index }" aria-hidden="true" />
+                            </button>
+                        </h2>
+                        <div v-show="openFAQ === index" :id="`faq-${index}`" class="border-t border-line px-5 py-4 text-sm leading-7 text-muted sm:px-6">{{ faq.answer }}</div>
+                    </section>
+                </div>
+
+                <section class="mt-8 rounded-2xl border border-line bg-brand-50 p-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
+                    <div class="flex gap-4"><MessageSquareText :size="23" class="mt-0.5 shrink-0 text-brand-700" aria-hidden="true" /><div><h2 class="font-bold text-ink">{{ isCzech ? 'Nenašli jste odpověď?' : 'Still need help?' }}</h2><p class="mt-1 text-sm leading-6 text-muted">{{ isCzech ? 'Pošlete nám podrobnosti přes kontaktní formulář.' : 'Send us the details through the contact form.' }}</p></div></div>
+                    <Link :href="route('pages.contact')" class="ui-button ui-button-primary mt-5 w-full shrink-0 sm:mt-0 sm:w-auto">{{ isCzech ? 'Napsat podpoře' : 'Contact support' }}</Link>
+                </section>
+            </div>
+        </main>
+    </AppLayout>
+</template>

@@ -1,60 +1,70 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import { Check, Languages } from '@lucide/vue';
 
 const page = usePage();
 const open = ref(false);
-
 const languages = [
-    { code: 'en', flag: '🇬🇧' },
-    { code: 'cs', flag: '🇨🇿' },
+    { code: 'cs', label: 'Čeština', short: 'CS' },
+    { code: 'en', label: 'English', short: 'EN' },
 ];
 
-const currentLang = () => languages.find(l => l.code === page.props.locale) || languages[0];
+const currentLanguage = computed(() => languages.find((language) => language.code === page.props.locale) ?? languages[0]);
 
-function handleClickOutside(e) {
-    if (!e.target.closest('#lang-switcher')) {
-        open.value = false;
-    }
+function handleClickOutside(event) {
+    if (!event.target.closest('[data-language-switcher]')) open.value = false;
 }
 
-onMounted(() => document.addEventListener('click', handleClickOutside));
-onUnmounted(() => document.removeEventListener('click', handleClickOutside));
+function closeOnEscape(event) {
+    if (event.key === 'Escape') open.value = false;
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('keydown', closeOnEscape);
+});
 </script>
 
 <template>
-    <div id="lang-switcher" class="relative">
+    <div data-language-switcher class="relative">
         <button
+            type="button"
+            class="ui-icon-button gap-1"
+            :title="currentLanguage.label"
+            :aria-label="$t('Change language')"
+            :aria-expanded="open"
             @click.stop="open = !open"
-            class="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-gray-100 transition-colors text-xl cursor-pointer"
-            :title="currentLang().code.toUpperCase()"
         >
-            {{ currentLang().flag }}
+            <Languages :size="18" aria-hidden="true" />
+            <span class="text-[10px] font-extrabold">{{ currentLanguage.short }}</span>
         </button>
 
-        <transition
-            enter-active-class="transition ease-out duration-100"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="transition ease-in duration-75"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
+        <Transition
+            enter-active-class="transition duration-150"
+            enter-from-class="translate-y-1 opacity-0"
+            leave-active-class="transition duration-100"
+            leave-to-class="translate-y-1 opacity-0"
         >
-            <div
-                v-if="open"
-                class="absolute right-0 top-full mt-1.5 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 min-w-[48px]"
-            >
+            <div v-if="open" class="absolute right-0 top-full z-50 mt-2 w-40 overflow-hidden rounded-2xl border border-line bg-white p-1.5 shadow-lift">
                 <Link
-                    v-for="lang in languages"
-                    :key="lang.code"
-                    :href="route('language.switch', lang.code)"
-                    class="flex items-center justify-center px-3 py-2 text-xl hover:bg-gray-50 transition-colors rounded-lg mx-1"
-                    :class="page.props.locale === lang.code ? 'bg-blue-50' : ''"
+                    v-for="language in languages"
+                    :key="language.code"
+                    :href="route('language.switch', language.code)"
+                    class="flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-semibold transition hover:bg-gray-50"
+                    :class="page.props.locale === language.code ? 'bg-brand-50 text-brand-800' : 'text-ink'"
+                    :aria-current="page.props.locale === language.code ? 'true' : undefined"
                     @click="open = false"
                 >
-                    {{ lang.flag }}
+                    <span>{{ language.label }}</span>
+                    <Check v-if="page.props.locale === language.code" :size="16" aria-hidden="true" />
                 </Link>
             </div>
-        </transition>
+        </Transition>
     </div>
 </template>

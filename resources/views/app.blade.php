@@ -6,11 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
+    <meta name="theme-color" content="#0F766E">
+    <meta name="color-scheme" content="light">
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600|plus-jakarta-sans:700,800&display=swap" rel="stylesheet" />
+    <title inertia>Domluveno</title>
 
     <!-- Scripts -->
     @routes
@@ -18,7 +17,7 @@
     @inertiaHead
 </head>
 
-<body class="font-sans antialiased">
+<body class="bg-canvas font-sans text-ink antialiased">
     @inertia
 </body>
 

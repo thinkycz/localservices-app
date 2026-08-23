@@ -14,29 +14,30 @@ class NotificationService
      */
     public static function bookingCreated(Booking $booking): void
     {
-        // Notify customer
-        Notification::create([
-            'user_id' => $booking->user_id,
-            'type' => 'booking',
-            'title' => 'Booking Confirmed',
-            'message' => "Your booking for {$booking->service->name} on {$booking->booking_date->format('M d, Y')} at {$booking->start_time} has been confirmed.",
-            'data' => [
-                'booking_id' => $booking->id,
-                'service_id' => $booking->service_id,
-                'service_name' => $booking->service->name,
-            ],
-            'action_url' => route('bookings.confirmation', $booking->id),
-        ]);
+        if ($booking->user_id) {
+            Notification::create([
+                'user_id' => $booking->user_id,
+                'type' => 'booking',
+                'title' => 'Rezervace byla přijata',
+                'message' => "Rezervace služby {$booking->service->name} na {$booking->booking_date->format('d. m. Y')} v ".substr($booking->start_time, 0, 5).' čeká na potvrzení.',
+                'data' => [
+                    'booking_id' => $booking->id,
+                    'service_id' => $booking->service_id,
+                    'service_name' => $booking->service->name,
+                ],
+                'action_url' => route('bookings.confirmation', $booking->id),
+            ]);
+        }
 
         // Notify provider
         Notification::create([
             'user_id' => $booking->provider_id,
             'type' => 'booking',
-            'title' => 'New Booking Received',
-            'message' => "You have a new booking from {$booking->customer->name} for {$booking->service->name} on {$booking->booking_date->format('M d, Y')}.",
+            'title' => 'Nová rezervace',
+            'message' => "{$booking->customer_display_name} rezervoval(a) službu {$booking->service->name} na {$booking->booking_date->format('d. m. Y')}.",
             'data' => [
                 'booking_id' => $booking->id,
-                'customer_name' => $booking->customer->name,
+                'customer_name' => $booking->customer_display_name,
                 'service_name' => $booking->service->name,
             ],
             'action_url' => route('vendor.bookings.show', $booking->id),
@@ -49,36 +50,41 @@ class NotificationService
     public static function bookingStatusUpdated(Booking $booking, string $oldStatus): void
     {
         $statusMessages = [
-            'confirmed' => 'Your booking has been confirmed by the provider.',
-            'completed' => 'Your service has been marked as completed. Please leave a review!',
-            'cancelled' => 'Your booking has been cancelled.',
+            'confirmed' => 'Poskytovatel potvrdil vaši rezervaci.',
+            'completed' => 'Rezervace byla dokončena. Nyní můžete přidat hodnocení.',
+            'cancelled' => 'Rezervace byla zrušena.',
         ];
 
         if (! isset($statusMessages[$booking->status])) {
             return;
         }
 
-        // Notify customer of status change
-        Notification::create([
-            'user_id' => $booking->user_id,
-            'type' => 'booking',
-            'title' => 'Booking '.ucfirst($booking->status),
-            'message' => $statusMessages[$booking->status],
-            'data' => [
-                'booking_id' => $booking->id,
-                'service_name' => $booking->service->name,
-                'status' => $booking->status,
-            ],
-            'action_url' => route('bookings.index'),
-        ]);
+        if ($booking->user_id) {
+            Notification::create([
+                'user_id' => $booking->user_id,
+                'type' => 'booking',
+                'title' => match ($booking->status) {
+                    'confirmed' => 'Rezervace potvrzena',
+                    'completed' => 'Rezervace dokončena',
+                    'cancelled' => 'Rezervace zrušena',
+                },
+                'message' => $statusMessages[$booking->status],
+                'data' => [
+                    'booking_id' => $booking->id,
+                    'service_name' => $booking->service->name,
+                    'status' => $booking->status,
+                ],
+                'action_url' => route('bookings.index'),
+            ]);
+        }
 
         // If cancelled, also notify provider
         if ($booking->status === 'cancelled') {
             Notification::create([
                 'user_id' => $booking->provider_id,
                 'type' => 'booking',
-                'title' => 'Booking Cancelled',
-                'message' => "A booking for {$booking->service->name} on {$booking->booking_date->format('M d, Y')} has been cancelled.",
+                'title' => 'Rezervace zrušena',
+                'message' => "Rezervace služby {$booking->service->name} na {$booking->booking_date->format('d. m. Y')} byla zrušena.",
                 'data' => [
                     'booking_id' => $booking->id,
                     'service_name' => $booking->service->name,
@@ -86,42 +92,6 @@ class NotificationService
                 'action_url' => route('vendor.bookings.index'),
             ]);
         }
-    }
-
-    /**
-     * Create a payment notification.
-     */
-    public static function paymentReceived(Booking $booking): void
-    {
-        // Notify customer
-        Notification::create([
-            'user_id' => $booking->user_id,
-            'type' => 'payment',
-            'title' => 'Payment Successful',
-            'message' => 'Your payment of '.number_format($booking->total_price, 2).' '.($booking->shop->currency ?? 'CZK')." for {$booking->service->name} has been received.",
-            'data' => [
-                'booking_id' => $booking->id,
-                'amount' => $booking->total_price,
-                'currency' => $booking->shop->currency ?? 'CZK',
-                'service_name' => $booking->service->name,
-            ],
-            'action_url' => route('bookings.confirmation', $booking->id),
-        ]);
-
-        // Notify provider
-        Notification::create([
-            'user_id' => $booking->provider_id,
-            'type' => 'payment',
-            'title' => 'Payment Received',
-            'message' => 'You received a payment of '.number_format($booking->total_price, 2).' '.($booking->shop->currency ?? 'CZK')." from {$booking->customer->name}.",
-            'data' => [
-                'booking_id' => $booking->id,
-                'amount' => $booking->total_price,
-                'currency' => $booking->shop->currency ?? 'CZK',
-                'customer_name' => $booking->customer->name,
-            ],
-            'action_url' => route('vendor.bookings.show', $booking->id),
-        ]);
     }
 
     /**
@@ -134,8 +104,8 @@ class NotificationService
         Notification::create([
             'user_id' => $booking->provider_id,
             'type' => 'review',
-            'title' => 'New Review Received',
-            'message' => "You received a {$review->rating}-star review from {$review->user->name} for {$booking->service->name}.",
+            'title' => 'Nové hodnocení',
+            'message' => "{$review->user->name} přidal(a) hodnocení {$review->rating}/5 ke službě {$booking->service->name}.",
             'data' => [
                 'review_id' => $review->id,
                 'booking_id' => $booking->id,
@@ -153,20 +123,20 @@ class NotificationService
     {
         $reminders = [
             '24h_customer' => [
-                'title' => 'Upcoming Booking Tomorrow',
-                'message' => "Reminder: You have a booking for {$booking->service->name} tomorrow at {$booking->start_time}.",
+                'title' => 'Rezervace je zítra',
+                'message' => "Připomínka služby {$booking->service->name} zítra v ".substr($booking->start_time, 0, 5).'.',
             ],
             '24h_provider' => [
-                'title' => 'Upcoming Booking Tomorrow',
-                'message' => "Reminder: You have a booking with {$booking->customer->name} tomorrow at {$booking->start_time}.",
+                'title' => 'Rezervace je zítra',
+                'message' => 'Zítra v '.substr($booking->start_time, 0, 5)." máte rezervaci se zákazníkem {$booking->customer_display_name}.",
             ],
             '1h_customer' => [
-                'title' => 'Booking in 1 Hour',
-                'message' => "Your {$booking->service->name} appointment is in 1 hour. Please be ready!",
+                'title' => 'Rezervace začne za hodinu',
+                'message' => "Služba {$booking->service->name} začne za jednu hodinu.",
             ],
             '1h_provider' => [
-                'title' => 'Booking in 1 Hour',
-                'message' => "Your appointment with {$booking->customer->name} is in 1 hour.",
+                'title' => 'Rezervace začne za hodinu',
+                'message' => "Rezervace se zákazníkem {$booking->customer_display_name} začne za jednu hodinu.",
             ],
         ];
 
@@ -175,6 +145,9 @@ class NotificationService
         }
 
         $userId = str_contains($reminderType, 'customer') ? $booking->user_id : $booking->provider_id;
+        if (! $userId) {
+            return;
+        }
 
         Notification::create([
             'user_id' => $userId,

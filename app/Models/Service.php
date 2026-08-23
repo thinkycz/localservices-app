@@ -13,6 +13,7 @@ class Service extends Model
         'description',
         'duration_minutes',
         'price',
+        'is_available',
         'is_popular',
         'category_tag',
         'staff_level',
@@ -22,6 +23,7 @@ class Service extends Model
         'duration_minutes' => 'integer',
         'price' => 'decimal:2',
         'is_popular' => 'boolean',
+        'is_available' => 'boolean',
     ];
 
     public function shop(): BelongsTo

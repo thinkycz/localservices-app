@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Vendor;
 
+use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
-use App\Mail\BookingStatusUpdated;
 use App\Models\Booking;
-use App\Models\Service;
 use App\Models\Shop;
+use App\Services\BookingService;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -45,8 +45,13 @@ class BookingController extends Controller
 
         // Search by customer name
         if ($request->filled('search')) {
-            $query->whereHas('customer', function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->search.'%');
+            $query->where(function ($search) use ($request) {
+                $search->where('customer_name', 'like', '%'.$request->search.'%')
+                    ->orWhere('customer_email', 'like', '%'.$request->search.'%')
+                    ->orWhereHas('customer', function ($customer) use ($request) {
+                        $customer->where('name', 'like', '%'.$request->search.'%')
+                            ->orWhere('email', 'like', '%'.$request->search.'%');
+                    });
             });
         }
 
@@ -70,7 +75,7 @@ class BookingController extends Controller
             $currency = $shop ? $shop->currency : 'CZK';
             $amount = $shopBookings->sum('total_price');
 
-            return $shop->name.': '.number_format($amount, 2).' '.$currency;
+            return $shop->name.': '.Money::format($amount, $currency);
         });
 
         $revenueString = $revenueByShop->isEmpty() ? '0.00 CZK' : $revenueByShop->implode(' | ');
@@ -103,10 +108,16 @@ class BookingController extends Controller
         $booking = Booking::whereIn('shop_id', $shops)
             ->with(['customer', 'shop', 'service', 'provider'])
             ->findOrFail($id);
+        $this->authorize('manage', $booking);
 
         // Get customer booking history with this vendor
         $customerHistory = Booking::where('provider_id', $user->id)
-            ->where('user_id', $booking->user_id)
+            ->when(
+                $booking->user_id,
+                fn ($query) => $query->where('user_id', $booking->user_id),
+                fn ($query) => $query->whereNull('user_id')
+                    ->where('customer_email', $booking->customer_email),
+            )
             ->where('id', '!=', $booking->id)
             ->with(['shop', 'service'])
             ->orderBy('booking_date', 'desc')
@@ -122,7 +133,7 @@ class BookingController extends Controller
     /**
      * Confirm a pending booking.
      */
-    public function confirm(Request $request, int $id): RedirectResponse
+    public function confirm(Request $request, int $id, BookingService $bookings): RedirectResponse
     {
         $user = $request->user();
 
@@ -132,16 +143,9 @@ class BookingController extends Controller
             ->where('status', 'pending')
             ->with(['customer', 'shop', 'service', 'provider'])
             ->findOrFail($id);
+        $this->authorize('manage', $booking);
 
-        $oldStatus = $booking->status;
-
-        $booking->update([
-            'status' => 'confirmed',
-            'notes' => $booking->notes."\n[Confirmed by vendor on ".now()->format('Y-m-d H:i').']',
-        ]);
-
-        // Send status update email to customer
-        Mail::to($booking->customer->email)->send(new BookingStatusUpdated($booking, $oldStatus, 'confirmed'));
+        $bookings->transition($booking, BookingStatus::Confirmed);
 
         return back()->with('success', __('Booking confirmed successfully.'));
     }
@@ -149,26 +153,19 @@ class BookingController extends Controller
     /**
      * Complete a confirmed booking.
      */
-    public function complete(Request $request, int $id): RedirectResponse
+    public function complete(Request $request, int $id, BookingService $bookings): RedirectResponse
     {
         $user = $request->user();
 
         $shops = Shop::where('user_id', $user->id)->pluck('id');
 
         $booking = Booking::whereIn('shop_id', $shops)
-            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('status', BookingStatus::Confirmed->value)
             ->with(['customer', 'shop', 'service', 'provider'])
             ->findOrFail($id);
+        $this->authorize('manage', $booking);
 
-        $oldStatus = $booking->status;
-
-        $booking->update([
-            'status' => 'completed',
-            'notes' => $booking->notes."\n[Completed on ".now()->format('Y-m-d H:i').']',
-        ]);
-
-        // Send status update email to customer
-        Mail::to($booking->customer->email)->send(new BookingStatusUpdated($booking, $oldStatus, 'completed'));
+        $bookings->transition($booking, BookingStatus::Completed);
 
         return back()->with('success', __('Booking marked as completed.'));
     }
@@ -176,15 +173,21 @@ class BookingController extends Controller
     /**
      * Update booking status.
      */
-    public function update(Request $request, int $bookingId): RedirectResponse
+    public function update(Request $request, int $bookingId, BookingService $bookings): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,completed,cancelled',
+            'cancellation_reason' => 'required_if:status,cancelled|nullable|string|max:500',
         ]);
 
-        $booking = Booking::findOrFail($bookingId);
-        $booking->status = $request->status;
-        $booking->save();
+        $shopIds = Shop::where('user_id', $request->user()->id)->pluck('id');
+        $booking = Booking::whereIn('shop_id', $shopIds)->findOrFail($bookingId);
+        $this->authorize('manage', $booking);
+        $bookings->transition(
+            $booking,
+            BookingStatus::from($validated['status']),
+            $validated['cancellation_reason'] ?? null,
+        );
 
         return back()->with('success', __('Booking status updated successfully.'));
     }
@@ -192,7 +195,7 @@ class BookingController extends Controller
     /**
      * Cancel a booking.
      */
-    public function cancel(Request $request, int $id): RedirectResponse
+    public function cancel(Request $request, int $id, BookingService $bookings): RedirectResponse
     {
         $user = $request->user();
 
@@ -202,25 +205,16 @@ class BookingController extends Controller
             ->whereIn('status', ['pending', 'confirmed'])
             ->with(['customer', 'shop', 'service', 'provider'])
             ->findOrFail($id);
-
-        $oldStatus = $booking->status;
+        $this->authorize('manage', $booking);
 
         $validated = $request->validate([
-            'cancellation_reason' => 'nullable|string|max:500',
+            'cancellation_reason' => 'required|string|max:500',
         ]);
-
-        $notes = $booking->notes."\n[Cancelled by vendor on ".now()->format('Y-m-d H:i').']';
-        if (! empty($validated['cancellation_reason'])) {
-            $notes .= "\nReason: ".$validated['cancellation_reason'];
-        }
-
-        $booking->update([
-            'status' => 'cancelled',
-            'notes' => $notes,
-        ]);
-
-        // Send status update email to customer
-        Mail::to($booking->customer->email)->send(new BookingStatusUpdated($booking, $oldStatus, 'cancelled'));
+        $bookings->transition(
+            $booking,
+            BookingStatus::Cancelled,
+            $validated['cancellation_reason'],
+        );
 
         return back()->with('success', __('Booking cancelled successfully.'));
     }
@@ -235,6 +229,7 @@ class BookingController extends Controller
         $shops = Shop::where('user_id', $user->id)->pluck('id');
 
         $booking = Booking::whereIn('shop_id', $shops)->findOrFail($id);
+        $this->authorize('manage', $booking);
 
         $validated = $request->validate([
             'notes' => 'required|string|max:2000',
@@ -246,78 +241,5 @@ class BookingController extends Controller
         $booking->update(['notes' => $newNotes]);
 
         return back()->with('success', __('Notes added successfully.'));
-    }
-
-    /**
-     * Get available time slots for a service on a specific date.
-     */
-    public function getAvailableSlots(Request $request, int $shopId)
-    {
-        $user = $request->user();
-
-        $shop = Shop::where('user_id', $user->id)->findOrFail($shopId);
-
-        $validated = $request->validate([
-            'date' => 'required|date',
-        ]);
-
-        $date = $validated['date'];
-        $dayOfWeek = (int) \Carbon\Carbon::parse($date)->dayOfWeek;
-
-        // Get business hours for this day
-        $businessHour = $shop->businessHours()->where('day_of_week', $dayOfWeek)->first();
-
-        // If no business hours set for this day, return empty slots
-        if ($shop->businessHours()->exists() && ! $businessHour) {
-            return response()->json([
-                'shop_id' => $shopId,
-                'date' => $date,
-                'slots' => [],
-                'closed' => true,
-            ]);
-        }
-
-        // Get existing bookings for this service on this date
-        $existingBookings = Booking::where('shop_id', $shopId)
-            ->whereDate('booking_date', $date)
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->get(['start_time', 'end_time']);
-
-        // Use business hours if available, otherwise default to 9-6
-        $startHour = $businessHour ? $businessHour->time_from : '09:00';
-        $endHour = $businessHour ? $businessHour->time_to : '18:00';
-
-        // Generate time slots (30 min intervals)
-        $slots = [];
-        $start = strtotime($startHour);
-        $end = strtotime($endHour);
-
-        for ($time = $start; $time < $end; $time += 1800) { // 30 min intervals
-            $slotStart = date('H:i', $time);
-            $slotEnd = date('H:i', $time + 1800);
-
-            // Check if slot is available (no overlapping bookings)
-            $isAvailable = true;
-            foreach ($existingBookings as $booking) {
-                $bookingStart = substr($booking->start_time, 0, 5);
-                $bookingEnd = substr($booking->end_time, 0, 5);
-
-                if ($slotStart < $bookingEnd && $slotEnd > $bookingStart) {
-                    $isAvailable = false;
-                    break;
-                }
-            }
-
-            $slots[] = [
-                'time' => $slotStart,
-                'available' => $isAvailable,
-            ];
-        }
-
-        return response()->json([
-            'shop_id' => $shopId,
-            'date' => $date,
-            'slots' => $slots,
-        ]);
     }
 }

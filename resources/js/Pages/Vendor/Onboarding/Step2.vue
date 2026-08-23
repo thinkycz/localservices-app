@@ -1,113 +1,265 @@
-<template>
-  <AppLayout>
-    <div class="min-h-screen bg-gray-50 py-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 px-6 py-8">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h1 class="text-2xl font-bold text-white">{{ $t('Shop Details') }}</h1>
-                <p class="text-blue-200 mt-1 text-sm">{{ $t('Step 2 of 3: What do you offer?') }}</p>
-              </div>
-              <div class="flex items-center space-x-2 shrink-0">
-                <Link :href="route('vendor.onboarding.step1')" class="w-3 h-3 rounded-full bg-white/40 hover:bg-white/60 transition-colors" :title="$t('Back to Step 1')"></Link>
-                <div class="w-8 h-2 rounded-full bg-white shadow-sm"></div>
-                <div class="w-2 h-2 rounded-full bg-white/30"></div>
-              </div>
-            </div>
-          </div>
-
-          <form @submit.prevent="submit" class="p-6 md:p-8">
-            <div class="space-y-6">
-              <div>
-                <label for="category_id" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Shop Category') }}</label>
-                <div class="relative">
-                  <select
-                    id="category_id"
-                    v-model="form.category_id"
-                    required
-                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200"
-                  >
-                    <option value="" disabled>{{ $t('Select a category') }}</option>
-                    <option v-for="category in categories" :key="category.id" :value="category.id">
-                      {{ category.name }}
-                    </option>
-                  </select>
-                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                  </div>
-                </div>
-                <p v-if="form.errors.category_id" class="mt-1.5 text-xs text-red-500">{{ form.errors.category_id }}</p>
-              </div>
-
-              <div>
-                <label for="shop_name" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Shop Name') }}</label>
-                <input
-                  id="shop_name"
-                  v-model="form.shop_name"
-                  type="text"
-                  required
-                  class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200"
-                  :placeholder="$t('e.g., Professional Plumbing Repairs')"
-                />
-                <p v-if="form.errors.shop_name" class="mt-1.5 text-xs text-red-500">{{ form.errors.shop_name }}</p>
-              </div>
-
-              <div>
-                <label for="description" class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ $t('Shop Description') }}</label>
-                <textarea
-                  id="description"
-                  v-model="form.description"
-                  rows="4"
-                  required
-                  class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all duration-200 resize-none"
-                  :placeholder="$t('Describe your services, experience, and what makes you unique...')"
-                ></textarea>
-                <div class="flex items-center justify-between mt-1">
-                  <p v-if="form.errors.description" class="text-xs text-red-500">{{ form.errors.description }}</p>
-                  <p class="text-[10px] text-gray-400 ml-auto">{{ form.description.length }}/1000</p>
-                </div>
-              </div>
-
-
-            </div>
-
-            <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-              <Link
-                :href="route('vendor.onboarding.step1')"
-                class="px-5 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
-              >{{ $t('Back') }}</Link>
-              <button
-                type="submit"
-                :disabled="form.processing"
-                class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white rounded-xl font-semibold shadow-sm transition-all text-sm"
-              >{{ $t('Continue to Step 3') }}<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </AppLayout>
-</template>
-
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { Link, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
+import { ArrowRight, ChevronLeft, Clock3, Info } from '@lucide/vue';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import TextInput from '@/Components/TextInput.vue';
+import UiButton from '@/Components/UiButton.vue';
+import OnboardingStepLayout from './OnboardingStepLayout.vue';
+import { readOnboardingDraft, saveOnboardingDraft, useOnboardingCopy } from './onboardingCopy';
 
 const props = defineProps({
-  categories: Array,
+    categories: { type: Array, default: () => [] },
+    saved: { type: Object, default: null },
 });
 
-const form = useForm({
-  category_id: '',
-  shop_name: '',
-  description: '',
+const copy = useOnboardingCopy();
+const dayDefinitions = [
+    { day_of_week: 1, labelKey: 'monday', closed: false },
+    { day_of_week: 2, labelKey: 'tuesday', closed: false },
+    { day_of_week: 3, labelKey: 'wednesday', closed: false },
+    { day_of_week: 4, labelKey: 'thursday', closed: false },
+    { day_of_week: 5, labelKey: 'friday', closed: false },
+    { day_of_week: 6, labelKey: 'saturday', closed: true },
+    { day_of_week: 0, labelKey: 'sunday', closed: true },
+];
+
+const rememberedStep = readOnboardingDraft().step2 ?? {};
+const initial = Object.keys(rememberedStep).length > 0 ? rememberedStep : (props.saved ?? {});
+const savedHours = Array.isArray(initial.business_hours) ? initial.business_hours : [];
+
+const businessHours = dayDefinitions.map((day) => {
+    const savedDay = savedHours.find((item) => Number(item.day_of_week) === day.day_of_week);
+    const isClosed = savedDay
+        ? [true, 1, '1'].includes(savedDay.is_closed)
+        : day.closed;
+
+    return {
+        day_of_week: day.day_of_week,
+        labelKey: day.labelKey,
+        is_closed: isClosed,
+        time_from: savedDay?.time_from ?? '09:00',
+        time_to: savedDay?.time_to ?? '17:00',
+    };
 });
 
-const submit = () => {
-  form.post(route('vendor.onboarding.step2.store'));
-};
+const form = useForm('ProviderOnboardingStep2', {
+    category_id: initial.category_id ?? '',
+    shop_name: initial.shop_name ?? '',
+    description: initial.description ?? '',
+    city: initial.city ?? '',
+    address: initial.address ?? '',
+    currency: initial.currency ?? 'CZK',
+    business_hours: businessHours,
+});
+
+function submit() {
+    const businessHoursPayload = form.business_hours.map((day) => ({
+        day_of_week: day.day_of_week,
+        is_closed: day.is_closed,
+        time_from: day.is_closed ? null : day.time_from,
+        time_to: day.is_closed ? null : day.time_to,
+    }));
+
+    saveOnboardingDraft('step2', {
+        category_id: form.category_id,
+        shop_name: form.shop_name,
+        description: form.description,
+        city: form.city,
+        address: form.address,
+        currency: form.currency,
+        business_hours: businessHoursPayload,
+    });
+
+    form.transform((data) => ({
+        ...data,
+        business_hours: businessHoursPayload,
+    })).post(route('vendor.onboarding.step2.store'), { preserveScroll: true });
+}
 </script>
+
+<template>
+    <Head :title="copy('step2Title')" />
+
+    <OnboardingStepLayout :current-step="2" :title="copy('step2Title')" :intro="copy('step2Intro')">
+        <form novalidate @submit.prevent="submit">
+            <div class="grid gap-6 sm:grid-cols-2">
+                <div>
+                    <InputLabel for="category_id">{{ copy('category') }}</InputLabel>
+                    <select
+                        id="category_id"
+                        v-model="form.category_id"
+                        required
+                        class="ui-field mt-2"
+                        :aria-invalid="Boolean(form.errors.category_id)"
+                        :aria-describedby="form.errors.category_id ? 'category-error' : undefined"
+                    >
+                        <option value="" disabled>{{ copy('chooseCategory') }}</option>
+                        <option v-for="category in categories" :key="category.id" :value="category.id">
+                            {{ category.name }}
+                        </option>
+                    </select>
+                    <InputError id="category-error" class="mt-2" :message="form.errors.category_id" />
+                </div>
+
+                <div>
+                    <InputLabel for="shop_name">{{ copy('shopName') }}</InputLabel>
+                    <TextInput
+                        id="shop_name"
+                        v-model="form.shop_name"
+                        type="text"
+                        autocomplete="organization"
+                        required
+                        class="mt-2"
+                        :placeholder="copy('shopNamePlaceholder')"
+                        :aria-invalid="Boolean(form.errors.shop_name)"
+                        :aria-describedby="form.errors.shop_name ? 'shop-name-error' : undefined"
+                    />
+                    <InputError id="shop-name-error" class="mt-2" :message="form.errors.shop_name" />
+                </div>
+
+                <div class="sm:col-span-2">
+                    <div class="flex items-end justify-between gap-3">
+                        <InputLabel for="description">{{ copy('description') }}</InputLabel>
+                        <span class="text-xs tabular-nums text-muted">{{ form.description.length }}/1000</span>
+                    </div>
+                    <textarea
+                        id="description"
+                        v-model="form.description"
+                        rows="5"
+                        minlength="50"
+                        maxlength="1000"
+                        required
+                        class="ui-field mt-2 min-h-32 resize-y"
+                        :placeholder="copy('descriptionPlaceholder')"
+                        :aria-invalid="Boolean(form.errors.description)"
+                        :aria-describedby="form.errors.description ? 'description-error' : 'description-help'"
+                    />
+                    <InputError id="description-error" class="mt-2" :message="form.errors.description" />
+                    <p id="description-help" class="mt-2 text-xs leading-5 text-muted">{{ copy('descriptionHint') }}</p>
+                </div>
+
+                <div>
+                    <InputLabel for="city">{{ copy('city') }}</InputLabel>
+                    <TextInput
+                        id="city"
+                        v-model="form.city"
+                        type="text"
+                        autocomplete="address-level2"
+                        required
+                        class="mt-2"
+                        :placeholder="copy('cityPlaceholder')"
+                        :aria-invalid="Boolean(form.errors.city)"
+                        :aria-describedby="form.errors.city ? 'city-error' : undefined"
+                    />
+                    <InputError id="city-error" class="mt-2" :message="form.errors.city" />
+                </div>
+
+                <div>
+                    <InputLabel for="address">{{ copy('address') }}</InputLabel>
+                    <TextInput
+                        id="address"
+                        v-model="form.address"
+                        type="text"
+                        autocomplete="street-address"
+                        required
+                        class="mt-2"
+                        :placeholder="copy('addressPlaceholder')"
+                        :aria-invalid="Boolean(form.errors.address)"
+                        :aria-describedby="form.errors.address ? 'address-error' : undefined"
+                    />
+                    <InputError id="address-error" class="mt-2" :message="form.errors.address" />
+                </div>
+
+                <div class="sm:col-span-2 sm:max-w-xs">
+                    <InputLabel for="currency">{{ copy('currency') }}</InputLabel>
+                    <select
+                        id="currency"
+                        v-model="form.currency"
+                        required
+                        class="ui-field mt-2"
+                        :aria-describedby="form.errors.currency ? 'currency-error' : 'currency-help'"
+                        :aria-invalid="Boolean(form.errors.currency)"
+                    >
+                        <option value="CZK">CZK — Kč</option>
+                        <option value="EUR">EUR — €</option>
+                    </select>
+                    <InputError id="currency-error" class="mt-2" :message="form.errors.currency" />
+                    <p id="currency-help" class="mt-2 text-xs leading-5 text-muted">{{ copy('currencyHint') }}</p>
+                </div>
+            </div>
+
+            <fieldset class="mt-8 border-t border-line pt-7">
+                <legend class="text-lg font-extrabold text-ink">{{ copy('businessHours') }}</legend>
+                <p class="mt-1 flex items-start gap-2 text-sm leading-6 text-muted">
+                    <Clock3 class="mt-0.5 shrink-0 text-brand-700" :size="17" aria-hidden="true" />
+                    <span>{{ copy('businessHoursHint') }}</span>
+                </p>
+                <InputError class="mt-2" :message="form.errors.business_hours" />
+
+                <div class="mt-5 overflow-hidden rounded-2xl border border-line bg-white">
+                    <div
+                        v-for="(day, index) in form.business_hours"
+                        :key="day.day_of_week"
+                        class="grid gap-3 border-b border-line p-4 last:border-b-0 sm:grid-cols-[minmax(8rem,1fr)_auto_minmax(15rem,1.4fr)] sm:items-center"
+                    >
+                        <span class="text-sm font-bold text-ink">{{ copy(day.labelKey) }}</span>
+
+                        <label class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-1 text-sm font-semibold text-muted">
+                            <input
+                                v-model="day.is_closed"
+                                type="checkbox"
+                                class="h-5 w-5 rounded border-line text-brand-600 focus:ring-brand-600"
+                            />
+                            {{ copy('closed') }}
+                        </label>
+
+                        <div v-if="!day.is_closed" class="grid grid-cols-2 gap-3">
+                            <label class="text-xs font-bold text-muted">
+                                <span>{{ copy('opens') }}</span>
+                                <input
+                                    v-model="day.time_from"
+                                    type="time"
+                                    required
+                                    class="ui-field mt-1"
+                                    :aria-invalid="Boolean(form.errors[`business_hours.${index}.time_from`])"
+                                />
+                            </label>
+                            <label class="text-xs font-bold text-muted">
+                                <span>{{ copy('closes') }}</span>
+                                <input
+                                    v-model="day.time_to"
+                                    type="time"
+                                    required
+                                    class="ui-field mt-1"
+                                    :aria-invalid="Boolean(form.errors[`business_hours.${index}.time_to`])"
+                                />
+                            </label>
+                        </div>
+                        <p v-else class="flex min-h-11 items-center text-sm text-muted sm:justify-end">{{ copy('closed') }}</p>
+
+                        <div v-if="form.errors[`business_hours.${index}.time_from`] || form.errors[`business_hours.${index}.time_to`]" class="sm:col-start-3">
+                            <InputError :message="form.errors[`business_hours.${index}.time_from`] || form.errors[`business_hours.${index}.time_to`]" />
+                        </div>
+                    </div>
+                </div>
+
+                <p class="mt-4 flex items-start gap-2 rounded-xl bg-brand-50 px-4 py-3 text-sm leading-6 text-brand-900">
+                    <Info class="mt-0.5 shrink-0" :size="17" aria-hidden="true" />
+                    <span>{{ copy('businessHoursHint') }}</span>
+                </p>
+            </fieldset>
+
+            <div class="mt-8 flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <UiButton :href="route('vendor.onboarding.step1')" variant="secondary">
+                    <ChevronLeft :size="18" aria-hidden="true" />
+                    {{ copy('back') }}
+                </UiButton>
+                <UiButton type="submit" :loading="form.processing" :disabled="form.processing">
+                    {{ form.processing ? copy('saving') : copy('continue') }}
+                    <ArrowRight v-if="!form.processing" :size="18" aria-hidden="true" />
+                </UiButton>
+            </div>
+        </form>
+    </OnboardingStepLayout>
+</template>

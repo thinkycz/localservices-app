@@ -1,222 +1,321 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import {
+    ArrowRight,
+    CalendarDays,
+    Clock3,
+    LoaderCircle,
+    MapPin,
+    Plus,
+    RotateCcw,
+    Star,
+    TriangleAlert,
+} from '@lucide/vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
     bookings: { type: Object, required: true },
 });
 
-
-
-function formatDate(dateStr) {
-    if (!dateStr) return 'Invalid Date';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) {
-        const isoDate = new Date(dateStr + 'T00:00:00');
-        if (!isNaN(isoDate.getTime())) return isoDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        return 'Invalid Date';
-    }
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function formatTime(time) {
-    if (!time) return '';
-    const s = String(time).trim();
-    if (!s) return '';
-    if (/[ap]m\b/.test(s) && !s.includes('T')) return s;
-    const asDate = new Date(s);
-    if (!Number.isNaN(asDate.getTime())) {
-        return asDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    }
-    const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/);
-    if (m) {
-        const h = Number(m[1]);
-        const min = Number(m[2]);
-        const d = new Date(1970, 0, 1, h, min, 0);
-        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    }
-    return s;
-}
+const page = usePage();
+const isEnglish = computed(() => page.props.locale === 'en');
+const locale = computed(() => isEnglish.value ? 'en-US' : 'cs-CZ');
+const tr = (czech, english) => isEnglish.value ? english : czech;
+const cancelTarget = ref(null);
+const cancelForm = useForm({});
 
 const statusConfig = {
-    pending:   { label: 'Pending',   bg: 'bg-amber-50',  text: 'text-amber-700',  ring: 'ring-amber-600/20',  dot: 'bg-amber-500' },
-    confirmed: { label: 'Confirmed', bg: 'bg-green-50',  text: 'text-green-700',  ring: 'ring-green-600/20',  dot: 'bg-green-500' },
-    completed: { label: 'Completed', bg: 'bg-gray-50',   text: 'text-gray-600',   ring: 'ring-gray-500/10',   dot: 'bg-gray-400' },
-    cancelled: { label: 'Cancelled', bg: 'bg-red-50',    text: 'text-red-700',    ring: 'ring-red-600/20',    dot: 'bg-red-500' },
+    pending: { cs: 'Čeká na potvrzení', en: 'Pending', classes: 'bg-amber-50 text-amber-800 ring-amber-600/20' },
+    confirmed: { cs: 'Potvrzeno', en: 'Confirmed', classes: 'bg-green-50 text-green-800 ring-green-600/20' },
+    completed: { cs: 'Dokončeno', en: 'Completed', classes: 'bg-gray-100 text-gray-700 ring-gray-500/20' },
+    cancelled: { cs: 'Zrušeno', en: 'Cancelled', classes: 'bg-red-50 text-red-800 ring-red-600/20' },
 };
 
-function getStatus(s) {
-    return statusConfig[s] || statusConfig.pending;
+const allBookings = computed(() => Array.isArray(props.bookings.data) ? props.bookings.data : []);
+const upcomingBookings = computed(() => allBookings.value.filter(isUpcoming));
+const historyBookings = computed(() => allBookings.value.filter((booking) => !isUpcoming(booking)));
+
+function statusFor(booking) {
+    return statusConfig[booking?.status] ?? statusConfig.pending;
 }
 
-function isPast(dateStr) {
-    if (!dateStr) return false;
-    let d = new Date(dateStr);
-    if (isNaN(d.getTime())) d = new Date(dateStr + 'T00:00:00');
-    if (isNaN(d.getTime())) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return d < today;
+function statusLabel(booking) {
+    const config = statusFor(booking);
+    return isEnglish.value ? config.en : config.cs;
+}
+
+function isUpcoming(booking) {
+    if (typeof booking?.is_upcoming === 'boolean') return booking.is_upcoming;
+    if (!['pending', 'confirmed'].includes(booking?.status)) return false;
+
+    const rawDate = booking?.booking_date ? String(booking.booking_date).slice(0, 10) : '';
+    const rawTime = booking?.start_time ? String(booking.start_time).slice(0, 5) : '23:59';
+    const startsAt = new Date(`${rawDate}T${rawTime}:00`);
+    return !Number.isNaN(startsAt.getTime()) && startsAt.getTime() >= Date.now();
+}
+
+function canCancel(booking) {
+    return booking?.can_cancel === true;
+}
+
+function formatDate(value) {
+    if (!value) return '—';
+    const raw = String(value).slice(0, 10);
+    const date = new Date(`${raw}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return '—';
+    return new Intl.DateTimeFormat(locale.value, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    }).format(date);
+}
+
+function formatTime(value) {
+    if (!value) return '—';
+    const match = String(value).match(/^(\d{1,2}):(\d{2})/);
+    return match ? `${String(Number(match[1])).padStart(2, '0')}:${match[2]}` : '—';
+}
+
+function formatMoney(booking) {
+    const value = booking?.price_amount ?? booking?.total_price ?? booking?.service?.price;
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) return '—';
+    const currency = booking?.currency || booking?.shop?.currency || 'CZK';
+    try {
+        return new Intl.NumberFormat(locale.value, {
+            style: 'currency',
+            currency,
+            maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+        }).format(amount);
+    } catch {
+        return `${amount.toFixed(2)} ${currency}`;
+    }
+}
+
+function shopUrl(booking) {
+    return booking?.shop?.slug ? route('shops.show', booking.shop.slug) : route('shops.index');
+}
+
+function rebookUrl(booking) {
+    if (!booking?.shop?.slug) return route('shops.index');
+    return route('shops.book', {
+        slug: booking.shop.slug,
+        ...(booking?.service?.id ? { service_id: booking.service.id } : {}),
+    });
+}
+
+function cancelBooking(booking) {
+    if (!canCancel(booking)) return;
+    cancelForm.post(route('bookings.cancel', booking.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            cancelTarget.value = null;
+        },
+    });
 }
 </script>
 
 <template>
+    <Head :title="tr('Moje rezervace', 'My bookings')" />
+
     <AppLayout>
-        <!-- Gradient Header -->
-        <div class="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">{{ $t('My Bookings') }}</h1>
-                        <p class="text-sm text-blue-200 mt-1">{{ $t('View and manage your appointments') }}</p>
-                    </div>
-                    <Link
-                        href="/shops"
-                        class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur border border-white/20 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>{{ $t('Book a Service') }}</Link>
+        <header class="border-b border-line bg-white">
+            <div class="ui-container flex flex-col gap-5 py-8 sm:flex-row sm:items-end sm:justify-between sm:py-10">
+                <div>
+                    <p class="text-sm font-bold text-brand-700">Domluveno</p>
+                    <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-ink">{{ tr('Moje rezervace', 'My bookings') }}</h1>
+                    <p class="mt-2 max-w-2xl text-sm leading-6 text-muted">
+                        {{ tr('Na jednom místě najdete nadcházející termíny i historii návštěv.', 'Find upcoming appointments and visit history in one place.') }}
+                    </p>
                 </div>
+                <Link :href="route('shops.index')" class="ui-button ui-button-primary w-full sm:w-auto">
+                    <Plus :size="18" aria-hidden="true" />
+                    {{ tr('Nová rezervace', 'New booking') }}
+                </Link>
             </div>
-        </div>
+        </header>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Bookings List -->
-            <div v-if="bookings.data.length > 0" class="space-y-4">
-                <div
-                    v-for="booking in bookings.data"
-                    :key="booking.id"
-                    class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md group"
-                    :class="{ 'opacity-50': booking.status === 'cancelled' }"
-                >
-                    <div class="flex flex-col sm:flex-row">
-                        <!-- Left accent bar -->
-                        <div
-                            class="hidden sm:block w-1.5 shrink-0"
-                            :class="{
-                                'bg-amber-400': booking.status === 'pending',
-                                'bg-green-500': booking.status === 'confirmed',
-                                'bg-gray-300': booking.status === 'completed',
-                                'bg-red-400': booking.status === 'cancelled',
-                            }"
-                        ></div>
-
-                        <div class="flex-1 p-5">
-                            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                                <!-- Left: Service Info -->
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-2.5 mb-2">
-                                        <span
-                                            :class="[getStatus(booking.status).bg, getStatus(booking.status).text, getStatus(booking.status).ring, 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ring-1 ring-inset']"
-                                        >
-                                            <span :class="[getStatus(booking.status).dot, 'w-1.5 h-1.5 rounded-full']"></span>
-                                            {{ getStatus(booking.status).label }}
-                                        </span>
-                                        <span v-if="isPast(booking.booking_date) && booking.status !== 'cancelled' && booking.status !== 'completed'" class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded">{{ $t('Past') }}</span>
-                                    </div>
-
-                                    <h3 class="font-bold text-gray-900 text-base mb-1">
-                                        {{ booking.shop?.name }}
-                                    </h3>
-
-                                    <p class="text-sm text-gray-500 mb-3">
-                                        {{ booking.service?.name }} · {{ booking.provider?.name }} · {{ Number(booking.service?.price ?? 0).toFixed(2) }} {{ booking.shop?.currency || 'CZK' }}
-                                    </p>
-
-                                    <div class="flex flex-wrap items-center gap-2 text-sm">
-                                        <span class="flex items-center gap-1.5 text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg">
-                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            {{ formatDate(booking.booking_date) }}
-                                        </span>
-                                        <span class="flex items-center gap-1.5 text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg">
-                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            {{ formatTime(booking.start_time) }} – {{ formatTime(booking.end_time) }}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <!-- Right: Actions -->
-                                <div class="flex sm:flex-col items-center sm:items-end gap-3 shrink-0">
-
-                                    <div class="flex gap-2">
-                                        <Link
-                                            v-if="booking.status === 'pending' || booking.status === 'confirmed'"
-                                            :href="route('shops.show', booking.shop?.slug)"
-                                            class="text-xs font-semibold text-gray-600 hover:text-gray-900 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all"
-                                        >{{ $t('Details') }}</Link>
-                                        <button
-                                            v-if="booking.status === 'pending' || booking.status === 'confirmed'"
-                                            @click="$inertia.post(route('bookings.cancel', booking.id))"
-                                            class="text-xs font-semibold text-red-600 hover:text-red-700 px-3 py-2 rounded-xl border border-red-200 hover:bg-red-50 hover:border-red-300 transition-all"
-                                        >{{ $t('Cancel') }}</button>
-                                        <Link
-                                            v-if="booking.status === 'completed' && !booking.has_review"
-                                            :href="route('reviews.create', booking.id)"
-                                            class="text-xs font-semibold text-amber-600 hover:text-amber-700 px-3 py-2 rounded-xl border border-amber-200 hover:bg-amber-50 hover:border-amber-300 transition-all flex items-center gap-1"
-                                        >
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>{{ $t('Review') }}</Link>
-                                        <Link
-                                            v-if="booking.status === 'completed'"
-                                            :href="route('shops.show', booking.shop?.slug)"
-                                            class="text-xs font-semibold text-blue-600 hover:text-blue-700 px-3 py-2 rounded-xl border border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center gap-1"
-                                        >
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>{{ $t('Rebook') }}</Link>
-
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            <!-- Customer Notes -->
-                            <div v-if="booking.customer_notes" class="mt-4 pt-3 border-t border-gray-100">
-                                <div class="flex items-start gap-2">
-                                    <svg class="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                    </svg>
-                                    <p class="text-xs text-gray-500 leading-relaxed">{{ booking.customer_notes }}</p>
-                                </div>
-                            </div>
+        <div class="ui-container py-8 sm:py-10">
+            <div v-if="allBookings.length" class="space-y-10">
+                <section aria-labelledby="upcoming-heading">
+                    <div class="flex items-end justify-between gap-4">
+                        <div>
+                            <h2 id="upcoming-heading" class="text-xl font-bold text-ink">{{ tr('Nadcházející', 'Upcoming') }}</h2>
+                            <p class="mt-1 text-sm text-muted">{{ tr('Termíny, které vás teprve čekají.', 'Appointments that are still ahead.') }}</p>
                         </div>
+                        <span class="rounded-full bg-brand-100 px-2.5 py-1 text-xs font-bold text-brand-800">{{ upcomingBookings.length }}</span>
                     </div>
-                </div>
+
+                    <div v-if="upcomingBookings.length" class="mt-5 grid gap-4 lg:grid-cols-2">
+                        <article v-for="booking in upcomingBookings" :key="booking.id" class="ui-card overflow-hidden">
+                            <div class="flex flex-col gap-4 p-5 sm:p-6">
+                                <div class="flex flex-wrap items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <span :class="[statusFor(booking).classes, 'inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset']">
+                                            {{ statusLabel(booking) }}
+                                        </span>
+                                        <h3 class="mt-3 truncate text-lg font-bold text-ink">{{ booking.service?.name || tr('Rezervovaná služba', 'Booked service') }}</h3>
+                                        <p class="mt-1 truncate text-sm text-muted">{{ booking.shop?.name || tr('Provozovna', 'Shop') }}</p>
+                                    </div>
+                                    <strong class="text-lg text-ink">{{ formatMoney(booking) }}</strong>
+                                </div>
+
+                                <dl class="grid gap-3 rounded-xl bg-gray-50 p-4 text-sm sm:grid-cols-2">
+                                    <div class="grid grid-cols-[auto_1fr] gap-x-2">
+                                        <dt>
+                                            <CalendarDays :size="18" class="mt-0.5 flex-none text-brand-700" aria-hidden="true" />
+                                            <span class="sr-only">{{ tr('Datum', 'Date') }}</span>
+                                        </dt>
+                                        <dd class="font-semibold text-ink">{{ formatDate(booking.booking_date) }}</dd>
+                                    </div>
+                                    <div class="grid grid-cols-[auto_1fr] gap-x-2">
+                                        <dt>
+                                            <Clock3 :size="18" class="mt-0.5 flex-none text-brand-700" aria-hidden="true" />
+                                            <span class="sr-only">{{ tr('Čas', 'Time') }}</span>
+                                        </dt>
+                                        <dd class="font-semibold text-ink">{{ formatTime(booking.start_time) }}–{{ formatTime(booking.end_time) }}</dd>
+                                    </div>
+                                    <div v-if="booking.shop?.address" class="grid grid-cols-[auto_1fr] gap-x-2 sm:col-span-2">
+                                        <dt>
+                                            <MapPin :size="18" class="mt-0.5 flex-none text-brand-700" aria-hidden="true" />
+                                            <span class="sr-only">{{ tr('Místo', 'Location') }}</span>
+                                        </dt>
+                                        <dd class="text-muted">{{ booking.shop.address }}<span v-if="booking.shop.city">, {{ booking.shop.city }}</span></dd>
+                                    </div>
+                                </dl>
+
+                                <p v-if="booking.customer_notes" class="line-clamp-2 text-sm leading-6 text-muted">{{ booking.customer_notes }}</p>
+
+                                <div v-if="cancelTarget === booking.id" class="rounded-xl border border-red-200 bg-red-50 p-4" role="alertdialog" :aria-labelledby="`cancel-title-${booking.id}`">
+                                    <div class="flex items-start gap-3">
+                                        <TriangleAlert :size="20" class="mt-0.5 flex-none text-danger" aria-hidden="true" />
+                                        <div>
+                                            <h4 :id="`cancel-title-${booking.id}`" class="font-bold text-ink">{{ tr('Zrušit tento termín?', 'Cancel this appointment?') }}</h4>
+                                            <p class="mt-1 text-sm text-muted">{{ tr('Tento krok nelze vrátit zpět.', 'This action cannot be undone.') }}</p>
+                                        </div>
+                                    </div>
+                                    <p v-if="Object.keys(cancelForm.errors).length" class="mt-3 text-sm font-medium text-danger" role="alert">
+                                        {{ tr('Rezervaci se nepodařilo zrušit. Zkuste to prosím znovu.', 'The booking could not be cancelled. Please try again.') }}
+                                    </p>
+                                    <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row">
+                                        <button type="button" class="ui-button ui-button-secondary" :disabled="cancelForm.processing" @click="cancelTarget = null">
+                                            {{ tr('Ponechat rezervaci', 'Keep booking') }}
+                                        </button>
+                                        <button type="button" class="ui-button ui-button-danger" :disabled="cancelForm.processing" @click="cancelBooking(booking)">
+                                            <LoaderCircle v-if="cancelForm.processing" :size="18" class="animate-spin" aria-hidden="true" />
+                                            {{ cancelForm.processing ? tr('Rušíme…', 'Cancelling…') : tr('Ano, zrušit', 'Yes, cancel') }}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div v-else class="flex flex-col gap-2 border-t border-line pt-4 sm:flex-row sm:items-center">
+                                    <Link :href="shopUrl(booking)" class="ui-button ui-button-secondary flex-1 sm:flex-none">
+                                        {{ tr('Detail provozovny', 'Shop details') }}
+                                        <ArrowRight :size="16" aria-hidden="true" />
+                                    </Link>
+                                    <button v-if="canCancel(booking)" type="button" class="ui-button flex-1 border border-red-200 bg-white text-danger hover:bg-red-50 sm:flex-none" @click="cancelTarget = booking.id">
+                                        {{ tr('Zrušit rezervaci', 'Cancel booking') }}
+                                    </button>
+                                    <p v-else class="text-xs leading-5 text-muted sm:ml-auto sm:max-w-52 sm:text-right">
+                                        {{ tr('Online zrušení už není dostupné.', 'Online cancellation is no longer available.') }}
+                                    </p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div v-else class="ui-card mt-5 p-7 text-center sm:p-10">
+                        <CalendarDays :size="30" class="mx-auto text-brand-700" aria-hidden="true" />
+                        <h3 class="mt-3 font-bold text-ink">{{ tr('Žádný nadcházející termín', 'No upcoming appointments') }}</h3>
+                        <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
+                            {{ tr('Až si něco rezervujete, termín se objeví tady.', 'Your next appointment will appear here after you make a booking.') }}
+                        </p>
+                        <Link :href="route('shops.index')" class="ui-button ui-button-primary mt-5">
+                            {{ tr('Najít službu', 'Find a service') }}
+                        </Link>
+                    </div>
+                </section>
+
+                <section aria-labelledby="history-heading">
+                    <div class="flex items-end justify-between gap-4">
+                        <div>
+                            <h2 id="history-heading" class="text-xl font-bold text-ink">{{ tr('Historie', 'History') }}</h2>
+                            <p class="mt-1 text-sm text-muted">{{ tr('Dokončené, zrušené a uplynulé rezervace.', 'Completed, cancelled and past bookings.') }}</p>
+                        </div>
+                        <span class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-muted">{{ historyBookings.length }}</span>
+                    </div>
+
+                    <div v-if="historyBookings.length" class="mt-5 overflow-hidden rounded-2xl border border-line bg-white">
+                        <article v-for="(booking, index) in historyBookings" :key="booking.id" class="p-5 sm:p-6" :class="index ? 'border-t border-line' : ''">
+                            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span :class="[statusFor(booking).classes, 'inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset']">
+                                            {{ statusLabel(booking) }}
+                                        </span>
+                                        <span class="text-sm text-muted">{{ formatDate(booking.booking_date) }} · {{ formatTime(booking.start_time) }}</span>
+                                    </div>
+                                    <h3 class="mt-2 font-bold text-ink">{{ booking.service?.name || tr('Rezervovaná služba', 'Booked service') }}</h3>
+                                    <p class="mt-1 text-sm text-muted">{{ booking.shop?.name || tr('Provozovna', 'Shop') }} · {{ formatMoney(booking) }}</p>
+                                </div>
+
+                                <div class="flex flex-col gap-2 sm:flex-row">
+                                    <Link
+                                        v-if="booking.status === 'completed' && !booking.has_review"
+                                        :href="route('reviews.create', booking.id)"
+                                        class="ui-button border border-amber-200 bg-white text-amber-800 hover:bg-amber-50"
+                                    >
+                                        <Star :size="17" aria-hidden="true" />
+                                        {{ tr('Napsat recenzi', 'Write a review') }}
+                                    </Link>
+                                    <Link :href="rebookUrl(booking)" class="ui-button ui-button-secondary">
+                                        <RotateCcw :size="17" aria-hidden="true" />
+                                        {{ tr('Rezervovat znovu', 'Book again') }}
+                                    </Link>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div v-else class="ui-card mt-5 p-7 text-center">
+                        <p class="text-sm text-muted">{{ tr('Historie je zatím prázdná.', 'Your booking history is empty.') }}</p>
+                    </div>
+                </section>
             </div>
 
-            <!-- Empty State -->
-            <div v-else class="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-2">{{ $t('No bookings yet') }}</h3>
-                <p class="text-gray-500 mb-6 max-w-sm mx-auto text-sm">{{ $t('Browse our services and book your first appointment today.') }}</p>
+            <div v-else class="ui-card mx-auto max-w-2xl p-8 text-center sm:p-12">
+                <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">
+                    <CalendarDays :size="28" aria-hidden="true" />
+                </span>
+                <h2 class="mt-5 text-xl font-bold text-ink">{{ tr('Zatím nemáte žádnou rezervaci', 'You do not have any bookings yet') }}</h2>
+                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
+                    {{ tr('Najděte službu, zvolte volný čas a potvrďte rezervaci během pár minut.', 'Find a service, choose an available time and confirm in a few minutes.') }}
+                </p>
+                <Link :href="route('shops.index')" class="ui-button ui-button-primary mt-6">
+                    {{ tr('Procházet služby', 'Browse services') }}
+                    <ArrowRight :size="17" aria-hidden="true" />
+                </Link>
+            </div>
+
+            <nav v-if="bookings.links?.length > 3" class="mt-8 flex flex-wrap justify-center gap-2" :aria-label="tr('Stránkování rezervací', 'Booking pagination')">
                 <Link
-                    href="/shops"
-                    class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-sm text-sm"
-                >{{ $t('Browse Shops') }}</Link>
-            </div>
-
-            <!-- Pagination -->
-            <div v-if="bookings.links && bookings.links.length > 3" class="mt-8 flex justify-center">
-                <div class="flex gap-1.5">
-                    <Link
-                        v-for="(link, index) in bookings.links"
-                        :key="index"
-                        :href="link.url"
-                        :class="[
-                            'px-3.5 py-2 rounded-xl text-sm font-semibold transition-all',
-                            link.active
-                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
-                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300',
-                            !link.url && 'opacity-40 cursor-not-allowed pointer-events-none'
-                        ]"
-                        v-html="link.label"
-                    />
-                </div>
-            </div>
+                    v-for="(link, index) in bookings.links"
+                    :key="`${index}-${link.label}`"
+                    :href="link.url || '#'"
+                    :aria-current="link.active ? 'page' : undefined"
+                    :aria-disabled="!link.url"
+                    :class="[
+                        'inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border px-3 text-sm font-semibold transition',
+                        link.active
+                            ? 'border-brand-600 bg-brand-600 text-white'
+                            : 'border-line bg-white text-muted hover:border-brand-300 hover:text-brand-700',
+                        !link.url ? 'pointer-events-none opacity-40' : '',
+                    ]"
+                    v-html="link.label"
+                ></Link>
+            </nav>
         </div>
     </AppLayout>
 </template>

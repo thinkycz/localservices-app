@@ -1,169 +1,35 @@
-<!DOCTYPE html>
-<html>
-
+<!doctype html>
+<html lang="cs">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('Booking Confirmation') }}</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            border-radius: 10px 10px 0 0;
-        }
-
-        .content {
-            background: #f9fafb;
-            padding: 30px;
-            border-radius: 0 0 10px 10px;
-        }
-
-        .booking-details {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .detail-row:last-child {
-            border-bottom: none;
-        }
-
-        .label {
-            color: #6b7280;
-            font-weight: 500;
-        }
-
-        .value {
-            color: #111827;
-            font-weight: 600;
-        }
-
-        .status {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        .button {
-            display: inline-block;
-            background: #4f46e5;
-            color: white;
-            padding: 12px 30px;
-            text-decoration: none;
-            border-radius: 6px;
-            margin-top: 20px;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Přijetí rezervace</title>
 </head>
-
-<body>
-    <div class="header">
-        <h1>{{ __('Booking Confirmation') }}</h1>
-        <p>{{ __('Thank you for booking with us!') }}</p>
-    </div>
-
-    <div class="content">
-        <p>Hi {{ $booking->customer->name }},</p>
-
-        <p>{{ __('Your booking has been received and is currently') }} <span class="status status-pending">{{ __('Pending') }}</span>{{ __('. We\'ll notify you once the vendor confirms your appointment.') }}</p>
-
-        <div class="booking-details">
-            <h3 style="margin-top: 0; color: #111827;">{{ __('Booking Details') }}</h3>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Service') }}</span>
-                <span class="value">{{ $booking->service->name }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Offering') }}</span>
-                <span class="value">{{ $booking->service->name }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Date') }}</span>
-                <span class="value">{{ $booking->booking_date->format('l, F j, Y') }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Time') }}</span>
-                <span class="value">{{ \Carbon\Carbon::parse($booking->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('g:i A') }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Duration') }}</span>
-                <span class="value">{{ $booking->service->duration_minutes }} minutes</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Total Price') }}</span>
-                <span class="value">{{ number_format($booking->total_price, 2) }} {{ $booking->shop->currency ?? 'CZK' }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Vendor') }}</span>
-                <span class="value">{{ $booking->provider->name }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="label">{{ __('Booking ID') }}</span>
-                <span class="value">#{{ $booking->id }}</span>
-            </div>
+<body style="margin:0;background:#F7F6F2;color:#17211F;font-family:Arial,sans-serif;line-height:1.6">
+    <div style="max-width:620px;margin:0 auto;padding:24px">
+        <div style="border-radius:16px 16px 0 0;background:#0F766E;padding:24px;color:#fff">
+            <strong style="font-size:22px">Domluveno</strong>
+            <h1 style="margin:16px 0 0;font-size:26px">Rezervaci jsme přijali</h1>
         </div>
+        <div style="border:1px solid #DDE3DF;border-top:0;border-radius:0 0 16px 16px;background:#fff;padding:24px">
+            <p>Dobrý den, {{ $booking->customer_display_name }},</p>
+            <p>požadavek čeká na potvrzení poskytovatelem. O změně stavu vám dáme vědět.</p>
 
-        @if($booking->customer_notes)
-        <div class="booking-details" style="background: #fffbeb;">
-            <h3 style="margin-top: 0; color: #92400e;">{{ __('Your Notes') }}</h3>
-            <p style="color: #92400e; margin: 0;">{{ $booking->customer_notes }}</p>
+            <table role="presentation" style="width:100%;margin:24px 0;border-collapse:collapse">
+                <tr><td style="border-bottom:1px solid #DDE3DF;padding:10px 0;color:#66736F">Provozovna</td><td style="border-bottom:1px solid #DDE3DF;padding:10px 0;text-align:right;font-weight:700">{{ $booking->shop->name }}</td></tr>
+                <tr><td style="border-bottom:1px solid #DDE3DF;padding:10px 0;color:#66736F">Služba</td><td style="border-bottom:1px solid #DDE3DF;padding:10px 0;text-align:right;font-weight:700">{{ $booking->service->name }}</td></tr>
+                <tr><td style="border-bottom:1px solid #DDE3DF;padding:10px 0;color:#66736F">Termín</td><td style="border-bottom:1px solid #DDE3DF;padding:10px 0;text-align:right;font-weight:700">{{ $booking->booking_date->locale('cs')->translatedFormat('j. F Y') }}, {{ substr($booking->start_time, 0, 5) }}</td></tr>
+                <tr><td style="border-bottom:1px solid #DDE3DF;padding:10px 0;color:#66736F">Délka</td><td style="border-bottom:1px solid #DDE3DF;padding:10px 0;text-align:right;font-weight:700">{{ $booking->service->duration_minutes }} min</td></tr>
+                <tr><td style="padding:10px 0;color:#66736F">Cena</td><td style="padding:10px 0;text-align:right;font-weight:700">{{ number_format((float) $booking->total_price, 2, ',', ' ') }} {{ $booking->currency }}</td></tr>
+            </table>
+
+            <p style="font-size:14px;color:#66736F">Bezplatné zrušení je možné nejpozději 24 hodin před začátkem. Časy jsou v pásmu {{ $booking->timezone }}. Domluveno nezpracovává platby.</p>
+            <p style="text-align:center;margin:24px 0 8px"><a href="{{ $manageUrl ?? route('bookings.index') }}" style="display:inline-block;border-radius:12px;background:#0F766E;padding:12px 20px;color:#fff;text-decoration:none;font-weight:700">Spravovat rezervaci</a></p>
+            @if($manageUrl)
+                <p style="font-size:12px;color:#66736F">Tento odkaz je určený jen vám. Nepřeposílejte ho dalším osobám.</p>
+            @endif
         </div>
-        @endif
-
-        <p>{{ __('You can view and manage your bookings anytime by visiting your account:') }}</p>
-
-        <div style="text-align: center;">
-            <a href="{{ route('bookings.index') }}" class="button">{{ __('View My Bookings') }}</a>
-        </div>
-
-        <div class="footer">
-            <p>{{ __('If you have any questions, please don\'t hesitate to contact us.') }}</p>
-            <p>&copy; {{ date('Y') }} LocalServices. All rights reserved.</p>
-        </div>
+        <p style="text-align:center;font-size:12px;color:#66736F">© {{ date('Y') }} Domluveno</p>
     </div>
 </body>
-
 </html>

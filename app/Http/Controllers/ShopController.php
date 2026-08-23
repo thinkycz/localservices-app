@@ -2,24 +2,57 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bookmark;
 use App\Models\Category;
+use App\Models\Service;
 use App\Models\Shop;
+use App\Services\BookingAvailabilityService;
+use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ShopController extends Controller
 {
+    public function availability(
+        Request $request,
+        Shop $shop,
+        BookingAvailabilityService $availability,
+    ): JsonResponse {
+        $validated = $request->validate([
+            'service_id' => ['required', 'integer'],
+            'date' => ['required', 'date_format:Y-m-d'],
+        ]);
+        $service = Service::where('shop_id', $shop->id)->findOrFail($validated['service_id']);
+        $date = CarbonImmutable::createFromFormat('!Y-m-d', $validated['date'], $shop->timezone);
+
+        return response()->json([
+            'shop_id' => $shop->id,
+            'service_id' => $service->id,
+            'date' => $validated['date'],
+            ...$availability->forDate($shop, $service, $date),
+        ]);
+    }
+
     public function index(Request $request): Response
     {
-        $query = Shop::with('category');
+        $query = Shop::with('category')->where('is_available', true);
 
         // Search by keyword
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%'.$request->q.'%')
-                    ->orWhere('description', 'like', '%'.$request->q.'%');
+                    ->orWhere('description', 'like', '%'.$request->q.'%')
+                    ->orWhere('city', 'like', '%'.$request->q.'%')
+                    ->orWhere('address', 'like', '%'.$request->q.'%')
+                    ->orWhereHas('category', fn ($category) => $category
+                        ->where('name', 'like', '%'.$request->q.'%'))
+                    ->orWhereHas('services', fn ($service) => $service
+                        ->where('is_available', true)
+                        ->where(function ($serviceQuery) use ($request) {
+                            $serviceQuery->where('name', 'like', '%'.$request->q.'%')
+                                ->orWhere('description', 'like', '%'.$request->q.'%');
+                        }));
             });
         }
 
@@ -56,30 +89,15 @@ class ShopController extends Controller
         // Sort
         $sort = $request->get('sort', 'recommended');
         match ($sort) {
-            'nearest' => $query->orderBy('id', 'asc'), // placeholder for geo sort
             'cheapest' => $query->orderBy('price_range', 'asc'),
             default => $query->orderBy('rating', 'desc'),
         };
 
         $shops = $query->paginate(20)->withQueryString();
 
-        // Add is_bookmarked flag for authenticated users
-        if ($request->user()) {
-            $userId = $request->user()->id;
-            $shopIds = $shops->pluck('id')->toArray();
-            $bookmarkedIds = Bookmark::where('user_id', $userId)
-                ->whereIn('shop_id', $shopIds)
-                ->pluck('shop_id')
-                ->toArray();
-
-            $shops->getCollection()->transform(function ($shop) use ($bookmarkedIds) {
-                $shop->is_bookmarked = in_array($shop->id, $bookmarkedIds);
-
-                return $shop;
-            });
-        }
-
-        $categories = Category::withCount('shops')->get();
+        $categories = Category::withCount([
+            'shops' => fn ($query) => $query->where('is_available', true),
+        ])->get();
 
         return Inertia::render('Shops/Index', [
             'shops' => $shops,
@@ -90,49 +108,27 @@ class ShopController extends Controller
 
     public function show(Request $request, string $slug): Response
     {
-        $shop = Shop::with(['category', 'services', 'businessHours'])
+        $shop = Shop::with([
+            'category',
+            'services' => fn ($query) => $query->where('is_available', true),
+            'businessHours',
+            'approvedReviews.user',
+        ])
             ->where('slug', $slug)
+            ->where('is_available', true)
             ->firstOrFail();
-
-        // Add is_bookmarked flag for authenticated users
-        if ($request->user()) {
-            $shop->is_bookmarked = Bookmark::where('user_id', $request->user()->id)
-                ->where('shop_id', $shop->id)
-                ->exists();
-        }
 
         $related = Shop::with('category')
             ->where('category_id', $shop->category_id)
             ->where('id', '!=', $shop->id)
+            ->where('is_available', true)
             ->orderBy('rating', 'desc')
             ->limit(3)
             ->get();
 
-        // Add is_bookmarked flag to related services for authenticated users
-        if ($request->user()) {
-            $userId = $request->user()->id;
-            $relatedIds = $related->pluck('id')->toArray();
-            $bookmarkedIds = Bookmark::where('user_id', $userId)
-                ->whereIn('shop_id', $relatedIds)
-                ->pluck('shop_id')
-                ->toArray();
-
-            $related->transform(function ($relatedShop) use ($bookmarkedIds) {
-                $relatedShop->is_bookmarked = in_array($relatedShop->id, $bookmarkedIds);
-
-                return $relatedShop;
-            });
-        }
-
-        $bookings = \App\Models\Booking::where('provider_id', $shop->user_id)
-            ->where('booking_date', '>=', now()->toDateString())
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->get(['booking_date', 'start_time', 'end_time']);
-
         return Inertia::render('Shops/Show', [
             'shop' => $shop,
             'related' => $related,
-            'bookings' => $bookings,
         ]);
     }
 }

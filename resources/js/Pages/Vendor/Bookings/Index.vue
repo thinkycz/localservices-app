@@ -1,312 +1,101 @@
 <script setup>
+import AppPagination from '@/Components/AppPagination.vue';
+import EmptyState from '@/Components/EmptyState.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import UiButton from '@/Components/UiButton.vue';
+import UiCard from '@/Components/UiCard.vue';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { CalendarCheck, CheckCircle2, CircleDollarSign, Clock3, Search } from '@lucide/vue';
+import { ref } from 'vue';
 
 const props = defineProps({
-    bookings: { type: Object, default: () => ({}) },
+    bookings: { type: Object, required: true },
     stats: { type: Object, default: () => ({}) },
     filters: { type: Object, default: () => ({}) },
 });
 
 const search = ref(props.filters.search || '');
-const statusFilter = ref(props.filters.status || '');
+const status = ref(props.filters.status || '');
 const dateFrom = ref(props.filters.date_from || '');
 const dateTo = ref(props.filters.date_to || '');
 const sort = ref(props.filters.sort || 'newest');
 
+const statusMap = {
+    pending: { label: 'Čeká na potvrzení', tone: 'warning' },
+    confirmed: { label: 'Potvrzená', tone: 'brand' },
+    completed: { label: 'Dokončená', tone: 'success' },
+    cancelled: { label: 'Zrušená', tone: 'danger' },
+};
+
 function applyFilters() {
-    router.get(route('vendor.bookings.index'), {
-        search: search.value,
-        status: statusFilter.value,
-        date_from: dateFrom.value,
-        date_to: dateTo.value,
-        sort: sort.value,
-    }, { preserveState: true });
+    router.get(route('vendor.bookings.index'), { search: search.value, status: status.value, date_from: dateFrom.value, date_to: dateTo.value, sort: sort.value }, { preserveState: true, replace: true });
 }
 
-function getStatusClasses(status) {
-    const classes = {
-        pending: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20',
-        confirmed: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/20',
-        completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20',
-        cancelled: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20',
-    };
-    return classes[status] || 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20';
+function resetFilters() {
+    search.value = ''; status.value = ''; dateFrom.value = ''; dateTo.value = ''; sort.value = 'newest'; applyFilters();
 }
 
-function getStatusDot(status) {
-    const dots = {
-        pending: 'bg-amber-500',
-        confirmed: 'bg-blue-500',
-        completed: 'bg-emerald-500',
-        cancelled: 'bg-red-500',
-    };
-    return dots[status] || 'bg-gray-500';
+function formatDate(value) {
+    if (!value) return '—';
+    return new Intl.DateTimeFormat('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${String(value).slice(0, 10)}T12:00:00`));
 }
 
-function formatDate(date) {
-    return new Date(date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
+function formatTime(value) {
+    return String(value || '').slice(0, 5) || '—';
 }
 
-function formatTime(time) {
-    if (!time) return '';
-    const s = String(time).trim();
-    if (!s) return '';
-    if (/[ap]m\b/.test(s) && !s.includes('T')) return s;
+function customerName(booking) {
+    return booking.customer_display_name || booking.customer_name || booking.customer?.name || 'Zákazník bez jména';
+}
 
-    const asDate = new Date(s);
-    if (!Number.isNaN(asDate.getTime())) {
-        return asDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    }
-
-    const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/);
-    if (m) {
-        const h = Number(m[1]);
-        const min = Number(m[2]);
-        const d = new Date(1970, 0, 1, h, min, 0);
-        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    }
-
-    return s;
+function money(booking) {
+    return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: booking.currency || booking.shop?.currency || 'CZK' }).format(Number(booking.price_amount ?? booking.total_price ?? booking.service?.price ?? 0));
 }
 </script>
 
 <template>
-    <Head :title="$t('Bookings')" />
-
+    <Head title="Rezervace" />
     <VendorLayout activePage="bookings">
-        <div class="flex flex-col gap-6">
+        <div class="space-y-6">
+            <PageHeader title="Rezervace" :description="`${stats.total ?? 0} rezervací celkem. Potvrďte nové požadavky a dokončete pouze proběhlé termíny.`" />
 
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-5 gap-4">
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-1">{{ $t('Total') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ stats.total }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-11 h-11 rounded-xl bg-yellow-50 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-1">{{ $t('Pending') }}</div>
-                    <div class="text-2xl font-bold text-yellow-600">{{ stats.pending }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-1">{{ $t('Confirmed') }}</div>
-                    <div class="text-2xl font-bold text-blue-600">{{ stats.confirmed }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-11 h-11 rounded-xl bg-green-50 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-1">{{ $t('Completed') }}</div>
-                    <div class="text-2xl font-bold text-green-600">{{ stats.completed }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-sm text-gray-500 mb-1">{{ $t('Cancelled') }}</div>
-                    <div class="text-2xl font-bold text-red-600">{{ stats.cancelled }}</div>
-                </div>
-
-
+            <div class="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <UiCard v-for="item in [
+                    { label: 'Čeká na potvrzení', value: stats.pending ?? 0, icon: Clock3 },
+                    { label: 'Potvrzené', value: stats.confirmed ?? 0, icon: CalendarCheck },
+                    { label: 'Dokončené', value: stats.completed ?? 0, icon: CheckCircle2 },
+                    { label: 'Hodnota nezrušených podle provozoven', value: stats.total_revenue ?? '0,00 CZK', icon: CircleDollarSign },
+                ]" :key="item.label" padding="sm" class="min-w-0"><div class="flex gap-3"><span class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-50 text-brand-700"><component :is="item.icon" :size="19" /></span><div class="min-w-0"><p class="text-xs font-bold uppercase tracking-wide text-muted">{{ item.label }}</p><p class="mt-1 break-words text-xl font-extrabold text-ink">{{ item.value }}</p></div></div></UiCard>
             </div>
 
-            <!-- Search and Filter Bar -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                <div class="flex items-center gap-4">
-                    <!-- Search -->
-                    <div class="flex-1 relative">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        <input
-                            v-model="search"
-                            type="text"
-                            :placeholder="$t('Search by customer name...')"
-                            class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            @keyup.enter="applyFilters"
-                        />
-                    </div>
-                    
-                    <!-- Filter Buttons -->
-                    <div class="flex items-center gap-1">
-                        <button
-                            @click="statusFilter = ''; applyFilters()"
-                            :class="[
-                                'px-4 py-2 text-sm font-medium rounded-xl transition-colors',
-                                statusFilter === ''
-                                    ? 'bg-gray-900 text-white'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                            ]"
-                        >{{ $t('All') }}</button>
-                        <button
-                            @click="statusFilter = 'pending'; applyFilters()"
-                            :class="[
-                                'px-4 py-2 text-sm font-medium rounded-xl transition-colors',
-                                statusFilter === 'pending'
-                                    ? 'bg-gray-900 text-white'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                            ]"
-                        >{{ $t('Pending') }}</button>
-                        <button
-                            @click="statusFilter = 'confirmed'; applyFilters()"
-                            :class="[
-                                'px-4 py-2 text-sm font-medium rounded-xl transition-colors',
-                                statusFilter === 'confirmed'
-                                    ? 'bg-gray-900 text-white'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                            ]"
-                        >{{ $t('Confirmed') }}</button>
-                        <button
-                            @click="statusFilter = 'completed'; applyFilters()"
-                            :class="[
-                                'px-4 py-2 text-sm font-medium rounded-xl transition-colors',
-                                statusFilter === 'completed'
-                                    ? 'bg-gray-900 text-white'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                            ]"
-                        >{{ $t('Completed') }}</button>
-                        <button
-                            @click="statusFilter = 'cancelled'; applyFilters()"
-                            :class="[
-                                'px-4 py-2 text-sm font-medium rounded-xl transition-colors',
-                                statusFilter === 'cancelled'
-                                    ? 'bg-gray-900 text-white'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                            ]"
-                        >{{ $t('Cancelled') }}</button>
-                    </div>
-                </div>
-            </div>
+            <UiCard padding="sm">
+                <form class="grid gap-3 lg:grid-cols-[minmax(12rem,1fr)_auto_auto_auto_auto]" @submit.prevent="applyFilters">
+                    <label class="relative min-w-0"><span class="sr-only">Hledat zákazníka</span><Search class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" :size="18" /><input v-model="search" type="search" class="ui-field pl-11" placeholder="Jméno nebo e-mail…" /></label>
+                    <select v-model="status" class="ui-field lg:w-48" aria-label="Stav rezervace" @change="applyFilters"><option value="">Všechny stavy</option><option value="pending">Čekající</option><option value="confirmed">Potvrzené</option><option value="completed">Dokončené</option><option value="cancelled">Zrušené</option></select>
+                    <label><span class="sr-only">Od data</span><input v-model="dateFrom" type="date" class="ui-field" @change="applyFilters" /></label>
+                    <label><span class="sr-only">Do data</span><input v-model="dateTo" type="date" class="ui-field" @change="applyFilters" /></label>
+                    <select v-model="sort" class="ui-field lg:w-40" aria-label="Řazení" @change="applyFilters"><option value="newest">Nejnovější</option><option value="oldest">Nejstarší</option><option value="date_asc">Termín vzestupně</option><option value="date_desc">Termín sestupně</option></select>
+                    <div class="flex gap-2 lg:col-span-5 lg:justify-end"><UiButton type="button" variant="ghost" @click="resetFilters">Vymazat filtry</UiButton><UiButton type="submit" variant="secondary">Použít</UiButton></div>
+                </form>
+            </UiCard>
 
-            <!-- Bookings Table -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table class="w-full">
-                    <thead>
-                        <tr class="bg-gray-50/50">
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Customer') }}</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Service') }}</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Date & Time') }}</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Status') }}</th>
-                            <th class="px-6 py-3.5"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr
-                            v-for="booking in bookings.data"
-                            :key="booking.id"
-                            class="group hover:bg-blue-50/30 transition-colors cursor-pointer"
-                            @click="router.visit(route('vendor.bookings.show', booking.id))"
-                        >
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 shadow-sm">
-                                        {{ booking.customer.name.charAt(0).toUpperCase() }}
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="font-semibold text-gray-900 text-sm truncate">{{ booking.customer.name }}</div>
-                                        <div class="text-xs text-gray-400 truncate">{{ booking.customer.email }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="font-medium text-gray-900 text-sm">{{ booking.shop.name }}</div>
-                                <div class="text-xs text-gray-400 mt-0.5">{{ booking.service.name }}</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm font-medium text-gray-800">{{ formatDate(booking.booking_date) }}</div>
-                                <div class="text-xs text-gray-400 mt-0.5">{{ formatTime(booking.start_time) }} – {{ formatTime(booking.end_time) }}</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium', getStatusClasses(booking.status)]">
-                                    <span :class="['w-1.5 h-1.5 rounded-full', getStatusDot(booking.status)]"></span>
-                                    {{ booking.status.charAt(0).toUpperCase() + booking.status.slice(1) }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <Link
-                                    :href="route('vendor.bookings.show', booking.id)"
-                                    class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 group-hover:text-blue-600 transition-colors"
-                                    @click.stop
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                    </svg>
-                                </Link>
-                            </td>
-                        </tr>
-                        <!-- Empty State -->
-                        <tr v-if="bookings.data.length === 0">
-                            <td colspan="6" class="px-6 py-16 text-center">
-                                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                                    </svg>
-                                </div>
-                                <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No bookings found') }}</h3>
-                                <p class="text-sm text-gray-500">{{ $t('Bookings will appear here once customers make reservations.') }}</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <EmptyState v-if="!bookings.data?.length" title="Žádné odpovídající rezervace" description="Změňte filtry, nebo vyčkejte na první rezervaci od zákazníka.">
+                <template #icon><CalendarCheck :size="23" /></template><template #actions><UiButton variant="secondary" @click="resetFilters">Vymazat filtry</UiButton></template>
+            </EmptyState>
 
-                <!-- Pagination -->
-                <div v-if="bookings.total > bookings.per_page" class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30">
-                    <div class="text-sm text-gray-500">{{ $t('Showing') }}<span class="font-medium text-gray-700">{{ bookings.from }}</span>{{ $t('to') }}<span class="font-medium text-gray-700">{{ bookings.to }}</span>{{ $t('of') }}<span class="font-medium text-gray-700">{{ bookings.total }}</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <button
-                            v-for="page in Math.ceil(bookings.total / bookings.per_page)"
-                            :key="page"
-                            @click="router.get(route('vendor.bookings.index'), { page: page, search: search, status: statusFilter }, { preserveState: true })"
-                            :class="[
-                                'w-9 h-9 rounded-lg text-sm font-medium transition-colors',
-                                page === bookings.current_page
-                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                                    : 'text-gray-600 hover:bg-white hover:shadow-sm'
-                            ]"
-                        >
-                            {{ page }}
-                        </button>
-                    </div>
+            <template v-else>
+                <div class="grid gap-3 md:hidden">
+                    <Link v-for="booking in bookings.data" :key="booking.id" :href="route('vendor.bookings.show', booking.id)" class="rounded-2xl border border-line bg-white p-4 transition hover:border-brand-300 hover:shadow-soft">
+                        <div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="break-words font-extrabold text-ink">{{ customerName(booking) }}</p><p class="mt-1 text-sm text-muted">{{ booking.service?.name || 'Služba' }}</p></div><StatusBadge :tone="statusMap[booking.status]?.tone || 'neutral'">{{ statusMap[booking.status]?.label || booking.status }}</StatusBadge></div>
+                        <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-4 text-sm"><div><dt class="text-xs font-bold uppercase text-muted">Termín</dt><dd class="mt-1 font-semibold text-ink">{{ formatDate(booking.booking_date) }} · {{ formatTime(booking.start_time) }}</dd></div><div><dt class="text-xs font-bold uppercase text-muted">Cena</dt><dd class="mt-1 font-semibold text-ink">{{ money(booking) }}</dd></div><div class="col-span-2"><dt class="text-xs font-bold uppercase text-muted">Provozovna</dt><dd class="mt-1 text-muted">{{ booking.shop?.name || '—' }}</dd></div></dl>
+                    </Link>
                 </div>
-            </div>
+
+                <div class="hidden overflow-hidden rounded-2xl border border-line bg-white md:block"><div class="overflow-x-auto"><table class="w-full min-w-[860px] text-left"><thead class="border-b border-line bg-gray-50 text-xs font-bold uppercase tracking-wide text-muted"><tr><th class="px-5 py-3">Zákazník</th><th class="px-5 py-3">Služba</th><th class="px-5 py-3">Termín</th><th class="px-5 py-3">Cena</th><th class="px-5 py-3">Stav</th><th class="px-5 py-3"></th></tr></thead><tbody class="divide-y divide-line"><tr v-for="booking in bookings.data" :key="booking.id" class="hover:bg-brand-50/30"><td class="px-5 py-4"><p class="font-extrabold text-ink">{{ customerName(booking) }}</p><p class="mt-1 text-xs text-muted">{{ booking.customer_contact_email || booking.customer_email || booking.customer?.email }}</p></td><td class="px-5 py-4"><p class="text-sm font-semibold text-ink">{{ booking.service?.name || 'Služba' }}</p><p class="mt-1 text-xs text-muted">{{ booking.shop?.name }}</p></td><td class="px-5 py-4 text-sm text-muted">{{ formatDate(booking.booking_date) }}<br><span class="font-bold text-ink">{{ formatTime(booking.start_time) }}</span></td><td class="px-5 py-4 text-sm font-bold text-ink">{{ money(booking) }}</td><td class="px-5 py-4"><StatusBadge :tone="statusMap[booking.status]?.tone || 'neutral'">{{ statusMap[booking.status]?.label || booking.status }}</StatusBadge></td><td class="px-5 py-4 text-right"><UiButton :href="route('vendor.bookings.show', booking.id)" variant="secondary" size="sm">Detail</UiButton></td></tr></tbody></table></div></div>
+                <AppPagination :meta="bookings" :links="bookings.links || []" />
+            </template>
         </div>
     </VendorLayout>
 </template>

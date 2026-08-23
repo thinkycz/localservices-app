@@ -4,25 +4,21 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class CategorySeeder extends Seeder
 {
     public function run(): void
     {
         $categories = [
-            ['name' => 'Barbershops',    'icon' => '💇'],
-            ['name' => 'Auto Repair',    'icon' => '🔧'],
-            ['name' => 'Fitness',        'icon' => '💪'],
-            ['name' => 'Pet Care',       'icon' => '🐾'],
-            ['name' => 'Cleaning',       'icon' => '🧹'],
+            ['name' => 'Kadeřnictví a holičství', 'slug' => 'kadernictvi-a-holicstvi', 'icon' => 'scissors'],
+            ['name' => 'Autoservis', 'slug' => 'autoservis', 'icon' => 'car-front'],
+            ['name' => 'Fitness a pohyb', 'slug' => 'fitness-a-pohyb', 'icon' => 'dumbbell'],
+            ['name' => 'Péče o zvířata', 'slug' => 'pece-o-zvirata', 'icon' => 'paw-print'],
+            ['name' => 'Úklid', 'slug' => 'uklid', 'icon' => 'sparkles'],
         ];
 
-        foreach ($categories as $cat) {
-            Category::firstOrCreate(
-                ['slug' => Str::slug($cat['name'])],
-                ['name' => $cat['name'], 'icon' => $cat['icon']]
-            );
+        foreach ($categories as $category) {
+            Category::updateOrCreate(['slug' => $category['slug']], $category);
         }
     }
 }

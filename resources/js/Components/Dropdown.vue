@@ -27,8 +27,11 @@ onUnmounted(() => document.removeEventListener('keydown', closeOnEscape));
 
 const widthClass = computed(() => {
     return {
+        40: 'w-40',
         48: 'w-48',
-    }[props.width.toString()];
+        56: 'w-56',
+        64: 'w-64',
+    }[String(props.width ?? '48')] ?? 'w-48';
 });
 
 const alignmentClasses = computed(() => {
@@ -46,7 +49,7 @@ const open = ref(false);
 
 <template>
     <div class="relative">
-        <div @click="open = !open">
+        <div @click="open = !open" :aria-expanded="open">
             <slot name="trigger" />
         </div>
 
@@ -67,13 +70,13 @@ const open = ref(false);
         >
             <div
                 v-show="open"
-                class="absolute z-50 mt-2 rounded-md shadow-lg"
+                class="absolute z-50 mt-2 rounded-2xl shadow-lift"
                 :class="[widthClass, alignmentClasses]"
                 style="display: none"
                 @click="open = false"
             >
                 <div
-                    class="rounded-md ring-1 ring-black ring-opacity-5"
+                    class="overflow-hidden rounded-2xl border border-line"
                     :class="contentClasses"
                 >
                     <slot name="content" />

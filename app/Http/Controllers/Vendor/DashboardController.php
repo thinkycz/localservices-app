@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Service;
 use App\Models\Shop;
+use App\Support\Money;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,115 +21,100 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $now = Carbon::now(config('app.timezone'));
 
-        // Get all services for this vendor
         $shops = Shop::where('user_id', $user->id)->get();
         $shopIds = $shops->pluck('id');
+        $bookings = Booking::whereIn('shop_id', $shopIds)
+            ->with(['customer', 'shop', 'service'])
+            ->get();
 
-        // Get all bookings for vendor's services
-        $bookings = Booking::whereIn('shop_id', $shopIds)->get();
-
-        // Calculate stats
         $totalBookings = $bookings->count();
-        $completedBookings = $bookings->where('status', 'completed')->count();
         $cancelledBookings = $bookings->where('status', 'cancelled')->count();
         $pendingBookings = $bookings->where('status', 'pending')->count();
         $confirmedBookings = $bookings->where('status', 'confirmed')->count();
 
-        // Revenue (excluding cancelled)
-        $totalRevenue = $bookings->where('status', '!=', 'cancelled')->sum('total_price');
+        $customerGroups = $bookings->groupBy(fn (Booking $booking) => $this->customerIdentity($booking));
+        $totalCustomers = $customerGroups->count();
+        $newCustomers = $customerGroups->filter(function (Collection $customerBookings) use ($now): bool {
+            $firstBooking = $customerBookings->sortBy('created_at')->first();
 
-        // Get unique customers
-        $totalCustomers = $bookings->unique('user_id')->count();
+            return $firstBooking?->created_at?->gte($now->copy()->startOfMonth()) ?? false;
+        })->count();
+        $returningCustomers = $customerGroups
+            ->filter(fn (Collection $customerBookings) => $customerBookings->count() > 1)
+            ->count();
 
-        // Calculate new vs returning customers
-        $customerCounts = $bookings->groupBy('user_id')->map(fn ($b) => $b->count());
-        $newCustomers = $customerCounts->filter(fn ($count) => $count === 1)->count();
-        $returningCustomers = $customerCounts->filter(fn ($count) => $count > 1)->count();
+        $todayBookings = $bookings
+            ->filter(fn (Booking $booking) => $booking->booking_date->isSameDay($now))
+            ->sortBy('start_time')
+            ->values();
+        $weekStart = $now->copy()->startOfWeek(Carbon::MONDAY);
+        $weekEnd = $now->copy()->endOfWeek(Carbon::SUNDAY);
+        $weekBookings = $bookings
+            ->filter(fn (Booking $booking) => $booking->booking_date->betweenIncluded($weekStart, $weekEnd))
+            ->values();
 
-        // Today's bookings
-        $today = Carbon::today();
-        $todayBookings = Booking::whereIn('shop_id', $shopIds)
-            ->whereDate('booking_date', $today)
-            ->with(['customer', 'shop', 'service'])
-            ->orderBy('start_time')
-            ->get();
+        $servicePopularity = $bookings->groupBy('service_id')
+            ->map(function (Collection $serviceBookings) use ($totalBookings): array {
+                $service = $serviceBookings->first()->service;
+                $count = $serviceBookings->count();
 
-        // This week's bookings
-        $weekStart = Carbon::now()->startOfWeek();
-        $weekEnd = Carbon::now()->endOfWeek();
-        $weekBookings = Booking::whereIn('shop_id', $shopIds)
-            ->whereBetween('booking_date', [$weekStart, $weekEnd])
-            ->get();
-
-        // Service popularity (based on booking count)
-        $servicePopularity = $bookings->groupBy('shop_id')
-            ->map(fn ($b, $shopId) => [
-                'shop' => Shop::find($shopId)?->name ?? 'Unknown',
-                'count' => $b->count(),
-                'percentage' => $totalBookings > 0 ? round(($b->count() / $totalBookings) * 100) : 0,
-            ])
+                return [
+                    // Keep the legacy `shop` key until the dashboard component is migrated.
+                    'shop' => $service?->name ?? 'Unknown service',
+                    'count' => $count,
+                    'percentage' => $totalBookings > 0 ? round(($count / $totalBookings) * 100) : 0,
+                ];
+            })
             ->sortByDesc('count')
             ->take(5)
             ->values();
 
-        // Monthly revenue trend (last 6 months)
         $monthlyRevenue = [];
         for ($i = 5; $i >= 0; $i--) {
-            $month = Carbon::now()->subMonths($i);
-            $monthBookings = Booking::whereIn('shop_id', $shopIds)
-                ->whereYear('booking_date', $month->year)
-                ->whereMonth('booking_date', $month->month)
-                ->where('status', '!=', 'cancelled')
-                ->get();
-
-            $revenueByShopForMonth = $monthBookings->groupBy('shop_id')->map(function ($shopBookings) {
-                return $shopBookings->sum('total_price');
-            })->sum(); // Add up total numbers as a generic visual indicator if mixed, else true value
+            $month = $now->copy()->subMonths($i);
+            $monthBookings = $bookings->filter(fn (Booking $booking) => $booking->booking_date->year === $month->year
+                && $booking->booking_date->month === $month->month
+                && $booking->status !== 'cancelled'
+            );
+            $revenueByCurrency = $this->revenueByCurrency($monthBookings);
 
             $monthlyRevenue[] = [
                 'month' => $month->format('M'),
-                'revenue' => $revenueByShopForMonth,
+                // The numeric legacy value is retained only when there is one currency.
+                'revenue' => $revenueByCurrency->count() === 1 ? $revenueByCurrency->first() : null,
+                'currency' => $revenueByCurrency->count() === 1 ? $revenueByCurrency->keys()->first() : null,
+                'formatted_revenue' => $this->formatCurrencyTotals($revenueByCurrency),
+                'revenue_by_currency' => $revenueByCurrency->all(),
                 'bookings' => $monthBookings->count(),
             ];
         }
 
-        // Recent bookings (last 5)
-        $recentBookings = Booking::whereIn('shop_id', $shopIds)
-            ->with(['customer', 'shop', 'service'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get()
-            ->map(fn ($booking) => [
-                'id' => $booking->id,
-                'customer_name' => $booking->customer->name,
-                'service_name' => $booking->service->name,
-                'date' => $booking->booking_date->format('Y-m-d'),
-                'time' => $booking->start_time,
-                'status' => $booking->status,
-                'price' => $booking->total_price,
-            ]);
+        $recentBookings = $bookings
+            ->sortByDesc('created_at')
+            ->take(5)
+            ->values()
+            ->map(function (Booking $booking): array {
+                $currency = $this->bookingCurrency($booking);
+                $customerName = $booking->customer_display_name ?: 'Zákazník bez jména';
 
-        // Group revenue by shop to show aggregates ONLY per shop, as requested by user
-        $revenueByShop = $bookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function ($shopBookings) {
-            $shop = $shopBookings->first()->shop;
-            $currency = $shop ? $shop->currency : 'CZK';
-            $amount = $shopBookings->sum('total_price');
+                return [
+                    'id' => $booking->id,
+                    'customer_name' => $customerName,
+                    'service_name' => $booking->service?->name ?? $booking->shop?->name ?? 'Služba',
+                    'date' => $booking->booking_date->format('Y-m-d'),
+                    'time' => $booking->start_time,
+                    'status' => $booking->status,
+                    'price' => (float) $booking->total_price,
+                    'currency' => $currency,
+                    'formatted_price' => $this->formatMoney($booking->total_price, $currency),
+                ];
+            });
 
-            return $shop->name.': '.number_format($amount, 2).' '.$currency;
-        });
+        $revenueByCurrency = $this->revenueByCurrency($bookings);
+        $revenueString = $this->formatCurrencyTotals($revenueByCurrency, $shops->pluck('currency'));
 
-        // Calculate total revenue for the main stat card
-        $totalRevenue = $bookings->where('status', '!=', 'cancelled')->sum('total_price');
-        
-        // Get primary currency (from first shop) and format total
-        $primaryCurrency = $shops->first()?->currency ?? 'CZK';
-        $revenueString = $totalRevenue > 0 ? number_format($totalRevenue, 2).' '.$primaryCurrency : '0.00 '.$primaryCurrency;
-        
-        // Create detailed revenue info for tooltip or additional display
-        $revenueDetails = $revenueByShop->isEmpty() ? 'No revenue yet' : $revenueByShop->implode(' | ');
-
-        // Stats for the stats cards
         $stats = [
             [
                 'label' => 'Total Bookings',
@@ -159,7 +146,8 @@ class DashboardController extends Controller
             [
                 'label' => 'Revenue',
                 'value' => $revenueString,
-                'details' => $revenueDetails,
+                'details' => $revenueString,
+                'revenue_by_currency' => $revenueByCurrency->all(),
                 'change' => $this->calculateRevenueChange($bookings),
                 'positive' => true,
                 'icon' => 'cash',
@@ -168,34 +156,38 @@ class DashboardController extends Controller
             ],
         ];
 
+        $weekRevenueByCurrency = $this->revenueByCurrency($weekBookings);
+        $services = Service::whereIn('shop_id', $shopIds)->get();
+
         return Inertia::render('Vendor/Dashboard', [
             'stats' => $stats,
-            'todayBookings' => $todayBookings->map(fn ($b) => [
-                'id' => $b->id,
-                'time' => Carbon::parse($b->start_time)->format('g:i A'),
-                'end_time' => Carbon::parse($b->end_time)->format('g:i A'),
-                'duration' => ($b->service->duration_minutes ?? 60).' min',
-                'title' => $b->service->name ?? $b->shop->name,
-                'customer' => $b->customer->name,
-                'customer_initials' => $this->getInitials($b->customer->name),
-                'status' => strtoupper($b->status),
-                'completed' => in_array($b->status, ['completed', 'cancelled']),
-            ]),
+            'todayBookings' => $todayBookings->map(function (Booking $booking): array {
+                $customerName = $booking->customer_display_name ?: 'Zákazník bez jména';
+
+                return [
+                    'id' => $booking->id,
+                    'time' => Carbon::parse($booking->start_time)->format('g:i A'),
+                    'end_time' => Carbon::parse($booking->end_time)->format('g:i A'),
+                    'duration' => ($booking->service?->duration_minutes ?? 60).' min',
+                    'title' => $booking->service?->name ?? $booking->shop?->name ?? 'Služba',
+                    'customer' => $customerName,
+                    'customer_initials' => $this->getInitials($customerName),
+                    'status' => strtoupper($booking->status),
+                    'completed' => in_array($booking->status, ['completed', 'cancelled'], true),
+                ];
+            }),
             'weekStats' => [
                 'total_bookings' => $weekBookings->count(),
                 'completed' => $weekBookings->where('status', 'completed')->count(),
-                'revenue' => $weekBookings->where('status', '!=', 'cancelled')->groupBy('shop_id')->map(function ($sb) {
-                    $shop = $sb->first()->shop;
-
-                    return number_format($sb->sum('total_price'), 2).' '.($shop ? $shop->currency : 'CZK');
-                })->implode(' | ') ?: '0',
+                'revenue' => $this->formatCurrencyTotals($weekRevenueByCurrency, $shops->pluck('currency')),
+                'revenue_by_currency' => $weekRevenueByCurrency->all(),
             ],
             'servicePopularity' => $servicePopularity,
             'monthlyRevenue' => $monthlyRevenue,
             'recentBookings' => $recentBookings,
             'overview' => [
-                'total_services' => $shops->count(),
-                'available_services' => $shops->where('is_available', true)->count(),
+                'total_services' => $services->count(),
+                'available_services' => $services->where('is_available', true)->count(),
                 'total_customers' => $totalCustomers,
                 'pending_bookings' => $pendingBookings,
                 'confirmed_bookings' => $confirmedBookings,
@@ -204,100 +196,123 @@ class DashboardController extends Controller
         ]);
     }
 
-    /**
-     * Calculate percentage change from previous period.
-     */
-    private function calculateChange($bookings, $period = 'week')
+    private function calculateChange(Collection $bookings, string $period = 'week'): string
     {
-        $now = Carbon::now();
-        $currentPeriod = match ($period) {
-            'week' => $now->copy()->startOfWeek(),
-            'month' => $now->copy()->startOfMonth(),
-            default => $now->copy()->startOfWeek(),
-        };
+        $now = Carbon::now(config('app.timezone'));
+        $currentPeriod = $period === 'month'
+            ? $now->copy()->startOfMonth()
+            : $now->copy()->startOfWeek();
+        $previousPeriod = $period === 'month'
+            ? $now->copy()->subMonth()->startOfMonth()
+            : $now->copy()->subWeek()->startOfWeek();
 
-        $previousPeriod = match ($period) {
-            'week' => $now->copy()->subWeek()->startOfWeek(),
-            'month' => $now->copy()->subMonth()->startOfMonth(),
-            default => $now->copy()->subWeek()->startOfWeek(),
-        };
-
-        $current = $bookings->filter(fn ($b) => $b->created_at->gte($currentPeriod))->count();
-        $previous = $bookings->filter(fn ($b) => $b->created_at->gte($previousPeriod) && $b->created_at->lt($currentPeriod))->count();
+        $current = $bookings->filter(fn (Booking $booking) => $booking->created_at->gte($currentPeriod))->count();
+        $previous = $bookings->filter(fn (Booking $booking) => $booking->created_at->gte($previousPeriod) && $booking->created_at->lt($currentPeriod)
+        )->count();
 
         if ($previous === 0) {
             return $current > 0 ? '+100%' : '0%';
         }
 
         $change = (($current - $previous) / $previous) * 100;
-        $sign = $change >= 0 ? '+' : '';
 
-        return $sign.round($change).'%';
+        return ($change >= 0 ? '+' : '').round($change).'%';
     }
 
-    /**
-     * Calculate cancellation rate change.
-     */
-    private function calculateCancellationChange($bookings)
+    private function calculateCancellationChange(Collection $bookings): string
     {
-        $total = $bookings->count();
-        if ($total === 0) {
+        if ($bookings->isEmpty()) {
             return '0%';
         }
 
-        $cancelled = $bookings->where('status', 'cancelled')->count();
-        $rate = ($cancelled / $total) * 100;
-
-        return round($rate).'% rate';
+        return round(($bookings->where('status', 'cancelled')->count() / $bookings->count()) * 100).'% rate';
     }
 
-    /**
-     * Calculate revenue change.
-     */
-    private function calculateRevenueChange($bookings)
+    private function calculateRevenueChange(Collection $bookings): string
     {
-        $now = Carbon::now();
+        $now = Carbon::now(config('app.timezone'));
+        $thisMonth = $this->revenueByCurrency($bookings->filter(fn (Booking $booking) => $booking->created_at->gte($now->copy()->startOfMonth())
+        ));
+        $lastMonth = $this->revenueByCurrency($bookings->filter(fn (Booking $booking) => $booking->created_at->gte($now->copy()->subMonth()->startOfMonth())
+            && $booking->created_at->lt($now->copy()->startOfMonth())
+        ));
 
-        $thisMonthGrouped = $bookings->filter(
-            fn ($b) => $b->created_at->gte($now->copy()->startOfMonth()) &&
-                $b->status !== 'cancelled'
-        )->groupBy(function ($b) {
-            return $b->shop->currency ?? 'CZK';
-        });
-
-        $lastMonthGrouped = $bookings->filter(
-            fn ($b) => $b->created_at->gte($now->copy()->subMonth()->startOfMonth()) &&
-                $b->created_at->lt($now->copy()->startOfMonth()) &&
-                $b->status !== 'cancelled'
-        )->groupBy(function ($b) {
-            return $b->shop->currency ?? 'CZK';
-        });
-
-        // Calculate total amount across currencies to show an overall percentage metric
-        // A proper way would be per currency. For simplicity we sum the raw numbers.
-        $thisMonth = $thisMonthGrouped->map->sum('total_price')->sum();
-        $lastMonth = $lastMonthGrouped->map->sum('total_price')->sum();
-
-        if ($lastMonth == 0) {
-            return $thisMonth > 0 ? '+100%' : '0%';
+        $currencies = $thisMonth->keys()->merge($lastMonth->keys())->unique();
+        if ($currencies->isEmpty()) {
+            return '0%';
         }
 
-        $change = (($thisMonth - $lastMonth) / $lastMonth) * 100;
-        $sign = $change >= 0 ? '+' : '';
+        return $currencies->map(function (string $currency) use ($thisMonth, $lastMonth, $currencies): string {
+            $current = (float) $thisMonth->get($currency, 0);
+            $previous = (float) $lastMonth->get($currency, 0);
+            $change = $previous === 0.0
+                ? ($current > 0 ? 100 : 0)
+                : (($current - $previous) / $previous) * 100;
+            $formatted = ($change >= 0 ? '+' : '').round($change).'%';
 
-        return $sign.round($change).'%';
+            return $currencies->count() > 1 ? $currency.' '.$formatted : $formatted;
+        })->implode(' | ');
     }
 
-    /**
-     * Get initials from name.
-     */
+    private function customerIdentity(Booking $booking): string
+    {
+        if ($booking->user_id !== null) {
+            return 'user:'.$booking->user_id;
+        }
+
+        $email = mb_strtolower(trim($booking->customer_contact_email));
+
+        return $email !== '' ? 'guest:'.$email : 'guest-booking:'.$booking->id;
+    }
+
+    private function bookingCurrency(Booking $booking): string
+    {
+        return strtoupper($booking->currency ?: $booking->shop?->currency ?: 'CZK');
+    }
+
+    private function revenueByCurrency(Collection $bookings): Collection
+    {
+        return $bookings
+            ->where('status', '!=', 'cancelled')
+            ->groupBy(fn (Booking $booking) => $this->bookingCurrency($booking))
+            ->map(fn (Collection $currencyBookings) => $currencyBookings->sum(
+                fn (Booking $booking) => (float) $booking->total_price
+            ));
+    }
+
+    private function formatCurrencyTotals(Collection $totals, ?Collection $fallbackCurrencies = null): string
+    {
+        if ($totals->isNotEmpty()) {
+            return $totals->map(
+                fn ($amount, string $currency) => $this->formatMoney($amount, $currency)
+            )->implode(' | ');
+        }
+
+        $currencies = ($fallbackCurrencies ?? collect(['CZK']))
+            ->filter()
+            ->map(fn ($currency) => strtoupper((string) $currency))
+            ->unique()
+            ->values();
+
+        if ($currencies->isEmpty()) {
+            $currencies = collect(['CZK']);
+        }
+
+        return $currencies->map(fn (string $currency) => $this->formatMoney(0, $currency))->implode(' | ');
+    }
+
+    private function formatMoney($amount, string $currency): string
+    {
+        return Money::format($amount, $currency);
+    }
+
     private function getInitials(string $name): string
     {
-        $words = explode(' ', trim($name));
+        $words = preg_split('/\s+/u', trim($name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         if (count($words) >= 2) {
-            return strtoupper($words[0][0].$words[1][0]);
+            return mb_strtoupper(mb_substr($words[0], 0, 1).mb_substr($words[1], 0, 1));
         }
 
-        return strtoupper(substr($name, 0, 2));
+        return $words === [] ? '?' : mb_strtoupper(mb_substr($words[0], 0, 2));
     }
 }

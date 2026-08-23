@@ -1,5 +1,7 @@
 # Bug Fixes Applied
 
+> **Historical verification — superseded 2026-08-23.** These March fixes describe earlier behavior and must not be read as current release evidence. Current behavior and regression status are tracked in [the route/flow matrix](./route-flow-matrix.md) and the Domluveno relaunch artifacts.
+
 ## Vendor Calendar Status Dropdown Enhancement - 2026-03-20
 
 ### Issue

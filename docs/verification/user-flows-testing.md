@@ -1,5 +1,7 @@
 # User Flows Testing Report
 
+> **Historical verification — superseded 2026-08-23.** In this March report, several routes were marked working from registration or static inspection alone. Use [the current route/flow matrix](./route-flow-matrix.md), which separates route registration, automated evidence, and browser/responsive evidence.
+
 ## Test Environment
 - **Date**: 2026-03-20
 - **Application**: Local Services App (Laravel + Vue.js)

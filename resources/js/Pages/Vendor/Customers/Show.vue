@@ -1,243 +1,52 @@
 <script setup>
+import StatusBadge from '@/Components/StatusBadge.vue';
+import UiButton from '@/Components/UiButton.vue';
+import UiCard from '@/Components/UiCard.vue';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
+import { ArrowLeft, CalendarCheck, CircleDollarSign, Mail, Phone, Repeat2, UserRound } from '@lucide/vue';
 
-const props = defineProps({
-    customer: { type: Object, required: true },
-});
+defineProps({ customer: { type: Object, required: true } });
 
-function formatPrice(amount) {
-    // Return string directly since we formatted it in the backend
-    if (typeof amount === 'string') return amount;
-    return amount || 0;
-}
+const statusMap = {
+    pending: { label: 'Čeká', tone: 'warning' },
+    confirmed: { label: 'Potvrzená', tone: 'brand' },
+    completed: { label: 'Dokončená', tone: 'success' },
+    cancelled: { label: 'Zrušená', tone: 'danger' },
+};
 
-
-
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
-
-function formatTime(timeString) {
-    if (!timeString) return '';
-    if (typeof timeString === 'object' && timeString !== null) return timeString;
-    const [hours, minutes] = timeString.split(':');
-    const h = parseInt(hours);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const h12 = h % 12 || 12;
-    return `${h12}:${minutes} ${ampm}`;
-}
-
-function getStatusConfig(status) {
-    const config = {
-        pending: { label: 'Pending', bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-600/20', dot: 'bg-amber-500' },
-        confirmed: { label: 'Confirmed', bg: 'bg-blue-50', text: 'text-blue-700', ring: 'ring-blue-700/20', dot: 'bg-blue-500' },
-        completed: { label: 'Completed', bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-600/20', dot: 'bg-emerald-500' },
-        cancelled: { label: 'Cancelled', bg: 'bg-red-50', text: 'text-red-700', ring: 'ring-red-600/20', dot: 'bg-red-500' },
-    };
-    return config[status] || config.pending;
-}
+function formatDate(value) { return value ? new Intl.DateTimeFormat('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${String(value).slice(0, 10)}T12:00:00`)) : '—'; }
+function formatTime(value) { return String(value || '').slice(0, 5) || '—'; }
 </script>
 
 <template>
-    <Head ::title="$t('`${customer.name} - Customers`')" />
-
+    <Head :title="customer.name" />
     <VendorLayout activePage="customers">
-        <div class="flex flex-col gap-6">
+        <div class="mx-auto max-w-6xl space-y-6">
+            <UiButton :href="route('vendor.customers.index')" variant="ghost" size="sm"><ArrowLeft :size="17" /> Zpět na zákazníky</UiButton>
 
-            <!-- Back link -->
-            <div>
-                <Link
-                    :href="route('vendor.customers.index')"
-                    class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>{{ $t('Back to Customers') }}</Link>
+            <UiCard>
+                <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
+                    <span class="flex h-16 w-16 flex-none items-center justify-center rounded-2xl bg-brand-50 text-lg font-extrabold text-brand-800">{{ customer.avatar_initials }}</span>
+                    <div class="min-w-0 flex-1"><h1 class="break-words text-2xl font-extrabold tracking-tight text-ink">{{ customer.name }}</h1><div class="mt-3 flex flex-col gap-2 text-sm text-muted sm:flex-row sm:flex-wrap sm:gap-x-5"><a :href="`mailto:${customer.email}`" class="flex min-h-11 items-center gap-2 break-all hover:text-brand-700"><Mail :size="17" /> {{ customer.email }}</a><a v-if="customer.phone && customer.phone !== 'N/A'" :href="`tel:${customer.phone}`" class="flex min-h-11 items-center gap-2 hover:text-brand-700"><Phone :size="17" /> {{ customer.phone }}</a><span v-else class="flex min-h-11 items-center gap-2"><Phone :size="17" /> Telefon neuveden</span></div></div>
+                </div>
+            </UiCard>
+
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <UiCard v-for="item in [
+                    { label: 'Rezervace', value: customer.total_bookings ?? 0, icon: CalendarCheck },
+                    { label: 'Dokončené', value: customer.completed_bookings ?? 0, icon: UserRound },
+                    { label: 'Hodnota nezrušených rezervací', value: customer.total_spent, icon: CircleDollarSign },
+                    { label: 'Zákazníkem od', value: formatDate(customer.first_booking_date), icon: Repeat2 },
+                ]" :key="item.label" padding="sm" class="min-w-0"><div class="flex gap-3"><span class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-50 text-brand-700"><component :is="item.icon" :size="19" /></span><div class="min-w-0"><p class="text-xs font-bold uppercase tracking-wide text-muted">{{ item.label }}</p><p class="mt-1 break-words text-xl font-extrabold text-ink">{{ item.value }}</p></div></div></UiCard>
             </div>
 
-            <!-- Customer Profile Card -->
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div class="flex items-center gap-5">
-                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-2xl font-bold shadow-md flex-shrink-0">
-                        {{ customer.avatar_initials }}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h1 class="text-xl font-bold text-gray-900">{{ customer.name }}</h1>
-                        <p class="text-sm text-gray-400 mt-0.5">Customer since {{ formatDate(customer.first_booking_date) }}</p>
-                    </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        <a
-                            v-if="customer.email"
-                            :href="'mailto:' + customer.email"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                            {{ customer.email }}
-                        </a>
-                        <a
-                            v-if="customer.phone"
-                            :href="'tel:' + customer.phone"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-xl text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                            </svg>
-                            {{ customer.phone }}
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <UiCard v-if="customer.services_used?.length" padding="sm"><p class="text-xs font-bold uppercase tracking-wide text-muted">Využité služby</p><div class="mt-3 flex flex-wrap gap-2"><span v-for="service in customer.services_used" :key="service" class="rounded-full bg-brand-50 px-3 py-1.5 text-sm font-bold text-brand-800">{{ service }}</span></div></UiCard>
 
-            <!-- Stats + Services row -->
-            <div class="grid grid-cols-5 gap-4">
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Bookings') }}</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ customer.total_bookings }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Completed') }}</div>
-                    <div class="text-2xl font-bold text-emerald-600">{{ customer.completed_bookings }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Cancelled') }}</div>
-                    <div class="text-2xl font-bold text-red-600">{{ customer.cancelled_bookings }}</div>
-                </div>
-
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-0.5">{{ $t('Total Spent') }}</div>
-                    <div class="text-2xl font-bold text-purple-600">{{ formatPrice(customer.total_spent) }}</div>
-                </div>
-
-                <!-- Services Used -->
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                    <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center mb-3">
-                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-2">{{ $t('Services Used') }}</div>
-                    <div class="space-y-2">
-                        <div class="flex flex-wrap gap-1">
-                            <span
-                                v-for="(service, idx) in customer.services_used.slice(0, 3)"
-                                :key="idx"
-                                class="px-2 py-0.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-md ring-1 ring-inset ring-purple-700/10"
-                            >
-                                {{ service }}
-                            </span>
-                        </div>
-                        <div v-if="customer.services_used.length > 3" class="text-xs text-gray-400">
-                            +{{ customer.services_used.length - 3 }} more services
-                        </div>
-                        <div v-if="customer.services_used.length === 0" class="text-xs text-gray-400">{{ $t('No services used yet') }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Booking History -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">{{ $t('Booking History') }}</h2>
-                </div>
-                
-                <table class="w-full">
-                    <thead>
-                        <tr class="bg-gray-50/30">
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Date') }}</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Service') }}</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Time') }}</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('Status') }}</th>
-                            <th class="px-6 py-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr
-                            v-for="booking in customer.bookings"
-                            :key="booking.id"
-                            class="group hover:bg-blue-50/30 transition-colors cursor-pointer"
-                            @click="router.visit(route('vendor.bookings.show', booking.id))"
-                        >
-                            <td class="px-6 py-4">
-                                <span class="text-sm font-medium text-gray-900">{{ formatDate(booking.date) }}</span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm font-medium text-gray-900">{{ booking.shop_name }}</div>
-                                <div class="text-xs text-gray-400 mt-0.5">{{ booking.service_name }}</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="text-sm text-gray-600">{{ formatTime(booking.time) }}</span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span :class="[
-                                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset',
-                                    getStatusConfig(booking.status).bg,
-                                    getStatusConfig(booking.status).text,
-                                    getStatusConfig(booking.status).ring
-                                ]">
-                                    <span :class="['w-1.5 h-1.5 rounded-full', getStatusConfig(booking.status).dot]"></span>
-                                    {{ getStatusConfig(booking.status).label }}
-                                </span>
-                            </td>
-
-                            <td class="px-6 py-4">
-                                <Link
-                                    :href="route('vendor.bookings.show', booking.id)"
-                                    class="text-gray-400 group-hover:text-blue-600 transition-colors"
-                                    @click.stop
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                    </svg>
-                                </Link>
-                            </td>
-                        </tr>
-
-                        <!-- Empty State -->
-                        <tr v-if="customer.bookings.length === 0">
-                            <td colspan="6" class="px-6 py-16 text-center">
-                                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                    </svg>
-                                </div>
-                                <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $t('No bookings yet') }}</h3>
-                                <p class="text-sm text-gray-500">{{ $t('This customer hasn\'t booked any shops.') }}</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <section class="space-y-4"><div><h2 class="text-xl font-extrabold text-ink">Historie rezervací</h2><p class="mt-1 text-sm text-muted">Všechny termíny tohoto zákazníka u vašich provozoven.</p></div>
+                <div class="grid gap-3 md:hidden"><Link v-for="booking in customer.bookings" :key="booking.id" :href="route('vendor.bookings.show', booking.id)" class="rounded-2xl border border-line bg-white p-4"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="font-extrabold text-ink">{{ booking.service_name }}</p><p class="mt-1 text-sm text-muted">{{ booking.shop_name }}</p></div><StatusBadge :tone="statusMap[booking.status]?.tone || 'neutral'">{{ statusMap[booking.status]?.label || booking.status }}</StatusBadge></div><dl class="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-4"><div><dt class="text-xs font-bold uppercase text-muted">Termín</dt><dd class="mt-1 text-sm font-bold text-ink">{{ formatDate(booking.date) }} · {{ formatTime(booking.time) }}</dd></div><div><dt class="text-xs font-bold uppercase text-muted">Cena</dt><dd class="mt-1 text-sm font-bold text-ink">{{ booking.formatted_price }}</dd></div></dl></Link></div>
+                <div class="hidden overflow-hidden rounded-2xl border border-line bg-white md:block"><div class="overflow-x-auto"><table class="w-full min-w-[720px] text-left"><thead class="border-b border-line bg-gray-50 text-xs font-bold uppercase tracking-wide text-muted"><tr><th class="px-5 py-3">Služba</th><th class="px-5 py-3">Provozovna</th><th class="px-5 py-3">Termín</th><th class="px-5 py-3">Cena</th><th class="px-5 py-3">Stav</th></tr></thead><tbody class="divide-y divide-line"><tr v-for="booking in customer.bookings" :key="booking.id" class="hover:bg-brand-50/30"><td class="px-5 py-4"><Link :href="route('vendor.bookings.show', booking.id)" class="font-extrabold text-ink hover:text-brand-700">{{ booking.service_name }}</Link></td><td class="px-5 py-4 text-sm text-muted">{{ booking.shop_name }}</td><td class="px-5 py-4 text-sm text-muted">{{ formatDate(booking.date) }} · <strong class="text-ink">{{ formatTime(booking.time) }}</strong></td><td class="px-5 py-4 text-sm font-bold text-ink">{{ booking.formatted_price }}</td><td class="px-5 py-4"><StatusBadge :tone="statusMap[booking.status]?.tone || 'neutral'">{{ statusMap[booking.status]?.label || booking.status }}</StatusBadge></td></tr></tbody></table></div></div>
+            </section>
         </div>
     </VendorLayout>
 </template>

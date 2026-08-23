@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Shop extends Model
 {
@@ -15,6 +16,9 @@ class Shop extends Model
         'name',
         'slug',
         'currency',
+        'timezone',
+        'contact_email',
+        'contact_phone',
         'description',
         'price_range',
         'image',
@@ -37,7 +41,7 @@ class Shop extends Model
         'price_range' => 'integer',
     ];
 
-    protected $appends = ['computed_badge'];
+    protected $appends = ['computed_badge', 'cover_image_url'];
 
     /**
      * Auto-compute a badge based on business rules.
@@ -144,5 +148,10 @@ class Shop extends Model
         $symbol = $this->currency === 'EUR' ? '€' : 'Kč';
 
         return trim(str_repeat($symbol.' ', $this->price_range));
+    }
+
+    public function getCoverImageUrlAttribute(): ?string
+    {
+        return $this->image ? Storage::disk('public')->url($this->image) : null;
     }
 }

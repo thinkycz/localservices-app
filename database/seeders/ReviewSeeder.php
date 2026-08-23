@@ -2,91 +2,45 @@
 
 namespace Database\Seeders;
 
+use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\Review;
-use App\Models\Service;
 use App\Models\Shop;
-use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class ReviewSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get completed bookings that don't have reviews yet
-        $completedBookings = Booking::where('status', 'completed')
-            ->whereNotIn('id', Review::pluck('booking_id'))
-            ->with(['service', 'customer'])
+        $comments = [
+            ['Skvělá domluva, přesný čas a profesionální výsledek.', ['Spolehlivost', 'Kvalita']],
+            ['Příjemný přístup a vše bylo hotové podle dohody.', ['Příjemné jednání', 'Dochvilnost']],
+            ['Rychlé objednání a výborná služba. Ráda přijdu znovu.', ['Rychlá domluva', 'Doporučuji']],
+        ];
+
+        $bookings = Booking::query()
+            ->where('status', BookingStatus::Completed->value)
+            ->whereNotNull('user_id')
+            ->orderBy('id')
             ->get();
 
-        $tags = [
-            'Professional',
-            'On-time',
-            'Quality Service',
-            'Friendly',
-            'Clean',
-            'Good Value',
-            'Expert',
-            'Recommended',
-        ];
+        foreach ($bookings as $index => $booking) {
+            [$comment, $tags] = $comments[$index % count($comments)];
 
-        $comments = [
-            'Excellent service! Very professional and completed the job quickly.',
-            'Great experience. Arrived on time and did quality work.',
-            'Highly recommend! Fair pricing and very knowledgeable.',
-            'Good service overall. Would use again.',
-            'Outstanding work! Exceeded my expectations.',
-            'Very friendly and efficient. Cleaned up after the job.',
-            'Professional service from start to finish.',
-            'Satisfied with the results. Good communication throughout.',
-            'Quick response time and quality workmanship.',
-            'Reasonable price for excellent service. Will definitely recommend.',
-        ];
-
-        // Create reviews for about 60% of completed bookings
-        $bookingsToReview = $completedBookings->shuffle()->take((int) ($completedBookings->count() * 0.6));
-
-        foreach ($bookingsToReview as $booking) {
-            $rating = $this->weightedRandomChoice(
-                [5, 4, 3, 2, 1],
-                [50, 30, 12, 5, 3] // Mostly positive reviews
+            Review::updateOrCreate(
+                ['booking_id' => $booking->id],
+                [
+                    'user_id' => $booking->user_id,
+                    'shop_id' => $booking->shop_id,
+                    'rating' => 5 - ($index % 2),
+                    'comment' => $comment,
+                    'tags' => $tags,
+                    'is_approved' => true,
+                    'reviewed_at' => $booking->appointmentStartsAt()->addDays(1),
+                ]
             );
-
-            $selectedTags = collect($tags)->random(rand(1, 4))->toArray();
-
-            Review::create([
-                'user_id' => $booking->user_id,
-                'shop_id' => $booking->shop_id,
-                'booking_id' => $booking->id,
-                'rating' => $rating,
-                'comment' => $comments[array_rand($comments)],
-                'tags' => $selectedTags,
-                'is_approved' => true,
-                'reviewed_at' => Carbon::parse($booking->booking_date)->addDays(rand(1, 5)),
-            ]);
-
-            // Update service rating stats
-            $shop = Shop::find($booking->shop_id);
-            $shop->updateRatingStats();
-        }
-    }
-
-    /**
-     * Weighted random choice from array
-     */
-    private function weightedRandomChoice(array $choices, array $weights): int
-    {
-        $totalWeight = array_sum($weights);
-        $random = rand(1, $totalWeight);
-
-        $currentWeight = 0;
-        foreach ($choices as $index => $choice) {
-            $currentWeight += $weights[$index];
-            if ($random <= $currentWeight) {
-                return $choice;
-            }
         }
 
-        return $choices[0];
+        Shop::query()->each(fn (Shop $shop) => $shop->updateRatingStats());
     }
 }

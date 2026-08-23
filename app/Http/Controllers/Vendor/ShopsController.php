@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\BusinessHour;
 use App\Models\Category;
 use App\Models\Service;
-// use App\Models\Something;
 use App\Models\Shop;
+use App\Services\ShopCoverImageService;
+use App\Support\Money;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -70,7 +74,7 @@ class ShopsController extends Controller
 
         $potentialRevenueDisplay = [];
         foreach ($potentialRevenueByCurrency as $currency => $amount) {
-            $potentialRevenueDisplay[] = number_format($amount, 2).' '.$currency;
+            $potentialRevenueDisplay[] = Money::format($amount, $currency);
         }
         $potentialRevenueString = empty($potentialRevenueDisplay) ? '0.00 CZK' : implode(' + ', $potentialRevenueDisplay);
 
@@ -102,7 +106,7 @@ class ShopsController extends Controller
     /**
      * Store a newly created service.
      */
-    public function store(Request $request)
+    public function store(Request $request, ShopCoverImageService $images)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -115,14 +119,17 @@ class ShopsController extends Controller
             'state' => 'nullable|string|max:50',
             'is_online_only' => 'boolean',
             'is_available' => 'boolean',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'business_hours' => 'nullable|array',
-            'business_hours.*.day_of_week' => 'required|integer|between:0,6',
-            'business_hours.*.time_from' => 'required|string',
-            'business_hours.*.time_to' => 'required|string',
+            'business_hours.*.day_of_week' => 'required|integer|between:0,6|distinct',
+            'business_hours.*.is_closed' => 'sometimes|boolean',
+            'business_hours.*.time_from' => 'nullable|date_format:H:i',
+            'business_hours.*.time_to' => 'nullable|date_format:H:i',
         ]);
 
-        $businessHoursData = $validated['business_hours'] ?? [];
-        unset($validated['business_hours']);
+        $businessHoursData = $this->bookableBusinessHours($validated['business_hours'] ?? []);
+        $image = $request->file('image');
+        unset($validated['business_hours'], $validated['image']);
 
         $validated['user_id'] = $request->user()->id;
         $validated['slug'] = Str::slug($validated['name']);
@@ -134,16 +141,29 @@ class ShopsController extends Controller
             $validated['slug'] = $originalSlug.'-'.$counter++;
         }
 
-        $shop = Shop::create($validated);
+        $storedPath = null;
+        try {
+            $shop = DB::transaction(function () use ($businessHoursData, $image, $images, &$storedPath, $validated): Shop {
+                $shop = Shop::create($validated);
+                if ($image) {
+                    $storedPath = $images->store($shop, $image);
+                    $shop->update(['image' => $storedPath]);
+                }
 
-        // Save business hours
-        foreach ($businessHoursData as $hour) {
-            BusinessHour::create([
-                'shop_id' => $shop->id,
-                'day_of_week' => $hour['day_of_week'],
-                'time_from' => $hour['time_from'],
-                'time_to' => $hour['time_to'],
-            ]);
+                foreach ($businessHoursData as $hour) {
+                    BusinessHour::create([
+                        'shop_id' => $shop->id,
+                        'day_of_week' => $hour['day_of_week'],
+                        'time_from' => $hour['time_from'],
+                        'time_to' => $hour['time_to'],
+                    ]);
+                }
+
+                return $shop;
+            });
+        } catch (\Throwable $exception) {
+            $images->delete($storedPath);
+            throw $exception;
         }
 
         return redirect()->route('vendor.shops.show', $shop->id)
@@ -164,7 +184,7 @@ class ShopsController extends Controller
         $categories = Category::all();
 
         // Get booking stats for this shop
-        $bookings = \App\Models\Booking::where('shop_id', $id)->get();
+        $bookings = Booking::where('shop_id', $id)->get();
         $stats = [
             'total_bookings' => $bookings->count(),
             'completed_bookings' => $bookings->where('status', 'completed')->count(),
@@ -201,7 +221,7 @@ class ShopsController extends Controller
     /**
      * Update the specified service.
      */
-    public function update(Request $request, int $id)
+    public function update(Request $request, int $id, ShopCoverImageService $images)
     {
         $user = $request->user();
 
@@ -218,15 +238,19 @@ class ShopsController extends Controller
             'state' => 'nullable|string|max:50',
             'is_online_only' => 'boolean',
             'is_available' => 'boolean',
-            'image' => 'nullable|string|max:500',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'remove_image' => 'sometimes|boolean',
             'business_hours' => 'nullable|array',
-            'business_hours.*.day_of_week' => 'required|integer|between:0,6',
-            'business_hours.*.time_from' => 'required|string',
-            'business_hours.*.time_to' => 'required|string',
+            'business_hours.*.day_of_week' => 'required|integer|between:0,6|distinct',
+            'business_hours.*.is_closed' => 'sometimes|boolean',
+            'business_hours.*.time_from' => 'nullable|date_format:H:i',
+            'business_hours.*.time_to' => 'nullable|date_format:H:i',
         ]);
 
-        $businessHoursData = $validated['business_hours'] ?? [];
-        unset($validated['business_hours']);
+        $businessHoursData = $this->bookableBusinessHours($validated['business_hours'] ?? []);
+        $image = $request->file('image');
+        $removeImage = (bool) ($validated['remove_image'] ?? false);
+        unset($validated['business_hours'], $validated['image'], $validated['remove_image']);
 
         // Update slug if name changed
         if ($shop->name !== $validated['name']) {
@@ -238,17 +262,32 @@ class ShopsController extends Controller
             }
         }
 
-        $shop->update($validated);
+        $oldPath = $shop->image;
+        $storedPath = $image ? $images->store($shop, $image) : null;
+        if ($storedPath || $removeImage) {
+            $validated['image'] = $storedPath;
+        }
 
-        // Sync business hours
-        $shop->businessHours()->delete();
-        foreach ($businessHoursData as $hour) {
-            BusinessHour::create([
-                'shop_id' => $shop->id,
-                'day_of_week' => $hour['day_of_week'],
-                'time_from' => $hour['time_from'],
-                'time_to' => $hour['time_to'],
-            ]);
+        try {
+            DB::transaction(function () use ($businessHoursData, $shop, $validated): void {
+                $shop->update($validated);
+                $shop->businessHours()->delete();
+                foreach ($businessHoursData as $hour) {
+                    BusinessHour::create([
+                        'shop_id' => $shop->id,
+                        'day_of_week' => $hour['day_of_week'],
+                        'time_from' => $hour['time_from'],
+                        'time_to' => $hour['time_to'],
+                    ]);
+                }
+            });
+        } catch (\Throwable $exception) {
+            $images->delete($storedPath);
+            throw $exception;
+        }
+
+        if (($storedPath || $removeImage) && $oldPath !== $storedPath) {
+            $images->delete($oldPath);
         }
 
         return back()->with('success', __('Shop updated successfully.'));
@@ -257,22 +296,23 @@ class ShopsController extends Controller
     /**
      * Remove the specified service.
      */
-    public function destroy(Request $request, int $id)
+    public function destroy(Request $request, int $id, ShopCoverImageService $images)
     {
         $user = $request->user();
 
         $shop = Shop::where('user_id', $user->id)->findOrFail($id);
 
-        // Delete associated offerings first
+        $imagePath = $shop->image;
         $shop->services()->delete();
         $shop->delete();
+        $images->delete($imagePath);
 
         return redirect()->route('vendor.shops.index')
             ->with('success', __('Shop deleted successfully.'));
     }
 
     /**
-     * Store a new offering for a service.
+     * Store a new service for a shop.
      */
     public function storeService(Request $request, int $shopId)
     {
@@ -288,6 +328,7 @@ class ShopsController extends Controller
             'is_popular' => 'boolean',
             'category_tag' => 'nullable|string|max:100',
             'staff_level' => 'nullable|string|max:100',
+            'is_available' => 'sometimes|boolean',
         ]);
 
         $validated['shop_id'] = $shop->id;
@@ -298,7 +339,7 @@ class ShopsController extends Controller
     }
 
     /**
-     * Update an offering.
+     * Update a service.
      */
     public function updateService(Request $request, int $shopId, int $serviceId)
     {
@@ -316,6 +357,7 @@ class ShopsController extends Controller
             'is_popular' => 'boolean',
             'category_tag' => 'nullable|string|max:100',
             'staff_level' => 'nullable|string|max:100',
+            'is_available' => 'sometimes|boolean',
         ]);
 
         $service->update($validated);
@@ -324,7 +366,7 @@ class ShopsController extends Controller
     }
 
     /**
-     * Delete an offering.
+     * Delete a service.
      */
     public function destroyService(Request $request, int $shopId, int $serviceId)
     {
@@ -356,7 +398,7 @@ class ShopsController extends Controller
     }
 
     /**
-     * Store / sync business hours for a service.
+     * Store / sync business hours for a shop.
      */
     public function storeBusinessHours(Request $request, int $shopId)
     {
@@ -365,23 +407,60 @@ class ShopsController extends Controller
 
         $validated = $request->validate([
             'hours' => 'present|array',
-            'hours.*.day_of_week' => 'required|integer|between:0,6',
-            'hours.*.time_from' => 'required|string|date_format:H:i',
-            'hours.*.time_to' => 'required|string|date_format:H:i|after:hours.*.time_from',
+            'hours.*.day_of_week' => 'required|integer|between:0,6|distinct',
+            'hours.*.is_closed' => 'sometimes|boolean',
+            'hours.*.time_from' => 'nullable|date_format:H:i',
+            'hours.*.time_to' => 'nullable|date_format:H:i',
         ]);
 
-        // Delete existing and re-create
-        $shop->businessHours()->delete();
+        $hours = $this->bookableBusinessHours($validated['hours'], 'hours');
 
-        foreach ($validated['hours'] as $hour) {
-            BusinessHour::create([
-                'shop_id' => $shop->id,
-                'day_of_week' => $hour['day_of_week'],
-                'time_from' => $hour['time_from'],
-                'time_to' => $hour['time_to'],
-            ]);
-        }
+        DB::transaction(function () use ($hours, $shop): void {
+            $shop->businessHours()->delete();
+
+            foreach ($hours as $hour) {
+                BusinessHour::create([
+                    'shop_id' => $shop->id,
+                    'day_of_week' => $hour['day_of_week'],
+                    'time_from' => $hour['time_from'],
+                    'time_to' => $hour['time_to'],
+                ]);
+            }
+        });
 
         return back()->with('success', __('Business hours updated successfully.'));
+    }
+
+    /**
+     * Closed days are represented by the absence of a business-hour row.
+     *
+     * @param  array<int, array<string, mixed>>  $hours
+     * @return array<int, array{day_of_week: int, time_from: string, time_to: string}>
+     */
+    private function bookableBusinessHours(array $hours, string $errorKey = 'business_hours'): array
+    {
+        $normalized = [];
+
+        foreach ($hours as $index => $hour) {
+            if ((bool) ($hour['is_closed'] ?? false)) {
+                continue;
+            }
+
+            $from = $hour['time_from'] ?? null;
+            $to = $hour['time_to'] ?? null;
+            if (! $from || ! $to || $to <= $from) {
+                throw ValidationException::withMessages([
+                    "{$errorKey}.{$index}.time_to" => __('Closing time must be after opening time.'),
+                ]);
+            }
+
+            $normalized[] = [
+                'day_of_week' => (int) $hour['day_of_week'],
+                'time_from' => $from,
+                'time_to' => $to,
+            ];
+        }
+
+        return $normalized;
     }
 }

@@ -6,6 +6,8 @@ use App\Mail\ContactSubmissionReceived;
 use App\Models\ContactSubmission;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,7 +22,7 @@ class PageController extends Controller
         return Inertia::render('Pages/Terms', [
             'title' => 'Terms of Service',
             'content' => $this->getTermsContent(),
-            'lastUpdated' => 'February 2026',
+            'lastUpdated' => app()->isLocale('cs') ? 'srpen 2026' : 'August 2026',
         ]);
     }
 
@@ -32,7 +34,7 @@ class PageController extends Controller
         return Inertia::render('Pages/Privacy', [
             'title' => 'Privacy Policy',
             'content' => $this->getPrivacyContent(),
-            'lastUpdated' => 'February 2026',
+            'lastUpdated' => app()->isLocale('cs') ? 'srpen 2026' : 'August 2026',
         ]);
     }
 
@@ -70,22 +72,33 @@ class PageController extends Controller
             'type' => 'required|in:general,support,partnership,feedback',
         ]);
 
-        $submission = ContactSubmission::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'subject' => $validated['subject'],
-            'message' => $validated['message'],
-            'type' => $validated['type'],
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ]);
+        DB::transaction(function () use ($request, $validated): void {
+            $submission = ContactSubmission::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'subject' => $validated['subject'],
+                'message' => $validated['message'],
+                'type' => $validated['type'],
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
 
-        $to = config('services.contact.to') ?: config('mail.from.address');
-        if ($to) {
-            Mail::to($to)->send(new ContactSubmissionReceived($submission));
-        }
+            $to = config('services.contact.to') ?: config('mail.from.address');
+            if ($to) {
+                DB::afterCommit(function () use ($submission, $to): void {
+                    try {
+                        Mail::to($to)->queue(new ContactSubmissionReceived($submission));
+                    } catch (\Throwable $exception) {
+                        Log::warning('Post-commit contact email failed.', [
+                            'contact_submission_id' => $submission->id,
+                            'exception' => $exception::class,
+                        ]);
+                    }
+                });
+            }
+        });
 
-        return back()->with('success', __('Thank you for your message! We will get back to you within 24 hours.'));
+        return back()->with('success', __('Thank you. Your message has been received.'));
     }
 
     /**
@@ -97,7 +110,7 @@ class PageController extends Controller
             'sections' => [
                 [
                     'title' => '1. Acceptance of Terms',
-                    'content' => 'By accessing or using Local Services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our platform.',
+                    'content' => 'By using Domluveno, you agree to these terms. If you do not agree, do not use the platform.',
                 ],
                 [
                     'title' => '2. User Accounts',
@@ -105,11 +118,11 @@ class PageController extends Controller
                 ],
                 [
                     'title' => '3. Vendors',
-                    'content' => 'Service providers must meet our qualification standards and maintain appropriate licenses and insurance. We reserve the right to remove providers who violate our policies.',
+                    'content' => 'Providers are responsible for the accuracy of their shop, availability, qualifications, prices, and service information. Domluveno may remove accounts that misuse the platform.',
                 ],
                 [
-                    'title' => '4. Bookings and Payments',
-                    'content' => 'All bookings are subject to availability. Payments are processed securely through our platform. Cancellation policies vary by service and are clearly displayed before booking.',
+                    'title' => '4. Bookings and cancellations',
+                    'content' => 'Bookings are subject to provider confirmation and availability. Domluveno does not process payments. Customers and guests may cancel at least 24 hours before the appointment starts.',
                 ],
                 [
                     'title' => '5. Reviews and Ratings',
@@ -117,7 +130,7 @@ class PageController extends Controller
                 ],
                 [
                     'title' => '6. Limitation of Liability',
-                    'content' => 'Local Services acts as a platform connecting customers and vendors. We are not responsible for the quality of services provided by independent contractors.',
+                    'content' => 'Domluveno connects customers with independent providers. Providers remain responsible for the services they deliver.',
                 ],
             ],
         ];
@@ -132,7 +145,7 @@ class PageController extends Controller
             'sections' => [
                 [
                     'title' => 'Information We Collect',
-                    'content' => 'We collect information you provide directly (name, email, phone), booking details, payment information, and usage data to improve our services.',
+                    'content' => 'We collect information you provide directly, including name, email, phone number, account information, booking details, reviews, and support requests.',
                 ],
                 [
                     'title' => 'How We Use Your Information',
@@ -144,7 +157,7 @@ class PageController extends Controller
                 ],
                 [
                     'title' => 'Data Security',
-                    'content' => 'We implement industry-standard security measures to protect your data. All payment information is encrypted and processed by PCI-compliant providers.',
+                    'content' => 'We use access controls and secure, hashed guest-management tokens to protect booking information. No payment-card information is collected by Domluveno.',
                 ],
                 [
                     'title' => 'Your Rights',
@@ -164,16 +177,16 @@ class PageController extends Controller
                 'category' => 'General',
                 'questions' => [
                     [
-                        'question' => 'What is Local Services?',
-                        'answer' => 'Local Services is a platform that connects customers with trusted local vendors. You can browse, compare, and book services all in one place.',
+                        'question' => 'What is Domluveno?',
+                        'answer' => 'Domluveno helps customers find local providers, compare services, and request an appointment in one place.',
                     ],
                     [
                         'question' => 'How do I create an account?',
-                        'answer' => 'Click the "Sign Up" button and fill in your details. You can register as a customer to book services or apply to become a vendor.',
+                        'answer' => 'An account is optional for booking. Create one if you want all bookings and reviews in one place, or verify your email before setting up a provider profile.',
                     ],
                     [
-                        'question' => 'Is Local Services available in my area?',
-                        'answer' => 'We are rapidly expanding! Enter your location on the homepage to see available services in your area.',
+                        'question' => 'Which locations are supported?',
+                        'answer' => 'The shop list shows the cities currently represented by active providers. Domluveno does not yet use live proximity or location tracking.',
                     ],
                 ],
             ],
@@ -186,11 +199,11 @@ class PageController extends Controller
                     ],
                     [
                         'question' => 'Can I cancel or reschedule a booking?',
-                        'answer' => 'Yes, you can cancel or reschedule through your account dashboard. Please check the cancellation policy for each service as they may vary.',
+                        'answer' => 'You can cancel a pending or confirmed booking at least 24 hours before it starts. Guests use the secure link sent by email; account customers use My bookings.',
                     ],
                     [
-                        'question' => 'What payment methods are accepted?',
-                        'answer' => 'We accept all major credit cards, debit cards, and digital wallets including Apple Pay and Google Pay.',
+                        'question' => 'Does Domluveno process payments?',
+                        'answer' => 'No. The displayed price is booking information; payment arrangements are handled directly with the provider.',
                     ],
                 ],
             ],
@@ -199,15 +212,15 @@ class PageController extends Controller
                 'questions' => [
                     [
                         'question' => 'How do I become a vendor?',
-                        'answer' => 'Click "Become a Provider" and complete our onboarding process. We will review your application and verify your credentials.',
+                        'answer' => 'Verify your email, choose Become a provider, and complete the three setup steps for your shop, hours, and services.',
                     ],
                     [
-                        'question' => 'What are the requirements to join?',
-                        'answer' => 'Requirements vary by service category but generally include relevant experience, licenses, insurance, and passing our background check.',
+                        'question' => 'Does Domluveno verify provider qualifications?',
+                        'answer' => 'Domluveno verifies the provider email address but does not currently conduct background or professional-license checks. Providers are responsible for truthful profile information.',
                     ],
                     [
-                        'question' => 'How and when do I get paid?',
-                        'answer' => 'Payments are processed automatically after service completion. Funds are typically deposited within 2-3 business days.',
+                        'question' => 'How are payments handled?',
+                        'answer' => 'Domluveno does not process provider payouts. Agree payment details directly with the customer.',
                     ],
                 ],
             ],
@@ -216,15 +229,15 @@ class PageController extends Controller
                 'questions' => [
                     [
                         'question' => 'How do I contact customer support?',
-                        'answer' => 'You can reach us through the Contact page, email at support@localservices.com, or call 1-800-LOCAL-SRV.',
+                        'answer' => 'Use the Contact page. Your request is stored for the support team and a copy is sent to the configured support mailbox.',
                     ],
                     [
                         'question' => 'What if I have an issue with a service?',
                         'answer' => 'Contact the vendor first. If unresolved, reach out to our support team within 48 hours and we will help mediate.',
                     ],
                     [
-                        'question' => 'Is there a satisfaction guarantee?',
-                        'answer' => 'Yes! If you are not satisfied with a service, contact us within 24 hours and we will work to make it right or provide a refund.',
+                        'question' => 'Does Domluveno offer a satisfaction guarantee?',
+                        'answer' => 'No automatic refund or satisfaction guarantee is offered. Contact the provider first and use the Contact page if you need to report a platform issue.',
                     ],
                 ],
             ],

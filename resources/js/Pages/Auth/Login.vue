@@ -1,132 +1,70 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { CircleCheck, LoaderCircle } from '@lucide/vue';
 
 defineProps({
-    canResetPassword: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
+    canResetPassword: Boolean,
+    status: String,
 });
 
-const form = useForm({
-    email: '',
-    password: '',
-    remember: false,
-});
+const page = usePage();
+const copy = (cs, en) => page.props.locale === 'cs' ? cs : en;
+const form = useForm({ email: '', password: '', remember: false });
 
-const submit = () => {
-    form.post(route('login'), {
-        onFinish: () => form.reset('password'),
-    });
-};
+const submit = () => form.post(route('login'), {
+    onFinish: () => form.reset('password'),
+});
 </script>
 
 <template>
     <GuestLayout>
-        <Head :title="$t('Log in')" />
+        <Head :title="copy('Přihlášení', 'Sign in')" />
 
-        <!-- Heading -->
-        <div class="mb-8">
-            <h2 class="text-2xl font-bold text-gray-900">{{ $t('Welcome back') }}</h2>
-            <p class="text-sm text-gray-500 mt-1">{{ $t('Sign in to your Bookable account') }}</p>
+        <header class="mb-8">
+            <p class="text-sm font-bold text-brand-700">{{ copy('Vítejte zpět', 'Welcome back') }}</p>
+            <h1 class="mt-1 text-2xl font-extrabold tracking-tight text-ink">{{ copy('Přihlaste se do Domluveno', 'Sign in to Domluveno') }}</h1>
+            <p class="mt-2 text-sm leading-6 text-muted">{{ copy('Spravujte své rezervace a recenze na jednom místě.', 'Manage your bookings and reviews in one place.') }}</p>
+        </header>
+
+        <div v-if="status" role="status" class="mb-6 flex items-start gap-3 rounded-xl border border-success/20 bg-success/10 p-4 text-sm font-medium text-success">
+            <CircleCheck :size="19" class="mt-0.5 shrink-0" aria-hidden="true" />
+            <span>{{ status }}</span>
         </div>
 
-        <!-- Status message -->
-        <div v-if="status" class="mb-6 flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium px-4 py-3 rounded-xl">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            {{ status }}
-        </div>
-
-        <form @submit.prevent="submit" class="space-y-5">
-            <!-- Email -->
+        <form class="space-y-5" @submit.prevent="submit">
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('Email address') }}</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
-                        </svg>
-                    </div>
-                    <input
-                        id="email"
-                        type="email"
-                        v-model="form.email"
-                        required
-                        autofocus
-                        autocomplete="username"
-                        :placeholder="$t('you@example.com')"
-                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                        :class="{ 'border-red-400 focus:ring-red-400': form.errors.email }"
-                    />
-                </div>
+                <label for="email" class="mb-1.5 block text-sm font-semibold text-ink">E-mail</label>
+                <input id="email" v-model="form.email" type="email" required autofocus autocomplete="username" inputmode="email" class="ui-field" :class="{ 'border-danger': form.errors.email }" placeholder="jana@example.cz" />
                 <InputError class="mt-1.5" :message="form.errors.email" />
             </div>
 
-            <!-- Password -->
             <div>
-                <div class="flex items-center justify-between mb-1.5">
-                    <label for="password" class="block text-sm font-medium text-gray-700">{{ $t('Password') }}</label>
-                    <Link
-                        v-if="canResetPassword"
-                        :href="route('password.request')"
-                        class="text-xs font-medium text-blue-600 hover:text-blue-700 transition"
-                    >{{ $t('Forgot password?') }}</Link>
+                <div class="mb-1.5 flex items-center justify-between gap-4">
+                    <label for="password" class="block text-sm font-semibold text-ink">{{ copy('Heslo', 'Password') }}</label>
+                    <Link v-if="canResetPassword" :href="route('password.request')" class="rounded-lg text-sm font-semibold text-brand-700 hover:text-brand-800">
+                        {{ copy('Zapomenuté heslo?', 'Forgot password?') }}
+                    </Link>
                 </div>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                    </div>
-                    <input
-                        id="password"
-                        type="password"
-                        v-model="form.password"
-                        required
-                        autocomplete="current-password"
-                        placeholder="••••••••"
-                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                        :class="{ 'border-red-400 focus:ring-red-400': form.errors.password }"
-                    />
-                </div>
+                <input id="password" v-model="form.password" type="password" required autocomplete="current-password" class="ui-field" :class="{ 'border-danger': form.errors.password }" placeholder="••••••••" />
                 <InputError class="mt-1.5" :message="form.errors.password" />
             </div>
 
-            <!-- Remember me -->
-            <div class="flex items-center gap-2.5">
-                <input
-                    id="remember"
-                    type="checkbox"
-                    v-model="form.remember"
-                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                />
-                <label for="remember" class="text-sm text-gray-600 cursor-pointer select-none">{{ $t('Remember me for 30 days') }}</label>
-            </div>
+            <label for="remember" class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl text-sm text-muted">
+                <input id="remember" v-model="form.remember" type="checkbox" class="h-5 w-5 rounded border-line text-brand-600 focus:ring-brand-600" />
+                <span>{{ copy('Zůstat přihlášený', 'Keep me signed in') }}</span>
+            </label>
 
-            <!-- Submit -->
-            <button
-                type="submit"
-                :disabled="form.processing"
-                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
-            >
-                <svg v-if="form.processing" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                {{ form.processing ? 'Signing in…' : 'Sign in' }}
+            <button type="submit" :disabled="form.processing" class="ui-button ui-button-primary w-full">
+                <LoaderCircle v-if="form.processing" :size="18" class="animate-spin" aria-hidden="true" />
+                {{ form.processing ? copy('Přihlašování…', 'Signing in…') : copy('Přihlásit se', 'Sign in') }}
             </button>
         </form>
 
-        <!-- Divider + Register link -->
-        <div class="mt-6 text-center">
-            <p class="text-sm text-gray-500">{{ $t('Don\'t have an account?') }}<Link :href="route('register')" class="font-semibold text-blue-600 hover:text-blue-700 transition">{{ $t('Create one for free') }}</Link>
-            </p>
-        </div>
+        <p class="mt-6 text-center text-sm text-muted">
+            {{ copy('Ještě nemáte účet?', 'New to Domluveno?') }}
+            <Link :href="route('register')" class="ml-1 rounded-lg font-bold text-brand-700 hover:text-brand-800">{{ copy('Vytvořit účet', 'Create an account') }}</Link>
+        </p>
     </GuestLayout>
 </template>
